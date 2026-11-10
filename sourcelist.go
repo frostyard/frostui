@@ -99,7 +99,8 @@ type SourceList[K comparable] struct {
 	// Rename, when set, lets the user rename items in place: F2 on the
 	// item chosen, or StartRename, shows a field of its title; Enter, or
 	// the focus leaving it, keeps the name, and Escape gives up. Rename
-	// gets the new name, unless it is empty or the title.
+	// gets the new name, trimmed, unless it is empty or the title. A
+	// rename whose row goes away ends without a call.
 	Rename func(item K, name string)
 	// CanRename, with Rename, reports whether an item can be renamed; nil
 	// lets every item be.
@@ -462,6 +463,10 @@ func (s *SourceList[K]) View(c *ui.Context, sections []SourceSection[K]) ui.Elem
 	} else {
 		s.restore(roots)
 	}
+	if s.renaming && s.rowOf(roots, s.renameKey) < 0 {
+		// Its row is gone, and with it the field that would end this.
+		s.renaming = false
+	}
 	st.List.Selected = &s.row
 	st.List.Header = func(i int) bool { return st.Item(i).header }
 	st.List.Label = func(i int) string {
@@ -637,7 +642,7 @@ func (s *SourceList[K]) renameField(c *ui.Context) {
 			return
 		}
 		s.renaming = false
-		if name := s.draft; keep && name != "" && name != s.renameFrom {
+		if name := strings.TrimSpace(s.draft); keep && name != "" && name != s.renameFrom {
 			s.Rename(s.renameKey.item, name)
 		}
 	}

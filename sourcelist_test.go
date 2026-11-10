@@ -481,6 +481,63 @@ func TestSourceListRenamesAnItemFoundInAnySection(t *testing.T) {
 	}
 }
 
+func TestSourceListRenameEndsWhenItsRowGoes(t *testing.T) {
+	l := mailList()
+	var renamed, activated []string
+	l.Rename = func(item, name string) { renamed = append(renamed, item+"="+name) }
+	l.OnActivate = func(item string, _ ui.Modifiers) { activated = append(activated, item) }
+	sections := mailSections()
+	tt := listTester(l, sections)
+	l.StartRename("work", "Spam")
+	tt.Frame()
+	tt.Key(ui.Cmd, ui.KeyA)
+	tt.Type("Junk")
+	sections[1].Items = []string{"Inbox", "Projects"}
+	tt.Frame()
+	tt.Frame()
+	if l.Renaming() {
+		t.Fatal("the rename stayed on after its row went")
+	}
+	if renamed != nil {
+		t.Errorf("a rename whose row went called Rename: %q", renamed)
+	}
+	if err := tt.Click("Projects"); err != nil {
+		t.Fatal(err)
+	}
+	tt.Key(0, ui.KeyEnter)
+	if !reflect.DeepEqual(activated, []string{"Projects"}) {
+		t.Errorf("Enter after the rename activated %q", activated)
+	}
+	tt.Key(0, ui.KeyF2)
+	if !l.Renaming() {
+		t.Error("F2 after the rename did not start another")
+	}
+}
+
+func TestSourceListTrimsANewName(t *testing.T) {
+	for _, tc := range []struct {
+		typed string
+		want  []string
+	}{
+		{"  Junk  ", []string{"Spam=Junk"}},
+		{"   ", nil},
+		{"  Spam ", nil},
+	} {
+		l := mailList()
+		var renamed []string
+		l.Rename = func(item, name string) { renamed = append(renamed, item+"="+name) }
+		tt := listTester(l, mailSections())
+		l.StartRename("work", "Spam")
+		tt.Frame()
+		tt.Key(ui.Cmd, ui.KeyA)
+		tt.Type(tc.typed)
+		tt.Key(0, ui.KeyEnter)
+		if !reflect.DeepEqual(renamed, tc.want) {
+			t.Errorf("typed %q: renamed %q, want %q", tc.typed, renamed, tc.want)
+		}
+	}
+}
+
 func TestSourceListRenameEndsWhenTheFocusLeaves(t *testing.T) {
 	l := mailList()
 	var renamed []string
