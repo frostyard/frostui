@@ -1,0 +1,39 @@
+# CI workflow (ADR-0021: SHA-pinned actions, least privilege): the job verify
+# is the required check. Actions use full commit SHA pins, the token has only
+# contents read, and checkout does not persist credentials.
+name: CI
+
+on:
+  pull_request: {}
+  push:
+    branches:
+      - main
+  merge_group: {}
+
+permissions: {}
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      # Node comes from mise.toml and mise.lock (ADR-0043), checksum-verified,
+      # the same way a developer's `mise install` does.
+      - uses: jdx/mise-action@f5be966e4a917d54244728e6a5fdcd1d93a35e6c # v5.2.6
+        with:
+          install: true
+          install_args: node
+          cache: true
+      - run: make ci BASE="$BASE"
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || '' }}

@@ -1,0 +1,20 @@
+# Dependabot (frostyard/core ADR-0071 row B13). This template has one manifest
+# that needs updates: the actions the workflows pin. Add 1 entry for each other
+# ecosystem with a manifest: "gomod" for go.mod, "npm" for package.json,
+# "cargo" for Cargo.toml, "docker" for a Dockerfile or Containerfile. Each
+# entry has 1 group with `patterns: ["*"]`, so each entry opens at most 1
+# version-update PR for each run (ADR-0075). The group has no `applies-to`, so
+# security updates stay 1 PR each.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    groups:
+      actions:
+        patterns: ["*"]
