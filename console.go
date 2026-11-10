@@ -72,12 +72,31 @@ func (c *Console) SetNotify(fn func()) {
 	c.mu.Unlock()
 }
 
-// Add appends a line. Text with several lines becomes several lines.
+// Add appends a line. Text with several lines becomes several lines, all
+// of level.
 func (c *Console) Add(level Level, source, text string) {
+	c.add(source, splitLines(text), func(int) Level { return level })
+}
+
+// splitLines splits text into the lines Add appends: a final newline ends
+// the last line rather than starting an empty one, and each line loses a
+// trailing carriage return.
+func splitLines(text string) []string {
+	parts := strings.Split(strings.TrimRight(text, "\n"), "\n")
+	for i, part := range parts {
+		parts[i] = strings.TrimRight(part, "\r")
+	}
+	return parts
+}
+
+// add appends texts, the ith of level levelOf(i), under one lock, and
+// notifies once.
+func (c *Console) add(source string, texts []string, levelOf func(i int) Level) {
 	c.mu.Lock()
-	for _, part := range strings.Split(strings.TrimRight(text, "\n"), "\n") {
+	for i, text := range texts {
+		level := levelOf(i)
 		c.seq++
-		line := Line{Seq: c.seq, At: c.now(), Level: level, Source: source, Text: strings.TrimRight(part, "\r")}
+		line := Line{Seq: c.seq, At: c.now(), Level: level, Source: source, Text: text}
 		if c.count < len(c.lines) {
 			c.lines[(c.start+c.count)%len(c.lines)] = line
 			c.count++
@@ -181,27 +200,37 @@ func (s *LevelSet) Has(l Level) bool { return *s&(1<<l) != 0 }
 func (s *LevelSet) Toggle(l Level) { *s ^= 1 << l }
 
 // Writer returns an io.Writer whose writes become lines of level from
-// source, as a log.Logger's output: each write is one or more lines.
+// source, as a log.Logger's output: each write is one or more lines, split
+// at its newlines. The writer keeps no partial line between writes, so a
+// write that does not end in a newline still ends in a line of its own; a
+// log.Logger's writes always end in one.
 func (c *Console) Writer(level Level, source string) *ConsoleWriter {
 	return &ConsoleWriter{c: c, level: level, source: source}
 }
 
-// ConsoleWriter is the io.Writer Console.Writer returns. A write's text is
-// trimmed of the timestamp prefix the standard logger adds.
+// ConsoleWriter is the io.Writer Console.Writer returns. It does not strip
+// the timestamp prefix the standard logger adds: for lines without it, set
+// the logger's flags to 0 or strip it before the write.
 type ConsoleWriter struct {
 	c      *Console
 	level  Level
 	source string
-	// Classify, when set, picks the level of each line from its text.
+	// Classify, when set, picks the level of each line from its text: it
+	// runs once per line, so the lines of one write can differ in level.
+	// It runs on the writing goroutine, outside the console's lock.
 	Classify func(text string) Level
 }
 
 func (w *ConsoleWriter) Write(p []byte) (int, error) {
-	text := strings.TrimRight(string(p), "\n")
-	level := w.level
-	if w.Classify != nil {
-		level = w.Classify(text)
+	texts := splitLines(string(p))
+	if w.Classify == nil {
+		w.c.add(w.source, texts, func(int) Level { return w.level })
+		return len(p), nil
 	}
-	w.c.Add(level, w.source, text)
+	levels := make([]Level, len(texts))
+	for i, text := range texts {
+		levels[i] = w.Classify(text)
+	}
+	w.c.add(w.source, texts, func(i int) Level { return levels[i] })
 	return len(p), nil
 }

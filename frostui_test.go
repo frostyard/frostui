@@ -129,6 +129,37 @@ func TestConsoleWriterClassifies(t *testing.T) {
 	}
 }
 
+func TestConsoleWriterClassifiesEachLineOfAWrite(t *testing.T) {
+	c := NewConsole(16)
+	w := c.Writer(LevelInfo, "log")
+	w.Classify = func(s string) Level {
+		if strings.HasPrefix(s, "ERROR") {
+			return LevelError
+		}
+		return LevelInfo
+	}
+	_, _ = w.Write([]byte("okay\nERROR failed\n"))
+	_, _ = w.Write([]byte("ERROR first\r\nfine after it\nfine again\n"))
+	_, _ = w.Write([]byte("ERROR without a newline"))
+	texts := func(l Level) string {
+		set := LevelSet(1 << l)
+		var out []string
+		for _, line := range c.Lines(&set, "") {
+			out = append(out, line.Text)
+		}
+		return strings.Join(out, "|")
+	}
+	if got, want := texts(LevelError), "ERROR failed|ERROR first|ERROR without a newline"; got != want {
+		t.Errorf("Error lines = %q, want %q", got, want)
+	}
+	if got, want := texts(LevelInfo), "okay|fine after it|fine again"; got != want {
+		t.Errorf("Info lines = %q, want %q", got, want)
+	}
+	if _, errs := c.Counts(); errs != 3 {
+		t.Errorf("error count = %d, want 3: one per ERROR line", errs)
+	}
+}
+
 func TestJobsRunOneAtATimeInOrder(t *testing.T) {
 	sp := frostuitest.NewLoop()
 	con := NewConsole(64)

@@ -98,7 +98,11 @@ counts of warnings and errors since the last `Clear`, and a notify function
 called after each `Add` from the adding goroutine. `Lines(levels, query)`
 filters by level and by text or source; `Text` renders lines for the
 clipboard. `Console.Writer` adapts it as a `log` output, with an optional
-per-line `Classify`. `ConsoleView` is the pane: filters by level
+`Classify` that picks the level of each line: a write of several lines is
+split first, so its lines can differ in level and count as warnings or
+errors one by one. The writer keeps no partial line between writes (a
+write without a final newline is a line of its own) and does not strip
+the standard logger's timestamp. `ConsoleView` is the pane: filters by level
 (`DefaultLevels` hides debug) and text, follow, copy, clear and close; its
 `Subtitle` follows the title ("every command the app runs, as it runs"
 when empty).
