@@ -16,6 +16,8 @@ Docs are split by the question they answer:
 - [0001 — Record architecture decisions](adr/0001-record-architecture-decisions.md)
 - [0002 — Agent-portable instruction surface](adr/0002-agent-portable-instruction-surface.md)
 - [0003 — Verify gate, risk paths and corrections](adr/0003-verify-gate-risk-paths-and-corrections.md)
+- [0004 — Extract the UI kit into its own module](adr/0004-extract-the-ui-kit-into-its-own-module.md)
+- [0005 — Build everywhere, with the freedesktop parts behind build tags](adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md)
 
 ### Org-wide decisions
 
@@ -23,19 +25,20 @@ Docs are split by the question they answer:
 
 ### Guides
 
-- [After you create a repository from this template](new-repository.md)
+- [After you create a repository from this template](new-repository.md): the admin steps for frostyard/frostui
 
 ### Design
 
+- [frostui: frostyard's desktop UI kit](design/frostui.md): start here
 - [Agent-ready repository](design/agent-ready-repository.md)
 
 ### Specs
 
-*(none yet)*
+- [API stability and versions](specs/api-stability.md)
 
 ### Plans
 
-*(none yet)*
+- [Roadmap](plans/roadmap.md)
 
 ## Conventions
 

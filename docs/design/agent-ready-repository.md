@@ -5,7 +5,7 @@ Contracts: [repository baseline spec](https://github.com/frostyard/core/blob/mai
 
 ## Overview
 
-This repository uses the structure of [bketelsen/agentic-template](https://github.com/bketelsen/agentic-template): a portable instruction surface, category-based documentation, reusable skills, a verification gate and a corrections loop, for work that LLM agents build and maintain. The structure is extracted from [bespoke](https://github.com/bketelsen/bespoke), where it has held up across coding agents. In the template itself, this structure is the whole content: it has no application code. A repository made from the template keeps this document and updates it in place when its own structure changes, as it does for every design document.
+This repository uses the structure of [bketelsen/agentic-template](https://github.com/bketelsen/agentic-template): a portable instruction surface, category-based documentation, reusable skills, a verification gate and a corrections loop, for work that LLM agents build and maintain. The structure is extracted from [bespoke](https://github.com/bketelsen/bespoke), where it has held up across coding agents. In the template itself, this structure is the whole content. This repository adds a Go module, the frostui kit ([design](frostui.md)), and keeps this document up to date as its structure changes.
 
 ## Design
 
@@ -17,9 +17,23 @@ Agents succeed when the repository answers their questions before they ask:
 - **Mandatory cross-linking.** ADRs link the designs they shape; designs link their ADRs, specs, and roadmap phase; specs link back. A doc without its links is defined as incomplete, so the graph stays navigable from any entry point.
 - **Live conventions only.** AGENTS.md's code-conventions section describes the code *as it is* — rules graduate in when the enforcing code lands. Agents following stale rules produce broken work; this structure makes stale rules a category error.
 - **Skills over improvisation.** Multi-step procedures that repeat become `.agents/skills/<name>/SKILL.md` files with a frontmatter description agents can select on. Explaining a procedure twice means it should become a skill.
-- **A verify gate protects the template.** `make verify` checks the canonical surfaces, documentation index, risk paths, corrections inbox and vendored copies. The risk-path list gives every path a level, and the caller labels pull requests with it; the corrections inbox turns blocking reviews into guards.
+- **A verify gate protects the repository.** `make verify` checks the Go module (tidy, vet, gofmt, the pinned lint, every test with the import, API and cross-build guards) and the canonical surfaces, documentation index, risk paths, corrections inbox and vendored copies. The risk-path list gives every path a level, and the caller labels pull requests with it; the corrections inbox turns blocking reviews into guards.
 
-**Layout.** The parts that the template brings are:
+**Layout.** The kit's own parts are:
+
+| Path | What it is |
+| --- | --- |
+| `*.go` | Package `frostui`, the kit; `*_linux.go` and `*_other.go` hold the platform parts |
+| `frostuitest/` | Package `frostuitest`: the UI-thread loop for tests |
+| `examples/commandcenter/` | The command-center example and its snapshot test |
+| `internal/repocheck/` | The guards: imports, exported API (`testdata/api.txt`), cross-build, Makefile, workflow pins |
+| `docs/images/` | The example's picture for the README and the design doc |
+| `go.mod`, `go.sum` | The module: MyGo and purego |
+| `.golangci.yml` | The lint configuration |
+| `.svu.yml` | The version rule for release tags (`make bump`) |
+| `.gitignore` | Local build output (`build/`) |
+
+The parts that the template brings are:
 
 | Path | What it is |
 | --- | --- |
@@ -36,9 +50,9 @@ Agents succeed when the repository answers their questions before they ask:
 | `docs/design/` | Living architecture documents; how; also `TEMPLATE.md` |
 | `docs/specs/` | Testable contracts; what; also `TEMPLATE.md` |
 | `docs/plans/` | Phased plans; when; also `TEMPLATE.md` |
-| `Makefile` | Verify, check and CI triad |
-| `mise.toml`, `mise.lock` | Tool pins; `mise install` provisions them |
-| `LICENSE` | MIT license text |
+| `Makefile` | Verify, check and CI triad, and the Go targets |
+| `mise.toml`, `mise.lock` | Tool pins (golangci-lint, Node); `mise install` provisions them |
+| `LICENSE` | GPL-3.0 license text, from ChairLift, where the code comes from |
 | `SECURITY.md` | Private vulnerability reporting |
 | `scripts/` | Template and corrections gates |
 | `scripts/lib/risk-paths.mjs` | Pinned risk-path validator, matcher and levels |
@@ -53,7 +67,7 @@ Agents succeed when the repository answers their questions before they ask:
 
 ## Operational notes
 
-`mise install` provisions the pinned Node.js. `make verify` needs only Node.js 22 or later and `make`; it uses no package manager, `package.json`, install step or third-party dependency. Symlinks require Linux or macOS, or `core.symlinks=true` on Windows. GitHub's web renderer shows a symlink as its target path; this is cosmetic only.
+`mise install` provisions the pinned golangci-lint and Node.js; Go comes from go.mod's `go` line. `make verify` needs Go, golangci-lint, Node.js 22 or later, `make`, and Pango and cairo for MyGo's Tester; the template gate itself uses no package manager, `package.json`, install step or third-party dependency. Symlinks require Linux or macOS, or `core.symlinks=true` on Windows. GitHub's web renderer shows a symlink as its target path; this is cosmetic only.
 
 The verify gate checks canonical surfaces, the documentation index, risk paths, the corrections inbox and vendored copies. A pull request that touches `.github/risk-paths.json` gets 1 level label, and `risk:high` at L1 or L2; core takes the level from the matched globs, `default_level` and the org floors, and it never lowers a level label that the pull request already has. Blocking reviews become targeted tests or `AGENTS.md` rules with a corrections entry.
 

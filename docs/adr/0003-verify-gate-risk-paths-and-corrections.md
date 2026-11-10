@@ -1,7 +1,7 @@
 # 0003 — Verify gate, risk paths and corrections
 
 - **Status:** Accepted
-- **Date:** YYYY-MM-DD <!-- set when you adopt the template -->
+- **Date:** 2026-11-10
 
 ## Context
 

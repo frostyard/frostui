@@ -1,6 +1,7 @@
 # CI workflow (ADR-0021: SHA-pinned actions, least privilege): the job verify
-# is the required check. Actions use full commit SHA pins, the token has only
-# contents read, and checkout does not persist credentials.
+# is the required check. Actions use full commit SHA pins with the version in
+# a comment, the token has only contents read, and checkout does not persist
+# credentials.
 name: CI
 
 on:
@@ -19,21 +20,64 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # The corrections check compares .memory/corrections.jsonl with the
+          # base, which needs the base commit's history.
           fetch-depth: 0
-      # Node comes from mise.toml and mise.lock (ADR-0043), checksum-verified,
-      # the same way a developer's `mise install` does.
+      # Go comes from go.mod's go line, the only Go pin.
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      # golangci-lint and Node come from mise.toml and mise.lock (ADR-0043),
+      # checksum-verified: golangci-lint for the pinned lint, Node for the
+      # template gate and the js/wasm tests.
       - uses: jdx/mise-action@f5be966e4a917d54244728e6a5fdcd1d93a35e6c # v5.2.6
         with:
           install: true
-          install_args: node
+          install_args: golangci-lint node
           cache: true
+      # MyGo's Tester lays text out with Pango and cairo (no GTK, no display).
+      - name: Install the text runtime of the UI tests
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends fonts-dejavu-core libpangocairo-1.0-0
       - run: make ci BASE="$BASE"
         env:
           BASE: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || '' }}
+
+  # Each target on a runner of its own, so a failure names its platform.
+  # internal/repocheck's TestKitCrossCompiles and the Makefile's CROSS_TARGETS
+  # list the same targets.
+  cross-build:
+    name: cross-build (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - linux/amd64
+          - linux/arm64
+          - windows/amd64
+          - windows/arm64
+          - darwin/amd64
+          - darwin/arm64
+          - js/wasm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - run: make cross CROSS_TARGETS="$TARGET"
+        env:
+          TARGET: ${{ matrix.target }}
