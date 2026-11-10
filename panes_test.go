@@ -191,6 +191,60 @@ func TestPanesCollapseAndShowAgain(t *testing.T) {
 	}
 }
 
+// TestSetCollapsedIgnoresWhatCannotHide leaves the saved layout and Shown
+// alone for a pane not Collapsible, the pane that takes the room left and
+// an ID no frame drew.
+func TestSetCollapsedIgnoresWhatCannotHide(t *testing.T) {
+	var p Panes
+	tt := ui.NewTester(func(c *ui.Context) {
+		panes := threePanes(c)
+		panes[2].Collapsible = true // the pane that takes the room left
+		p.View(c, panes).Fill()
+	}, 1000, 400)
+	tt.Frame()
+	for _, id := range []string{"list", "read", "no-such-pane"} {
+		p.SetCollapsed(id, true)
+		if !p.Shown(id) {
+			t.Errorf("%s reads as hidden", id)
+		}
+		p.Toggle(id)
+		if !p.Shown(id) {
+			t.Errorf("%s reads as hidden after a toggle", id)
+		}
+	}
+	if len(p.Layout.Collapsed) != 0 {
+		t.Errorf("the saved layout took %v", p.Layout.Collapsed)
+	}
+	tt.Frame()
+	for _, want := range []string{"list body", "read body"} {
+		if !tt.HasText(want) {
+			t.Errorf("no %q in %q", want, tt.Texts())
+		}
+	}
+}
+
+// TestPanesBeforeTheFirstFrame applies the same rule while no pane is
+// known: a stray saved entry does not read as hidden, and a saved collapsed
+// pane hides from the first frame.
+func TestPanesBeforeTheFirstFrame(t *testing.T) {
+	p := Panes{Layout: PaneLayout{Collapsed: map[string]bool{"list": true, "side": true}}}
+	if !p.Shown("list") || !p.Shown("side") {
+		t.Errorf("before the first frame: list %v, side %v", p.Shown("list"), p.Shown("side"))
+	}
+	p.SetCollapsed("read", true)
+	if p.Layout.Collapsed["read"] {
+		t.Error("SetCollapsed wrote an ID no frame drew")
+	}
+	tt := panesTester(&p, 1000)
+	tt.Frame()
+	if p.Shown("side") || tt.HasText("side body") {
+		t.Errorf("the saved collapsed pane shows: %q", tt.Texts())
+	}
+	if !p.Shown("list") || !tt.HasText("list body") {
+		t.Errorf("the pane that cannot hide is hidden: %q", tt.Texts())
+	}
+}
+
 func TestPanesGiveWayWhenNarrow(t *testing.T) {
 	var p Panes
 	tt := panesTester(&p, 1000)
@@ -241,7 +295,6 @@ func TestPaneLayoutRoundTrips(t *testing.T) {
 	var p Panes
 	tt := panesTester(&p, 1000)
 	drag(tt, 200, 100, 250, 100)
-	p.SetCollapsed("list", false)
 	p.SetCollapsed("side", true)
 	data, err := json.Marshal(p.Layout)
 	if err != nil {
@@ -254,7 +307,7 @@ func TestPaneLayoutRoundTrips(t *testing.T) {
 	if restored.Layout.Widths["side"] != 250 || !restored.Layout.Collapsed["side"] {
 		t.Errorf("restored %+v from %s", restored.Layout, data)
 	}
-	restored.SetCollapsed("side", false)
+	delete(restored.Layout.Collapsed, "side")
 	tt2 := panesTester(&restored, 1000)
 	if got := x(t, tt2, "list body"); got != 251 {
 		t.Errorf("restored: the list starts at %v, want 251", got)

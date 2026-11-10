@@ -42,7 +42,7 @@ type PaneShell struct {
 type PaneFrame struct {
 	// SidebarPane is the ID of the pane the toggle at the far left of the
 	// top bar shows and hides, of SidebarPanes, or of the shell's Panes
-	// when that is nil. "" draws no toggle.
+	// when that is nil; the pane must be Collapsible. "" draws no toggle.
 	SidebarPane  string
 	SidebarPanes *Panes
 	// Panes are the window's panes, which take the room under the top bar.

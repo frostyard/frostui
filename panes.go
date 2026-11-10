@@ -65,9 +65,12 @@ type Panes struct {
 	Step float32
 
 	hidden map[string]bool // the panes the last frame did not show
-	prefer string          // the pane the app showed last, hidden for room last
-	total  float32         // the width of the last layout
-	window float32         // the window's width in the last build
+	// collapsible holds the IDs of the panes that can hide, as of the last
+	// frame; nil before the first.
+	collapsible map[string]bool
+	prefer      string  // the pane the app showed last, hidden for room last
+	total       float32 // the width of the last layout
+	window      float32 // the window's width in the last build
 }
 
 // View draws panes and returns the row that holds them; give it a size,
@@ -77,19 +80,18 @@ func (p *Panes) View(c *ui.Context, panes []Pane) ui.Element {
 }
 
 // Shown reports whether the pane shows: it is not collapsed, and the last
-// frame had room for it.
-func (p *Panes) Shown(id string) bool {
-	if p.hidden != nil {
-		return !p.hidden[id]
-	}
-	return !p.Layout.Collapsed[id]
-}
+// frame had room for it. Before the first frame no pane is known to be
+// able to hide, so every ID shows.
+func (p *Panes) Shown(id string) bool { return !p.hidden[id] }
 
 // SetCollapsed hides or shows a Collapsible pane. A pane shown this way is
-// the last to hide for want of room.
+// the last to hide for want of room. It ignores an ID that cannot hide: one
+// not Collapsible, the pane that takes the room left, one no frame drew,
+// and so every ID before the first frame. To start with a pane collapsed,
+// set it in Layout.
 func (p *Panes) SetCollapsed(id string, collapsed bool) {
-	if p.hidden == nil {
-		p.hidden = map[string]bool{}
+	if !p.collapsible[id] {
+		return
 	}
 	if collapsed {
 		if p.Layout.Collapsed == nil {
@@ -229,6 +231,12 @@ func (p *Panes) view(c *ui.Context, panes []Pane, bar func(pn Pane, first, last 
 	flex := flexPane(panes)
 	widths, shown := p.arrange(panes, flex, total)
 	p.hidden = map[string]bool{}
+	p.collapsible = map[string]bool{}
+	for i, pn := range panes {
+		if pn.Collapsible && i != flex {
+			p.collapsible[pn.ID] = true
+		}
+	}
 	first, last := -1, -1
 	for i, pn := range panes {
 		if !shown[i] {
