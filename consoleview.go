@@ -14,8 +14,33 @@ type ConsoleView struct {
 	// Subtitle follows the pane's title; empty shows "every command the
 	// app runs, as it runs".
 	Subtitle string
-	list     ui.ListState
-	init     bool
+	// Title names the pane, as "Activity"; empty is "Console".
+	Title string
+	// Offered are the levels the pane offers to filter by, every level
+	// when 0. A level not offered has no toggle and its lines do not
+	// show.
+	Offered LevelSet
+	// EmptyNote is what the empty pane says under "Nothing yet"; empty
+	// says "Commands and their output show here as they run."
+	EmptyNote string
+	list      ui.ListState
+	init      bool
+}
+
+// title is the pane's title.
+func (v *ConsoleView) title() string {
+	if v.Title != "" {
+		return v.Title
+	}
+	return "Console"
+}
+
+// showing is the levels whose lines show: those turned on and offered.
+func (v *ConsoleView) showing() LevelSet {
+	if v.Offered != 0 {
+		return v.Levels & v.Offered
+	}
+	return v.Levels
 }
 
 // View draws the pane for con.
@@ -28,11 +53,17 @@ func (v *ConsoleView) View(c *ui.Context, con *Console) {
 		v.list.FollowEnd = true
 	}
 	t := c.Theme()
-	lines := con.Lines(&v.Levels, v.Query)
-	ui.Column(c).Fill().Background(Chrome(t)).AlignItems(ui.Stretch).Role(ui.RoleRegion).Label("Console").Children(func() {
+	showing := v.showing()
+	lines := con.Lines(&showing, v.Query)
+	title := v.title()
+	copied, clearLabel, closeLabel := "Console copied", "Clear the console", "Close the console"
+	if v.Title != "" {
+		copied, clearLabel, closeLabel = v.Title+" copied", "Clear "+v.Title, "Close "+v.Title
+	}
+	ui.Column(c).Fill().Background(Chrome(t)).AlignItems(ui.Stretch).Role(ui.RoleRegion).Label(title).Children(func() {
 		ui.Row(c).Gap(SpaceS).Padding(SpaceS, SpaceL).AlignItems(ui.Center).Children(func() {
 			Icon(c, "utilities-terminal").TextColor(t.TextMuted)
-			ui.Text(c, "Console").Bold().FontSize(13)
+			ui.Text(c, title).Bold().FontSize(13)
 			sub := v.Subtitle
 			if sub == "" {
 				sub = "every command the app runs, as it runs"
@@ -41,6 +72,9 @@ func (v *ConsoleView) View(c *ui.Context, con *Console) {
 			ui.Spacer(c)
 			ui.ToggleGroup(c, func() {
 				for l := Level(0); l < levelCount; l++ {
+					if v.Offered != 0 && !v.Offered.Has(l) {
+						continue
+					}
 					on := v.Levels.Has(l)
 					if ui.Toggle(c.Key(int(l)), &on, LevelNames[l]).Changed() {
 						v.Levels.Toggle(l)
@@ -56,18 +90,22 @@ func (v *ConsoleView) View(c *ui.Context, con *Console) {
 			}
 			if IconButton(c, "edit-copy", "Copy the lines shown").Clicked() {
 				c.WriteClipboard(Text(lines))
-				c.Announce("Console copied")
+				c.Announce(copied)
 			}
-			if IconButton(c, "edit-clear-all", "Clear the console").Clicked() {
+			if IconButton(c, "edit-clear-all", clearLabel).Clicked() {
 				con.Clear()
 			}
-			if IconButton(c, "window-close", "Close the console").Clicked() {
+			if IconButton(c, "window-close", closeLabel).Clicked() {
 				v.Open = false
 			}
 		})
 		ui.Box(c).Height(1).Background(t.Border)
 		if len(lines) == 0 {
-			Empty(c, "utilities-terminal", "Nothing yet", "Commands and their output show here as they run.").Grow(1)
+			note := v.EmptyNote
+			if note == "" {
+				note = "Commands and their output show here as they run."
+			}
+			Empty(c, "utilities-terminal", "Nothing yet", note).Grow(1)
 			return
 		}
 		v.list.Key = func(i int) any { return lines[i].Seq }
