@@ -48,6 +48,13 @@ field frostui.About.Name string
 field frostui.About.Summary string
 field frostui.About.Version string
 field frostui.About.Website string
+field frostui.ActionToast.Action string
+field frostui.ActionToast.Countdown bool
+field frostui.ActionToast.OnAction func()
+field frostui.ActionToast.OnExpire func()
+field frostui.ActionToast.Timeout time.Duration
+field frostui.ActionToast.Title string
+field frostui.ActionToast.Type string
 field frostui.Brand.Logo *ui.SVG
 field frostui.Brand.Name string
 field frostui.Brand.Tagline string
@@ -270,6 +277,7 @@ func frostui.SetAppID(string, string) error
 func frostui.SetIcons(*Icons)
 func frostui.Shortcut(*ui.Context, ...string) ui.Element
 func frostui.ShortcutsBody([]ShortcutEntry) func(c *ui.Context)
+func frostui.ShowActionToast(*ui.Context, ActionToast) string
 func frostui.SoftSelection(*ui.Theme) *ui.Theme
 func frostui.SquareAvatar(*ui.Context, string, float32) ui.Element
 func frostui.StateOf(*Job) StepState
@@ -337,6 +345,7 @@ method (*Shell) frostui.View(*ui.Context, Frame)
 method (*Waker) frostui.Wake()
 method (JobState) frostui.Ended() bool
 type frostui.About struct
+type frostui.ActionToast struct
 type frostui.Brand struct
 type frostui.Command struct
 type frostui.CommandItem struct
