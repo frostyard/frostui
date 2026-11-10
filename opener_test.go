@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -166,5 +167,41 @@ func TestOpenerExtensionsAndFolders(t *testing.T) {
 	o = Opener{Roots: []string{dir}, Folders: true, LaunchFile: func(string) error { return nil }}
 	if err := o.OpenFile(filepath.Join(dir, "sub")); err != nil {
 		t.Errorf("a folder with Folders: %v", err)
+	}
+}
+
+// deniedTypes is the deny list, written out so that taking a type off
+// runnableExtensions fails a test.
+var deniedTypes = []string{
+	".app", ".appimage", ".appinstaller", ".application", ".appref-ms", ".appx", ".appxbundle",
+	".bash", ".bat", ".chm", ".cmd", ".com", ".command", ".cpl", ".deb", ".desktop", ".dmg",
+	".exe", ".fileloc", ".flatpak", ".flatpakref", ".gadget", ".hta", ".img", ".inetloc", ".inf",
+	".iso", ".jar", ".js", ".jse", ".library-ms", ".lnk", ".mpkg", ".msc", ".msi", ".msix",
+	".msixbundle", ".msp", ".mst", ".pif", ".pkg", ".pl", ".ps1", ".ps1xml", ".psc1", ".psd1",
+	".psm1", ".py", ".pyw", ".pyz", ".rb", ".reg", ".rpm", ".run", ".scf", ".scr", ".sct",
+	".search-ms", ".settingcontent-ms", ".sh", ".terminal", ".url", ".vb", ".vbe", ".vbs",
+	".vhd", ".vhdx", ".webloc", ".workflow", ".ws", ".wsc", ".wsf", ".wsh", ".xbap", ".xll",
+}
+
+func TestOpenerRefusesEveryDeniedType(t *testing.T) {
+	dir := vault(t)
+	for _, ext := range deniedTypes {
+		t.Run(ext, func(t *testing.T) {
+			// Listing a type does not let it through, in either case.
+			o := Opener{Roots: []string{dir}, Extensions: []string{ext}, LaunchFile: func(p string) error {
+				t.Errorf("launched %q", p)
+				return nil
+			}}
+			for _, name := range []string{"a" + ext, "b" + strings.ToUpper(ext)} {
+				p := filepath.Join(dir, name)
+				write(t, p, 0o644)
+				if err := o.OpenFile(p); !errors.Is(err, ErrNotAllowed) {
+					t.Errorf("OpenFile(%q) = %v, want a refusal", p, err)
+				}
+			}
+		})
+	}
+	if len(runnableExtensions) != len(deniedTypes) {
+		t.Errorf("the deny list has %d types, the test %d", len(runnableExtensions), len(deniedTypes))
 	}
 }

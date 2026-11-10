@@ -67,8 +67,9 @@ on branch `feat/frame-panes`.
   [palette sources](../design/frostui.md#palette-sources),
   [source list](../design/frostui.md#source-list),
   [settings layout](../design/frostui.md#settings-layout),
-  [opener](../design/frostui.md#opener)), additive to the API
-  ([spec](../specs/api-stability.md)).
+  [opener](../design/frostui.md#opener),
+  [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md)),
+  additive to the API ([spec](../specs/api-stability.md)).
 
 **Done when:** `examples/sourcelist` draws them all, `make ci` passes, and
 `api.txt` only gains lines against v0.1.0.

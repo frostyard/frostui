@@ -20,6 +20,7 @@ Docs are split by the question they answer:
 - [0005 — Build everywhere, with the freedesktop parts behind build tags](adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md)
 - [0006 — A frame without the rail, whose top-bar segments live in the panes' columns](adr/0006-a-frame-without-the-rail.md)
 - [0007 — Embed a Lucide icon set as the last fallback](adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md)
+- [0008 — Open behind allow-lists, and let editors keep their keys](adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md)
 
 ### Org-wide decisions
 

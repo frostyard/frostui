@@ -20,14 +20,19 @@ var ErrNotAllowed = errors.New("not allowed")
 // DefaultOpenSchemes are the URL schemes an Opener with no Schemes opens.
 func DefaultOpenSchemes() []string { return []string{"http", "https", "mailto"} }
 
-// runnableExtensions are the file types the system would run, or follow
-// to something else, rather than show: an Opener never opens them.
+// runnableExtensions is a deny list of file types that run, install or
+// redirect when the system opens them, or mount and hide what they hold:
+// an Opener never opens them. It is a backstop, and cannot be complete:
+// Opener.Extensions is the allow-list for files from outside the app.
 var runnableExtensions = []string{
-	".app", ".appimage", ".application", ".bash", ".bat", ".cmd", ".com", ".command", ".cpl",
-	".deb", ".desktop", ".exe", ".flatpak", ".flatpakref", ".hta", ".inf", ".jar", ".js", ".jse",
-	".lnk", ".msc", ".msi", ".msp", ".pif", ".pkg", ".ps1", ".reg", ".rpm", ".run", ".scr",
-	".scf", ".sh", ".terminal", ".url", ".vb", ".vbe", ".vbs", ".webloc", ".workflow", ".ws",
-	".wsf", ".wsh",
+	".app", ".appimage", ".appinstaller", ".application", ".appref-ms", ".appx", ".appxbundle",
+	".bash", ".bat", ".chm", ".cmd", ".com", ".command", ".cpl", ".deb", ".desktop", ".dmg",
+	".exe", ".fileloc", ".flatpak", ".flatpakref", ".gadget", ".hta", ".img", ".inetloc", ".inf",
+	".iso", ".jar", ".js", ".jse", ".library-ms", ".lnk", ".mpkg", ".msc", ".msi", ".msix",
+	".msixbundle", ".msp", ".mst", ".pif", ".pkg", ".pl", ".ps1", ".ps1xml", ".psc1", ".psd1",
+	".psm1", ".py", ".pyw", ".pyz", ".rb", ".reg", ".rpm", ".run", ".scf", ".scr", ".sct",
+	".search-ms", ".settingcontent-ms", ".sh", ".terminal", ".url", ".vb", ".vbe", ".vbs",
+	".vhd", ".vhdx", ".webloc", ".workflow", ".ws", ".wsc", ".wsf", ".wsh", ".xbap", ".xll",
 }
 
 // Opener opens links and files with the system's handlers, behind
@@ -45,8 +50,10 @@ type Opener struct {
 	// under a root that leads out of it is refused.
 	Roots []string
 	// Extensions, when set, are the only file extensions OpenFile opens,
-	// as ".pdf", in any case. Files the system would run are refused
-	// whether listed or not.
+	// as ".pdf", in any case. Set it for files from outside the app, as
+	// attachments: without it OpenFile relies on a deny list of types that
+	// run, install or redirect, a backstop that cannot be complete. Types
+	// on the deny list are refused whether listed here or not.
 	Extensions []string
 	// Folders lets OpenFile open directories under Roots, in the file
 	// manager.
@@ -153,7 +160,7 @@ func (o Opener) CheckFile(path string) (string, error) {
 	}
 	ext := strings.ToLower(filepath.Ext(name))
 	if slices.Contains(runnableExtensions, ext) {
-		return "", refused(path, "the system would run it")
+		return "", refused(path, "files of the type "+ext+" can run, install or redirect")
 	}
 	switch {
 	case info.IsDir():

@@ -1,6 +1,6 @@
 # frostui: frostyard's desktop UI kit
 
-Living document. Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md), [ADR-0006](../adr/0006-a-frame-without-the-rail.md), [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md).
+Living document. Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md), [ADR-0006](../adr/0006-a-frame-without-the-rail.md), [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md), [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md).
 Contracts: [spec: API stability](../specs/api-stability.md).
 Built in: [roadmap](../plans/roadmap.md).
 
@@ -299,7 +299,8 @@ is a function of the window's `Context`, usually `c.FocusWithin(handle)` over
 a `ui.Handle` bound to the editor, which reads the focus whatever the build
 order. Left nil, any element that takes text counts, so that a key never
 goes past a field. An element that binds the key itself comes first in
-every scope. A table binds the keys of one window; give each its own.
+every scope. A table binds the keys of one window; give each its own. The
+rule is [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md).
 
 ### Palette sources
 
@@ -389,11 +390,15 @@ from a worker. Anything not allowed returns an error wrapping
   refused; `file:` is refused even when listed.
 - `OpenFile`: an absolute path that, symbolic links followed, is under one
   of `Roots` (none opens nothing); a regular file, or a folder with
-  `Folders`; not executable and not of a type the system would run, listed
-  in `Extensions` or not; and in `Extensions` when that is set.
+  `Folders`; not executable; not on a deny list of types that run, install
+  or redirect, listed in `Extensions` or not; and in `Extensions` when that
+  is set.
 
-The check and the open are two steps, so a file swapped between them is
-opened as swapped: the roots are the app's own directories.
+The deny list is a backstop and cannot be complete, so an app sets
+`Extensions` for files from outside it, as attachments. The check and the
+open are two steps, so a file swapped between them is opened as swapped: the
+roots are the app's own directories. The policy is
+[ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md).
 
 ### Theming
 
@@ -555,6 +560,6 @@ None since the module began.
 
 ## References
 
-- Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md), [ADR-0006](../adr/0006-a-frame-without-the-rail.md), [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md)
+- Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md), [ADR-0006](../adr/0006-a-frame-without-the-rail.md), [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md), [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md)
 - Contracts: [spec: API stability](../specs/api-stability.md)
 - Built in: [roadmap — Phase 1](../plans/roadmap.md#phase-1--extract-the-kit-done), [Phase 5](../plans/roadmap.md#phase-5--the-frame-and-the-layout), [Phase 6](../plans/roadmap.md#phase-6--commands-navigation-and-settings-for-v020-medium)
