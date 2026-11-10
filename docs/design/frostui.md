@@ -1,6 +1,6 @@
 # frostui: frostyard's desktop UI kit
 
-Living document. Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md).
+Living document. Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md), [ADR-0006](../adr/0006-a-frame-without-the-rail.md), [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md).
 Contracts: [spec: API stability](../specs/api-stability.md).
 Built in: [roadmap](../plans/roadmap.md).
 
@@ -56,6 +56,102 @@ queue for every change, and the status bar for the state of the current
 run. `examples/commandcenter` is the reference: a pretend mail sync with an
 overview, an accounts page of `CommandRow`s and a settings page of
 `SwitchRow`s.
+
+### The frame without the rail
+
+`paneshell.go`
+([ADR-0006](../adr/0006-a-frame-without-the-rail.md)): `PaneShell` is the
+window of an app whose content is its own panes. The app keeps one and calls
+`PaneShell.View(c, PaneFrame{…})` every frame, under a hidden title bar as
+`Shell` is: the top bar is the drag region and keeps clear of
+`c.TitleBar()`'s room.
+
+![The three-pane example with a delete to undo](../images/threepane.png)
+
+The picture is `examples/threepane` drawn by its snapshot test.
+
+The top bar takes one of two shapes:
+
+- **Segments.** `PaneFrame.Panes` draws panes, and each `Pane.Bar` is the
+  part of the top bar over its pane, in the pane's own column, so it follows
+  the pane's width exactly. A collapsed pane takes its segment with it.
+- **A bar not split.** Without `Panes`, `Start` follows the toggle, the
+  palette field is in the middle of the window, and `Content` draws the
+  rest: full height, not scrolled, not padded.
+
+Either way the frame owns the order every app shares: `SidebarPane` puts the
+toggle at the far left (of `SidebarPanes`, or the shell's `Panes`);
+`PaletteField`, the same widget everywhere; then `End`, the console's button
+and the main menu (`Menu`) last before the window controls. The status bar
+starts with `Connection`, then `Status`, and ends with `StatusEnd`.
+
+Ctrl K opens the palette, except inside a text editor: an element around the
+focus that binds the key hears it first, and `PaneFrame.InEditor` keeps it
+for an editor that cannot. Ctrl Shift P opens it from everywhere.
+
+The console (`ConsoleData`) is a split under the panes, closed by default.
+Ctrl J, the top bar's button and the palette's command toggle it;
+`ConsoleCommand` is the command, added to the palette unless the app's
+commands have its ID (`ConsoleCommandID`). Its separator takes the same
+keys as a pane's, and `ConsoleHeight` is a plain value the app may save.
+`ConsoleView.Title` names the pane ("Activity"), `Offered` limits its levels
+(a level not offered has no toggle and shows no lines) and `EmptyNote` is
+what it says while empty.
+
+The shell draws the window's toasts as `TopToasts` does, under the top bar,
+so an app does not call `TopToasts` (`ToastCloseLabel` names their close
+button).
+
+### Panes
+
+`panes.go`: `Panes.View(c, []Pane{…})` lays panes side by side. A `Pane` has
+an `ID`, a `Label` (the region's and its separator's name), a `Width`, `Min`
+and `Max`, `Collapsible`, `Bar` and `Content`. The first pane with no `Width`
+takes the room left (the last pane when all have one).
+
+A separator resizes the pane on its far side from the pane that takes the
+room left. It is a `RoleSeparator` with `Range` (the pane's minimum, its
+maximum in the room there is, and its width) and `Step`, and it takes the
+arrows (`Panes.Step`, 16 DIPs, the way they point), Home and End; a double
+click resets its pane. It takes 1 DIP of room and the pointer 3 DIPs either
+side.
+
+`Panes.Layout` is a `PaneLayout`, a plain struct of widths and collapsed
+panes that the app saves and restores; widths out of bounds are clamped when
+drawn. `Toggle` and `SetCollapsed` hide a `Collapsible` pane, and `Shown` says
+what shows. A narrow window first shrinks the panes in proportion to what
+they have above their minimums, then hides `Collapsible` panes, the last
+first and the one the app last showed after them; that is not saved. A
+hidden pane is not built, so what it must remember lives in the app's state.
+
+### Connection status
+
+`connection.go`: `Connection` describes an app's link to its daemon.
+`ConnectionStatus` is the status bar's item: a dot with "Local" or the host,
+in the warning tone with the reason in its tooltip while `Reconnecting`, and
+a button when `OnClick` is set. `ConnectingScreen` fills the window with what
+it connects to, the reason, Retry (`OnRetry`) and Details (`OnDetails`), and
+is its own drag region. A `PaneShell` draws it for the `Connecting` state, the
+first try, with the main menu and the palette still there; `Reconnecting`
+keeps the content.
+
+### Action toast
+
+`toasts.go`: `ShowActionToast(c, ActionToast{…})` shows a toast with an action
+and, with `Countdown`, the seconds left, for Undo and Undo Send. Exactly one
+of `OnAction` and `OnExpire` runs: `OnExpire` when the toast closes without
+the action, by its time, its close button or `CloseToast`. Each call shows a
+toast of its own, because MyGo replaces a toast of the same ID without
+running its `OnClose`. `TopToasts` draws the action only for these toasts:
+others look as before. MyGo stops a toast's time while the pointer rests on
+it.
+
+### The coalescing waker
+
+`waker.go`: `NewWaker(post, every)` returns a `Waker` whose `Wake`, safe from
+any goroutine, posts an empty function at most once an interval.
+`Window.Update` rebuilds the view on every call, so give a stream's notify
+function `Wake`: `console.SetNotify(frostui.NewWaker(win.Update, 60*time.Millisecond).Wake)`.
 
 ### Command palette
 
@@ -125,7 +221,8 @@ monospaced box with Cancel and an action, and holds no state of its own.
 - `components.go`, `text.go`: `Card`, `CardHeader`, `PageHeader`, `Section`
   and `SectionHeader` (`SectionHead`: icon, title, note, aside, `Quiet`),
   `Figures`, `Pill`, `IconPill`, `ColorPill`, `DotPill`, `SquareAvatar` and
-  `Initials`, `IconTile`, `IconButton`, `LabeledButton`, `Banner`, `Empty`,
+  `Initials`, `IconTile`, `IconButton`, `LabeledButton`, `Banner` (and
+  `BannerClose`, which names its close button), `Empty`,
   `Loading`, `Problem`, `KeyValues` (with `KeyValuesStyle`), `PillTabs`,
   `SoftSelection`, `RowDivider`, `Kbd`/`Shortcut`, and the text styles
   `Title`, `Heading`, `Strong`, `Body`, `Muted`, `Caption`, `Mono`, `Toned`.
@@ -167,17 +264,33 @@ desktop's theme (`DesktopIconTheme`: `FROSTUI_ICON_THEME`, else KDE's
 `kdeglobals`, else `gsettings`, else Adwaita), then Adwaita, Breeze and
 hicolor, under `~/.local/share/icons`, `~/.icons`, `$XDG_DATA_DIRS/icons`
 and `/usr/share/icons`, in the layouts of Adwaita, Breeze and hicolor. Off
-Linux it searches nothing. `SetIcons` makes an `Icons` the kit's; `Icon`
-draws a missing icon as an empty box of the text size, so layouts do not
-move.
+Linux it searches nothing. After those, a name comes from the kit's own set.
+`SetIcons` makes an `Icons` the kit's; `Icon` draws an icon nobody has as an
+empty box of the text size, so layouts do not move.
 
-The kit itself draws these names, which an app off Linux embeds to show
-them: `changes-prevent`, `content-loading`, `dialog-error`,
-`dialog-password`, `dialog-warning`, `edit-clear-all`, `edit-copy`,
-`edit-find`, `go-bottom`, `go-next`, `media-skip-forward`, `object-select`,
-`open-menu`, `pan-down`, `pan-up`, `process-stop`,
-`software-update-available`, `system-search`, `utilities-terminal`,
-`window-close`.
+### The kit's icon set
+
+`iconset.go`, `icons/`
+([ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md)):
+symbolic icons of [Lucide](https://lucide.dev), ISC-licensed, taken from
+lucide-react 1.52.0's data. `icons/LICENSE` is Lucide's license, with
+Feather's MIT notice, and `NOTICE` attributes them. `kitIconNames` maps the
+freedesktop names the kit and its apps draw to Lucide's names; it is the only
+set off Linux, and on Linux it fills what the themes lack.
+
+To add a name:
+
+1. Find the Lucide icon and check that it is one of Lucide's own, under the
+   license in `icons/LICENSE`. Only MIT, ISC or Apache-2.0 icons go here.
+2. Save its SVG as `icons/<lucide name>.svg`, as Lucide publishes it: 24 by
+   24, `stroke="currentColor"`.
+3. Add `"<freedesktop name>": "<lucide name>",` to `kitIconNames`, without
+   `-symbolic`.
+
+`go test .` checks that the file parses
+(`TestKitIconSetParses`), that no file sits unmapped
+(`TestKitIconSetHoldsOnlyMappedIcons`, which keeps the binary small) and that
+every name the kit draws is mapped (`TestKitDrawsOnlyMappedIcons`).
 
 ### Platforms
 
@@ -190,7 +303,7 @@ function from `*_linux.go` or `*_other.go` (`//go:build !linux`):
 | --- | --- | --- |
 | `SetAppID` (`appid*.go`) | `g_set_prgname` and `g_set_application_name` through purego, so the Wayland app ID and X11 `WM_CLASS` match the `.desktop` file | loads nothing; rejects an empty ID |
 | `DesktopIconTheme` (`icons*.go`) | as above | "" |
-| `NewIcons` (`icons*.go`) | embedded icons, then the theme directories | embedded icons only |
+| `NewIcons` (`icons*.go`) | embedded icons, the theme directories, then the kit's set | embedded icons, then the kit's set |
 | `LaunchDesktopApp` (`launch*.go`) | `gtk-launch <id>`, not waited for | an error wrapping `errors.ErrUnsupported` |
 
 Only the first `SetAppID` call counts, on every system.
@@ -205,10 +318,10 @@ Only the first `SetAppID` call counts, on every system.
 - **No app code.** A helper that is about one app stays in that app; one
   that any app could use (a pill, a row, a status, a dialog) belongs here.
 - **Threads.** Views and every model belong to the UI thread, except
-  `Console.Add`/`Addf`/`Writer` and `Progress.Set`/`Log`, which any
-  goroutine may call. Apps hand work back with MyGo's `Window.Update`. It
-  rebuilds the view on every call, so wake the window from a burst of
-  console lines through a coalescing waker (the example's `coalesce`).
+  `Console.Add`/`Addf`/`Writer`, `Progress.Set`/`Log` and `Waker.Wake`,
+  which any goroutine may call. Apps hand work back with MyGo's
+  `Window.Update`. It rebuilds the view on every call, so wake the window
+  from a burst of console lines through a `Waker`.
 - **State outside the view.** `ListState`, `ScrollState`, dialog and
   palette state and parsed SVGs live in structs (`Shell` holds the
   palette, console view, dialogs and info dialog), never in a view
@@ -238,9 +351,9 @@ Only the first `SetAppID` call counts, on every system.
   thread: workers `Post` from any goroutine and the test runs what they
   posted with `Flush`, `RunUntil(t, cond)` or `Settle(quiet)`.
 - **Pictures.** `Tester.Image()` gives a frame as an image.
-  `FROSTUI_SNAPSHOT_DIR=<dir>` makes the example's snapshot test write
-  `commandcenter.png` and `commandcenter-dark.png` (`make snapshot` writes
-  them to `build/snapshots`). To prove a refactor changes nothing on screen,
+  `FROSTUI_SNAPSHOT_DIR=<dir>` makes the examples' snapshot tests write
+  `commandcenter.png`, `threepane.png` and their `-dark` forms (`make
+  snapshot` writes them to `build/snapshots`). To prove a refactor changes nothing on screen,
   render before and after and compare the PNGs: spinners and wall-clock
   times differ between runs, nothing else.
 - **MyGo.** After a MyGo bump, read its source in `GOMODCACHE` for the
@@ -287,6 +400,6 @@ None since the module began.
 
 ## References
 
-- Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md)
+- Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md), [ADR-0006](../adr/0006-a-frame-without-the-rail.md), [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md)
 - Contracts: [spec: API stability](../specs/api-stability.md)
-- Built in: [roadmap — Phase 1](../plans/roadmap.md#phase-1--extract-the-kit-done)
+- Built in: [roadmap — Phase 1](../plans/roadmap.md#phase-1--extract-the-kit-done), [Phase 5](../plans/roadmap.md#phase-5--the-frame-and-the-layout)

@@ -32,11 +32,11 @@ the canonical paths; keep content tool-agnostic.
   check against `BASE` (`make ci BASE=origin/main`), `make test-wasm` (the
   tests as js/wasm under Node), `make race` and `make cross` (build and vet
   every `CROSS_TARGETS` pair). Run it before you push.
-- `make snapshot` — the example's frame as PNGs in `build/snapshots`
-  (`FROSTUI_SNAPSHOT_DIR`); copy `commandcenter.png` to `docs/images/` to
-  refresh the README's picture.
-- `go run ./examples/commandcenter` — the example window (needs GTK 3 and
-  libepoxy on Linux).
+- `make snapshot` — the examples' frames as PNGs in `build/snapshots`
+  (`FROSTUI_SNAPSHOT_DIR`); copy `commandcenter.png` and `threepane.png` to
+  `docs/images/` to refresh the docs' pictures.
+- `go run ./examples/commandcenter` and `go run ./examples/threepane` — the
+  example windows (need GTK 3 and libepoxy on Linux).
 
 ## Skills (follow these for common tasks)
 
@@ -78,12 +78,12 @@ its skills there (core ADR-0026); start a repo-local one from
   ChairLift, Frostmail or Frostnotes wording in code, comments or default
   strings, no app configuration, no command tracer. A helper any app could
   use belongs here; one that is about one app stays in it.
-- **UI thread.** Views and every model (`Shell`, `Jobs`, `Palette`,
-  `Dialogs`, `ConsoleView`) belong to the UI thread; only `Console.Add`,
-  `Addf`, `Writer`, `Progress.Set` and `Progress.Log` are safe from any
-  goroutine. Workers hand results back through the post function the app
-  gives `NewJobs` (MyGo's `Window.Update`), which rebuilds the view on every
-  call: coalesce bursts (the example's `coalesce`).
+- **UI thread.** Views and every model (`Shell`, `PaneShell`, `Panes`,
+  `Jobs`, `Palette`, `Dialogs`, `ConsoleView`) belong to the UI thread; only
+  `Console.Add`, `Addf`, `Writer`, `Progress.Set`, `Progress.Log` and
+  `Waker.Wake` are safe from any goroutine. Workers hand results back through
+  the post function the app gives `NewJobs` (MyGo's `Window.Update`), which
+  rebuilds the view on every call: coalesce bursts (`Waker`).
 - **MyGo's rules.** MyGo resets the theme every build pass, so `Adapt` runs
   first in every frame (`Shell.View` does it). State (`ListState`, dialog
   and palette state, parsed SVGs) lives in structs, never in a view
@@ -139,6 +139,9 @@ by hand (`make verify` checks their hashes).
 - **License.** MIT, as Frostmail and Frostnotes, which import the kit. The
   kit's code came from ChairLift (GPL-3.0-or-later), whose author relicensed
   it. Code copied in must be MIT-compatible: never copy from a GPL source.
+  The icons in `icons/` are Lucide's, under ISC: keep `icons/LICENSE` and
+  `NOTICE`, and add only MIT, ISC or Apache-2.0 icons, never GPL, LGPL or
+  CC-BY-SA ([ADR-0007](docs/adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md)).
 - No secrets, credentials or personal data anywhere in the repository.
 
 ## Documentation rules (enforced)

@@ -44,9 +44,22 @@ has no `internal/frostui`, and its `make ci` passes.
 
 **Done when:** both apps open the shell on Linux and Frostmail on Windows.
 
+## Phase 5 — The frame and the layout
+
+The first half of v0.2.0's shared pieces, for Frostmail and Frostnotes:
+`PaneShell` ([ADR-0006](../adr/0006-a-frame-without-the-rail.md),
+[design](../design/frostui.md#the-frame-without-the-rail)),
+[`Panes`](../design/frostui.md#panes),
+[connection status](../design/frostui.md#connection-status),
+[the action toast](../design/frostui.md#action-toast),
+[the waker](../design/frostui.md#the-coalescing-waker) and
+[the icon set](../design/frostui.md#the-kits-icon-set)
+([ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md)).
+
+**Done when:** `examples/threepane` shows all of them, and `make ci` passes
+on branch `feat/frame-panes`.
+
 ## Open questions
 
-- Should the kit ship a small icon set for its own 20 icon names, so apps
-  off Linux need not embed them?
 - Should `Adapt` leave MyGo's inactive-window accent alone on macOS, where
   fading it is the native look?
