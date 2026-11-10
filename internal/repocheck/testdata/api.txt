@@ -5,6 +5,7 @@ const frostui.Connecting ConnectionState
 const frostui.ConsoleCommandID = "frostui.console"
 const frostui.Danger Tone
 const frostui.DefaultLevels = AllLevels &^ (1 << LevelDebug)
+const frostui.Everywhere KeyScope
 const frostui.HeroSize = 64
 const frostui.JobCanceled JobState
 const frostui.JobDone JobState
@@ -19,6 +20,9 @@ const frostui.LevelInfo Level
 const frostui.LevelOutput Level
 const frostui.LevelWarn Level
 const frostui.Neutral Tone
+const frostui.OutsideEditors KeyScope
+const frostui.OutsideText KeyScope
+const frostui.PaletteCommands = "commands"
 const frostui.RadiusCard = 12
 const frostui.RadiusChip = 8
 const frostui.RailWidth = 232
@@ -59,7 +63,10 @@ field frostui.ActionToast.Type string
 field frostui.Brand.Logo *ui.SVG
 field frostui.Brand.Name string
 field frostui.Brand.Tagline string
+field frostui.Command.Bindings []KeyBinding
+field frostui.Command.Checked func() bool
 field frostui.Command.Disabled bool
+field frostui.Command.Enabled func() (ok bool, reason string)
 field frostui.Command.Group string
 field frostui.Command.Hint string
 field frostui.Command.ID string
@@ -68,12 +75,14 @@ field frostui.Command.Keys []string
 field frostui.Command.Reason string
 field frostui.Command.Run func()
 field frostui.Command.Title string
+field frostui.Command.Unlisted bool
 field frostui.CommandItem.Action func()
 field frostui.CommandItem.Admin bool
 field frostui.CommandItem.Command string
 field frostui.CommandItem.Icon string
 field frostui.CommandItem.Status func()
 field frostui.CommandItem.Title string
+field frostui.CommandTable.Editing func(c *ui.Context) bool
 field frostui.Confirm.Action string
 field frostui.Confirm.Body string
 field frostui.Confirm.Cancel string
@@ -117,6 +126,7 @@ field frostui.Frame.Nav []NavSection
 field frostui.Frame.RailFooter func()
 field frostui.Frame.Status []StatusItem
 field frostui.Frame.StatusEnd []StatusItem
+field frostui.Frame.Table *CommandTable
 field frostui.HeroIcon.Busy bool
 field frostui.HeroIcon.Logo *ui.SVG
 field frostui.HeroIcon.Name string
@@ -137,6 +147,9 @@ field frostui.Job.Status string
 field frostui.Job.Title string
 field frostui.Job.Unstoppable bool
 field frostui.Jobs.OnIdle func(batch []*Job)
+field frostui.KeyBinding.Key ui.Key
+field frostui.KeyBinding.Mods ui.Modifiers
+field frostui.KeyBinding.Scope KeyScope
 field frostui.KeyValue.Key string
 field frostui.KeyValue.Mono bool
 field frostui.KeyValue.Value string
@@ -159,6 +172,24 @@ field frostui.NavSection.Title string
 field frostui.Palette.Open bool
 field frostui.Palette.Query string
 field frostui.Palette.Selected int
+field frostui.Palette.Sources []PaletteSource
+field frostui.PaletteItem.Detail string
+field frostui.PaletteItem.Disabled bool
+field frostui.PaletteItem.Group string
+field frostui.PaletteItem.ID string
+field frostui.PaletteItem.Icon string
+field frostui.PaletteItem.Keys []string
+field frostui.PaletteItem.Reason string
+field frostui.PaletteItem.Run func()
+field frostui.PaletteItem.RunWith func(mods ui.Modifiers)
+field frostui.PaletteItem.Title string
+field frostui.PaletteQuery.Alone bool
+field frostui.PaletteQuery.Text string
+field frostui.PaletteSource.ID string
+field frostui.PaletteSource.Limit int
+field frostui.PaletteSource.Placeholder string
+field frostui.PaletteSource.Query func(q *PaletteQuery)
+field frostui.PaletteSource.Title string
 field frostui.Pane.Bar func()
 field frostui.Pane.Collapsible bool
 field frostui.Pane.Content func()
@@ -283,17 +314,20 @@ func frostui.Loading(*ui.Context, string) ui.Element
 func frostui.Match(string, string) (int, bool)
 func frostui.Mono(*ui.Context, string) ui.Element
 func frostui.Muted(*ui.Context, string) ui.Element
+func frostui.NewCommandTable(...Command) *CommandTable
 func frostui.NewConsole(int) *Console
 func frostui.NewIcons(map[string][]byte) *Icons
 func frostui.NewJobs(func(func()), *Console) *Jobs
 func frostui.NewWaker(func(func()), time.Duration) *Waker
 func frostui.PageHeader(*ui.Context, string, string, func())
+func frostui.PaletteBindings() []KeyBinding
 func frostui.PaletteField(*ui.Context, *Palette) ui.Element
 func frostui.Panel(*ui.Theme) ui.Color
 func frostui.Pill(*ui.Context, string, Tone) ui.Element
 func frostui.PillTabs(*ui.Context, *int, []Tab) ui.Element
 func frostui.Pipeline(*ui.Context, []Stage) ui.Element
 func frostui.Problem(*ui.Context, string) ui.Element
+func frostui.Rank[T any]([]T, string, int, func(T) string) []T
 func frostui.RowDivider(*ui.Context) ui.Element
 func frostui.RunSummary([]*Job) string
 func frostui.Section(*ui.Context, string, string, string, func())
@@ -321,6 +355,18 @@ func frostui.Toned(*ui.Context, string, Tone) ui.Element
 func frostui.TopToasts(*ui.Context, string)
 func frostui.VersionChange(*ui.Context, string, string) ui.Element
 func frostuitest.NewLoop() *Loop
+method (*CommandTable) frostui.Add(...Command)
+method (*CommandTable) frostui.Bind(*ui.Context)
+method (*CommandTable) frostui.BindKeys(*ui.Context, []KeyBinding, func())
+method (*CommandTable) frostui.Command(string) (Command, bool)
+method (*CommandTable) frostui.Commands() []Command
+method (*CommandTable) frostui.Enabled(string) (bool, string)
+method (*CommandTable) frostui.Menu(...string) func(m *ui.Menu)
+method (*CommandTable) frostui.MenuItem(*ui.Menu, string) *ui.MenuItem
+method (*CommandTable) frostui.Remove(...string)
+method (*CommandTable) frostui.Run(string) bool
+method (*CommandTable) frostui.Shortcuts() []ShortcutEntry
+method (*CommandTable) frostui.Tooltip(string) string
 method (*Console) frostui.Add(Level, string, string)
 method (*Console) frostui.Addf(Level, string, string, ...any)
 method (*Console) frostui.Clear()
@@ -360,7 +406,12 @@ method (*Loop) frostuitest.RunUntil(testing.TB, func() bool)
 method (*Loop) frostuitest.Settle(time.Duration)
 method (*Palette) frostui.RunPending()
 method (*Palette) frostui.Show()
+method (*Palette) frostui.ShowSource(string)
+method (*Palette) frostui.ShownSource() string
 method (*Palette) frostui.View(*ui.Context, []Command)
+method (*PaletteQuery) frostui.Context() context.Context
+method (*PaletteQuery) frostui.Reply([]PaletteItem) bool
+method (*PaletteQuery) frostui.Stale() bool
 method (*PaneShell) frostui.ConsoleCommand() Command
 method (*PaneShell) frostui.View(*ui.Context, PaneFrame)
 method (*Panes) frostui.SetCollapsed(string, bool)
@@ -371,12 +422,16 @@ method (*Progress) frostui.Log(Level, string, ...any)
 method (*Progress) frostui.Set(float64, string)
 method (*Shell) frostui.View(*ui.Context, Frame)
 method (*Waker) frostui.Wake()
+method (Command) frostui.Resolve() Command
 method (JobState) frostui.Ended() bool
+method (KeyBinding) frostui.Caps() []string
+method (KeyBinding) frostui.String() string
 type frostui.About struct
 type frostui.ActionToast struct
 type frostui.Brand struct
 type frostui.Command struct
 type frostui.CommandItem struct
+type frostui.CommandTable struct
 type frostui.Confirm struct
 type frostui.Connection struct
 type frostui.ConnectionState int
@@ -393,6 +448,8 @@ type frostui.Info struct
 type frostui.Job struct
 type frostui.JobState int
 type frostui.Jobs struct
+type frostui.KeyBinding struct
+type frostui.KeyScope uint8
 type frostui.KeyValue struct
 type frostui.KeyValuesStyle struct
 type frostui.Level uint8
@@ -401,6 +458,9 @@ type frostui.Line struct
 type frostui.NavItem struct
 type frostui.NavSection struct
 type frostui.Palette struct
+type frostui.PaletteItem struct
+type frostui.PaletteQuery struct
+type frostui.PaletteSource struct
 type frostui.Pane struct
 type frostui.PaneFrame struct
 type frostui.PaneLayout struct

@@ -71,6 +71,11 @@ type Frame struct {
 	Content func()
 	// Commands are the palette's commands.
 	Commands []Command
+	// Table, when set, is the app's command table: the shell binds its
+	// keys (CommandTable.Bind), lists its commands in the palette after
+	// Commands, and opens the palette with PaletteBindings by the table's
+	// rule (Ctrl K steps aside in editors) in place of a plain Ctrl K.
+	Table *CommandTable
 	// Status and StatusEnd are the status bar's items at its start and
 	// at its end.
 	Status, StatusEnd []StatusItem
@@ -86,7 +91,14 @@ func (s *Shell) View(c *ui.Context, f Frame) {
 	if s.splitPercent == 0 {
 		s.splitPercent = 64
 	}
-	c.OnWindowShortcut(ui.Cmd, ui.KeyK, func() { s.Palette.Show() })
+	cmds := f.Commands
+	if f.Table != nil {
+		f.Table.BindKeys(c, PaletteBindings(), s.Palette.Show)
+		f.Table.Bind(c)
+		cmds = append(append([]Command(nil), f.Commands...), f.Table.Commands()...)
+	} else {
+		c.OnWindowShortcut(ui.Cmd, ui.KeyK, func() { s.Palette.Show() })
+	}
 	if f.ConsoleData != nil {
 		c.OnWindowShortcut(ui.Cmd, ui.KeyJ, func() { s.Console.Open = !s.Console.Open })
 	}
@@ -116,7 +128,7 @@ func (s *Shell) View(c *ui.Context, f Frame) {
 		s.Dialogs.View(c)
 	}
 	s.Info.View(c)
-	s.Palette.View(c, f.Commands)
+	s.Palette.View(c, cmds)
 }
 
 func (s *Shell) topBar(c *ui.Context, f Frame) {
