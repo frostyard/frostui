@@ -3,7 +3,7 @@ module github.com/frostyard/frostui
 go 1.27.3
 
 require (
-	github.com/ebitengine/purego v0.11.1
+	github.com/ebitengine/purego v0.11.3
 	github.com/egoist/mygo v0.8.3
 )
 
