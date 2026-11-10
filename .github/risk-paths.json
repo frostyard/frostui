@@ -41,6 +41,36 @@
       "glob": "mise.lock",
       "level": "L1",
       "why": "supply chain: the checksums of the tools that CI installs"
+    },
+    {
+      "glob": ".golangci.yml",
+      "level": "L2",
+      "why": "governance: the lint configuration of the verify gate"
+    },
+    {
+      "glob": "internal/repocheck/**",
+      "level": "L2",
+      "why": "governance: the import, exported-API and cross-build guards, and the pinned API list"
+    },
+    {
+      "glob": "go.mod",
+      "level": "L2",
+      "why": "supply chain: the module's requirements, which every app that imports the kit inherits"
+    },
+    {
+      "glob": "go.sum",
+      "level": "L2",
+      "why": "supply chain: the checksums of the module's requirements"
+    },
+    {
+      "glob": "appid_linux.go",
+      "level": "L2",
+      "why": "native code: loads GLib with purego and calls it by symbol"
+    },
+    {
+      "glob": ".svu.yml",
+      "level": "L1",
+      "why": "publication: the version rule for release tags (make bump)"
     }
   ]
 }
