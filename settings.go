@@ -144,29 +144,73 @@ func matchesSetting(query string, texts ...string) bool {
 	return true
 }
 
+// rowKey identifies a group or a setting of a page whatever else shows:
+// by titles, and by which of the same title it is. MyGo keeps a field's
+// focus and caret by key, so a row's key must not move with the query.
+type rowKey struct {
+	page, group string
+	groupNth    int
+	title       string
+	nth         int
+}
+
+// keyedSetting is a setting with its key.
+type keyedSetting struct {
+	Setting
+	key rowKey
+}
+
+// keyedGroup is a group with its key and its settings' keys.
+type keyedGroup struct {
+	title, note string
+	key         rowKey
+	settings    []keyedSetting
+	values      []KeyValue
+}
+
+// keyed gives the page's groups and settings their keys.
+func (p SettingsPage) keyed() []keyedGroup {
+	groups := make([]keyedGroup, len(p.Groups))
+	seenGroups := map[string]int{}
+	for i, g := range p.Groups {
+		key := rowKey{page: p.ID, group: g.Title, groupNth: seenGroups[g.Title]}
+		seenGroups[g.Title]++
+		settings := make([]keyedSetting, len(g.Settings))
+		seen := map[string]int{}
+		for j, st := range g.Settings {
+			k := key
+			k.title, k.nth = st.Title, seen[st.Title]+1
+			seen[st.Title]++
+			settings[j] = keyedSetting{st, k}
+		}
+		groups[i] = keyedGroup{title: g.Title, note: g.Note, key: key, settings: settings, values: g.Values}
+	}
+	return groups
+}
+
 // found is what the search shows of a page: all of it when the page's
 // title or keywords match, else its groups holding settings that match.
-func (p SettingsPage) found(query string) (whole bool, groups []SettingsGroup) {
+func (p SettingsPage) found(query string) (whole bool, groups []keyedGroup) {
 	if matchesSetting(query, p.Title, p.Keywords) {
-		return true, p.Groups
+		return true, p.keyed()
 	}
-	for _, g := range p.Groups {
-		if matchesSetting(query, g.Title, g.Note) {
+	for _, g := range p.keyed() {
+		if matchesSetting(query, g.title, g.note) {
 			groups = append(groups, g)
 			continue
 		}
-		hit := SettingsGroup{Title: g.Title, Note: g.Note}
-		for _, st := range g.Settings {
+		hit := keyedGroup{title: g.title, note: g.note, key: g.key}
+		for _, st := range g.settings {
 			if matchesSetting(query, st.Title, st.Subtitle, st.Keywords, st.Value) {
-				hit.Settings = append(hit.Settings, st)
+				hit.settings = append(hit.settings, st)
 			}
 		}
-		for _, kv := range g.Values {
+		for _, kv := range g.values {
 			if matchesSetting(query, kv.Key, kv.Value) {
-				hit.Values = append(hit.Values, kv)
+				hit.values = append(hit.values, kv)
 			}
 		}
-		if len(hit.Settings) > 0 || len(hit.Values) > 0 {
+		if len(hit.settings) > 0 || len(hit.values) > 0 {
 			groups = append(groups, hit)
 		}
 	}
@@ -222,7 +266,7 @@ func (s *Settings) View(c *ui.Context, pages []SettingsPage) ui.Element {
 					s.results(c, pages)
 				case page != nil:
 					Title(c, page.Title).Role(ui.RoleHeading).Level(1)
-					s.groups(c, page.ID, page.Groups)
+					s.groups(c, page.keyed())
 					if page.Body != nil {
 						page.Body(c)
 					}
@@ -243,7 +287,7 @@ func (s *Settings) results(c *ui.Context, pages []SettingsPage) {
 		shown = true
 		ui.Column(c.Key(p.ID)).Gap(18).AlignItems(ui.Stretch).Children(func() {
 			Title(c, p.Title).Role(ui.RoleHeading).Level(1)
-			s.groups(c, p.ID, groups)
+			s.groups(c, groups)
 			if whole && p.Body != nil {
 				p.Body(c)
 			}
@@ -255,27 +299,27 @@ func (s *Settings) results(c *ui.Context, pages []SettingsPage) {
 }
 
 // groups draws a page's cards.
-func (s *Settings) groups(c *ui.Context, page string, groups []SettingsGroup) {
-	for gi, g := range groups {
-		ui.Column(c.Key([2]any{page, gi})).Gap(SpaceS).AlignItems(ui.Stretch).Children(func() {
-			if g.Title != "" {
-				Heading(c, g.Title).Role(ui.RoleHeading).Level(2)
+func (s *Settings) groups(c *ui.Context, groups []keyedGroup) {
+	for _, g := range groups {
+		ui.Column(c.Key(g.key)).Gap(SpaceS).AlignItems(ui.Stretch).Children(func() {
+			if g.title != "" {
+				Heading(c, g.title).Role(ui.RoleHeading).Level(2)
 			}
-			if g.Note != "" {
-				Muted(c, g.Note).Wrap()
+			if g.note != "" {
+				Muted(c, g.note).Wrap()
 			}
-			if len(g.Settings) > 0 {
+			if len(g.settings) > 0 {
 				Card(c).Children(func() {
-					for i, st := range g.Settings {
+					for i, st := range g.settings {
 						if i > 0 {
-							RowDivider(c.Key([2]any{"divider", i}))
+							RowDivider(c.Key([2]any{"divider", st.key}))
 						}
-						setting(c.Key(i), st)
+						setting(c.Key(st.key), st.Setting)
 					}
 				})
 			}
-			if len(g.Values) > 0 {
-				KeyValues(c, g.Values)
+			if len(g.values) > 0 {
+				KeyValues(c, g.values)
 			}
 		})
 	}

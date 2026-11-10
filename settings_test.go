@@ -228,3 +228,49 @@ func TestSettingRowsLabelTheirControls(t *testing.T) {
 		t.Error("the text field is not named by its title")
 	}
 }
+
+func TestSettingsSearchKeepsAFieldsStateAsTheQueryChanges(t *testing.T) {
+	var alpha, bravo, charlie string
+	pages := []SettingsPage{{ID: "p", Title: "Page", Groups: []SettingsGroup{{Title: "G", Settings: []Setting{
+		{Title: "Alpha field", Text: &alpha},
+		{Title: "Bravo field", Text: &bravo},
+		{Title: "Charlie field", Text: &charlie},
+	}}}}}
+	s := Settings{Search: true, Query: "field"}
+	tt := ui.NewTester(func(c *ui.Context) { Adapt(c); s.View(c, pages) }, 900, 620)
+	tt.Frame()
+	f, ok := tt.AccessByRole(ui.RoleTextField, "Bravo field")
+	if !ok {
+		t.Fatal("no Bravo field")
+	}
+	tt.ClickAt(f.Bounds.X+f.Bounds.W/2, f.Bounds.Y+f.Bounds.H/2)
+	if !tt.Focused("Bravo field") {
+		t.Fatal("the field did not take the focus")
+	}
+	// Bravo moves from the second result to the first.
+	s.Query = "bravo"
+	tt.Frame()
+	if !tt.Focused("Bravo field") {
+		t.Error("the focus did not stay with the setting as the query changed")
+	}
+	tt.Type("x")
+	tt.Frame()
+	if bravo != "x" || alpha != "" || charlie != "" {
+		t.Errorf("typing went to alpha %q, bravo %q, charlie %q", alpha, bravo, charlie)
+	}
+}
+
+func TestSettingsTellsSameTitlesApart(t *testing.T) {
+	var a, b bool
+	pages := []SettingsPage{{ID: "p", Title: "Page", Groups: []SettingsGroup{
+		{Settings: []Setting{{Title: "Same", Switch: &a}, {Title: "Same", Switch: &b}}},
+		{Settings: []Setting{{Title: "Same", Switch: &a}}},
+	}}}
+	var s Settings
+	// A Tester panics on two keys alike under one parent.
+	tt := ui.NewTester(func(c *ui.Context) { Adapt(c); s.View(c, pages) }, 900, 620)
+	tt.Frame()
+	if !tt.HasText("Same") {
+		t.Errorf("%q", tt.Texts())
+	}
+}
