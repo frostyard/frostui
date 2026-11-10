@@ -252,3 +252,64 @@ func TestBindPassesAKeyToTheNextEnabledCommand(t *testing.T) {
 		t.Errorf("runs = %d, %d, want the enabled command alone", first, second)
 	}
 }
+
+func TestShellTableOwnsCtrlJ(t *testing.T) {
+	var s Shell
+	con := NewConsole(16)
+	table := NewCommandTable()
+	tt := ui.NewTester(func(c *ui.Context) {
+		s.View(c, Frame{Table: table, ConsoleData: con, Content: func() { Title(c, "Page") }})
+	}, 1000, 600)
+	tt.Frame()
+	noKeyBoundTwice(t, table)
+	if _, ok := table.Command(ConsoleCommandID); !ok {
+		t.Fatal("the console's command did not join the table")
+	}
+	tt.Key(ui.Cmd, ui.KeyJ)
+	if !s.Console.Open {
+		t.Fatal("one Ctrl J did not open the console")
+	}
+	tt.Key(ui.Cmd, ui.KeyK)
+	if !tt.HasText("Hide Console") {
+		t.Errorf("the palette does not offer to hide the console: %q", tt.Texts())
+	}
+}
+
+func TestShellLeavesCtrlJToATableCommand(t *testing.T) {
+	var s Shell
+	ran, enabled := 0, false
+	table := NewCommandTable(Command{ID: "mine", Title: "Mine",
+		Bindings: []KeyBinding{{Mods: ui.Cmd, Key: ui.KeyJ}},
+		Enabled:  func() (bool, string) { return enabled, "" }, Run: func() { ran++ }})
+	con := NewConsole(16)
+	tt := ui.NewTester(func(c *ui.Context) {
+		s.View(c, Frame{Table: table, ConsoleData: con, Content: func() { Title(c, "Page") }})
+	}, 1000, 600)
+	tt.Frame()
+	noKeyBoundTwice(t, table)
+	// While the command is disabled the table binds nothing, and a binding
+	// of the shell's would show here.
+	tt.Key(ui.Cmd, ui.KeyJ)
+	if ran != 0 || s.Console.Open {
+		t.Fatalf("Ctrl J with the command disabled: ran %d, console %v; the shell must not bind it", ran, s.Console.Open)
+	}
+	enabled = true
+	tt.Frame()
+	tt.Key(ui.Cmd, ui.KeyJ)
+	if ran != 1 || s.Console.Open {
+		t.Errorf("Ctrl J: the app's command ran %d times, console %v", ran, s.Console.Open)
+	}
+}
+
+func TestShellWithoutATableKeepsCtrlJ(t *testing.T) {
+	var s Shell
+	con := NewConsole(16)
+	tt := ui.NewTester(func(c *ui.Context) {
+		s.View(c, Frame{ConsoleData: con, Content: func() { Title(c, "Page") }})
+	}, 1000, 600)
+	tt.Frame()
+	tt.Key(ui.Cmd, ui.KeyJ)
+	if !s.Console.Open {
+		t.Error("Ctrl J did not open the console")
+	}
+}

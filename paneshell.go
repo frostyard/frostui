@@ -145,22 +145,24 @@ func (s *PaneShell) ConsoleCommand() Command {
 	if s.Console.Open {
 		verb = "Hide "
 	}
-	return Command{ID: ConsoleCommandID, Title: verb + s.Console.title(), Group: "View", Icon: "utilities-terminal",
-		Keys: []string{"Ctrl", "J"}, Bindings: []KeyBinding{{Mods: ui.Cmd, Key: ui.KeyJ, Scope: Everywhere}}, Run: s.toggleConsole}
+	return consoleCommand(verb+s.Console.title(), s.toggleConsole)
 }
 
-// joinTable brings the palette's and the console's commands to the table,
-// whose keys are then the window's only ones. An app's own console command
-// in Commands goes in the table, so its key works; there is no console to
-// toggle while the connecting screen covers the window.
-func (s *PaneShell) joinTable(f PaneFrame, connecting bool) {
-	f.Table.provide(s.Palette.Command())
-	if f.ConsoleData == nil || connecting {
-		f.Table.withdraw(ConsoleCommandID)
+// consoleCommand is the command that shows or hides a frame's console.
+func consoleCommand(title string, toggle func()) Command {
+	return Command{ID: ConsoleCommandID, Title: title, Group: "View", Icon: "utilities-terminal",
+		Keys: []string{"Ctrl", "J"}, Bindings: []KeyBinding{{Mods: ui.Cmd, Key: ui.KeyJ, Scope: Everywhere}}, Run: toggle}
+}
+
+// joinConsole brings a frame's console command to the table, whose keys
+// are then the window's only ones, or takes it back with show false. An
+// app's own console command in cmds goes in the table, so its key works.
+func joinConsole(t *CommandTable, console Command, cmds []Command, show bool) {
+	if !show {
+		t.withdraw(ConsoleCommandID)
 		return
 	}
-	console := s.ConsoleCommand()
-	for _, cmd := range f.Commands {
+	for _, cmd := range cmds {
 		if cmd.ID == ConsoleCommandID {
 			bindings := console.Bindings
 			console = cmd
@@ -169,7 +171,15 @@ func (s *PaneShell) joinTable(f PaneFrame, connecting bool) {
 			}
 		}
 	}
-	f.Table.provide(console)
+	t.provide(console)
+}
+
+// joinTable brings the palette's and the console's commands to the table.
+// There is no console to toggle while the connecting screen covers the
+// window.
+func (s *PaneShell) joinTable(f PaneFrame, connecting bool) {
+	f.Table.provide(s.Palette.Command())
+	joinConsole(f.Table, s.ConsoleCommand(), f.Commands, f.ConsoleData != nil && !connecting)
 }
 
 func (s *PaneShell) commands(f PaneFrame) []Command {

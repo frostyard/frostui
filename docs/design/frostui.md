@@ -269,11 +269,11 @@ the palette and to anything else that reads `Command`.
 - `Frame.Table` and `PaneFrame.Table` wire a table into a frame, which
   binds it and lists it in the palette after the frame's `Commands`. The
   frame adds the palette's command (`Palette.Command`, on `PaletteBindings`)
-  and `PaneShell` the console's (`ConsoleCommand`, Ctrl J) to the table, and
-  binds no palette or console key of its own, so a key is never bound twice:
+  and the console's (`ConsoleCommand`, Ctrl J) to the table, and binds no
+  palette or console key of its own, so a key is never bound twice:
   a command of the app's with the same ID stays, and one that binds the same
-  key keeps it. While the connecting screen covers the window the console's
-  command leaves the table. Without a table a frame binds its keys itself,
+  key keeps it. While `PaneShell`'s connecting screen covers the window the
+  console's command leaves the table. Without a table a frame binds its keys itself,
   as before (`PaneFrame.InEditor`).
 
 **How a key yields to an editor.** MyGo decides a key in this order: a text

@@ -488,6 +488,7 @@ method (*Progress) frostui.Set(float64, string)
 method (*Settings) frostui.Dialog(*ui.Context, string, []SettingsPage)
 method (*Settings) frostui.Show(string)
 method (*Settings) frostui.View(*ui.Context, []SettingsPage) ui.Element
+method (*Shell) frostui.ConsoleCommand() Command
 method (*Shell) frostui.View(*ui.Context, Frame)
 method (*SourceList[K]) frostui.ClearSelection()
 method (*SourceList[K]) frostui.CollapseAll()
