@@ -254,6 +254,7 @@ func frostui.Muted(*ui.Context, string) ui.Element
 func frostui.NewConsole(int) *Console
 func frostui.NewIcons(map[string][]byte) *Icons
 func frostui.NewJobs(func(func()), *Console) *Jobs
+func frostui.NewWaker(func(func()), time.Duration) *Waker
 func frostui.PageHeader(*ui.Context, string, string, func())
 func frostui.Panel(*ui.Theme) ui.Color
 func frostui.Pill(*ui.Context, string, Tone) ui.Element
@@ -333,6 +334,7 @@ method (*Panes) frostui.View(*ui.Context, []Pane) ui.Element
 method (*Progress) frostui.Log(Level, string, ...any)
 method (*Progress) frostui.Set(float64, string)
 method (*Shell) frostui.View(*ui.Context, Frame)
+method (*Waker) frostui.Wake()
 method (JobState) frostui.Ended() bool
 type frostui.About struct
 type frostui.Brand struct
@@ -379,5 +381,6 @@ type frostui.StepState int
 type frostui.Tab struct
 type frostui.Tile struct
 type frostui.Tone int
+type frostui.Waker struct
 type frostuitest.Loop struct
 var frostui.LevelNames [levelCount]string
