@@ -138,6 +138,18 @@ field frostui.NavSection.Title string
 field frostui.Palette.Open bool
 field frostui.Palette.Query string
 field frostui.Palette.Selected int
+field frostui.Pane.Bar func()
+field frostui.Pane.Collapsible bool
+field frostui.Pane.Content func()
+field frostui.Pane.ID string
+field frostui.Pane.Label string
+field frostui.Pane.Max float32
+field frostui.Pane.Min float32
+field frostui.Pane.Width float32
+field frostui.PaneLayout.Collapsed map[string]bool
+field frostui.PaneLayout.Widths map[string]float32
+field frostui.Panes.Layout PaneLayout
+field frostui.Panes.Step float32
 field frostui.RowStatus.Compact bool
 field frostui.RowStatus.Label string
 field frostui.RowStatus.State StepState
@@ -302,6 +314,10 @@ method (*Loop) frostuitest.Settle(time.Duration)
 method (*Palette) frostui.RunPending()
 method (*Palette) frostui.Show()
 method (*Palette) frostui.View(*ui.Context, []Command)
+method (*Panes) frostui.SetCollapsed(string, bool)
+method (*Panes) frostui.Shown(string) bool
+method (*Panes) frostui.Toggle(string)
+method (*Panes) frostui.View(*ui.Context, []Pane) ui.Element
 method (*Progress) frostui.Log(Level, string, ...any)
 method (*Progress) frostui.Set(float64, string)
 method (*Shell) frostui.View(*ui.Context, Frame)
@@ -332,6 +348,9 @@ type frostui.Line struct
 type frostui.NavItem struct
 type frostui.NavSection struct
 type frostui.Palette struct
+type frostui.Pane struct
+type frostui.PaneLayout struct
+type frostui.Panes struct
 type frostui.Progress struct
 type frostui.RowStatus struct
 type frostui.SectionHead struct
