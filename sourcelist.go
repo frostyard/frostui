@@ -88,8 +88,9 @@ type SourceList[K comparable] struct {
 	Children func(item K) []K
 	// Row returns how an item shows.
 	Row func(item K) SourceRow
-	// Menu, when set, builds an item's context menu.
-	Menu func(m *ui.Menu, item K)
+	// Menu, when set, builds the context menu of item, as it shows in
+	// section.
+	Menu func(m *ui.Menu, item K, section string)
 	// OnSelect runs as the user chooses an item, by a click or the keys.
 	OnSelect func(item K)
 	// OnActivate runs on Enter or a double click on an item, with the
@@ -255,8 +256,9 @@ func (s *SourceList[K]) ExpandAll() {
 	}
 }
 
-// StartRename chooses item in section and shows a field of its title in
-// its row, when Rename is set and CanRename lets it.
+// StartRename chooses item in section, or in the first section that
+// holds it for "", and shows a field of its title in its row, when Rename
+// is set and CanRename lets it.
 func (s *SourceList[K]) StartRename(section string, item K) {
 	if s.Rename == nil || s.CanRename != nil && !s.CanRename(item) {
 		return
@@ -440,9 +442,15 @@ func (s *SourceList[K]) View(c *ui.Context, sections []SourceSection[K]) ui.Elem
 	roots := s.roots()
 	st := &s.state
 	if s.want != nil {
-		if k, row := s.reveal(roots); row >= 0 {
+		k, row := s.reveal(roots)
+		if row >= 0 {
 			s.row, s.sel, s.hasSel = row, k, true
 			st.List.ScrollIntoView(row)
+			if s.renaming && s.renameKey.item == k.item {
+				s.renameKey = k
+			}
+		} else {
+			s.renaming = false
 		}
 		s.want = nil
 	} else {
@@ -548,7 +556,7 @@ func (s *SourceList[K]) item(c *ui.Context, t *ui.Theme, k sourceKey[K]) {
 	}
 	content := ui.Row(c).Grow(1).Height(28).Gap(6).Padding(0, SpaceS, 0, SpaceXS).AlignItems(ui.Center)
 	if s.Menu != nil {
-		content.ContextMenu(func(m *ui.Menu) { s.Menu(m, k.item) })
+		content.ContextMenu(func(m *ui.Menu) { s.Menu(m, k.item, k.section) })
 	}
 	over := false
 	for _, drop := range s.drops {

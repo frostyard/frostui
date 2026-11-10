@@ -278,9 +278,9 @@ func TestSourceListActivates(t *testing.T) {
 func TestSourceListBuildsContextMenus(t *testing.T) {
 	l := mailList()
 	got := ""
-	l.Menu = func(m *ui.Menu, item string) {
+	l.Menu = func(m *ui.Menu, item, section string) {
 		if m.Item("Empty " + item).Chosen() {
-			got = item
+			got = section + "/" + item
 		}
 	}
 	tt := listTester(l, mailSections())
@@ -294,7 +294,7 @@ func TestSourceListBuildsContextMenus(t *testing.T) {
 		t.Fatal(err)
 	}
 	tt.Frame()
-	if got != "Spam" {
+	if got != "work/Spam" {
 		t.Errorf("menu acted on %q", got)
 	}
 }
@@ -426,6 +426,29 @@ func TestSourceListRenamesInPlace(t *testing.T) {
 	tt.Key(0, ui.KeyEnter)
 	if renamed != nil {
 		t.Errorf("keeping the name renamed it: %v", renamed)
+	}
+}
+
+func TestSourceListRenamesAnItemFoundInAnySection(t *testing.T) {
+	l := mailList()
+	var renamed []string
+	l.Rename = func(item, name string) { renamed = append(renamed, item+"="+name) }
+	tt := listTester(l, mailSections())
+	l.StartRename("", "Spam")
+	tt.Frame()
+	if !tt.Focused("Name") {
+		t.Fatalf("no field took the focus: %q", tt.Texts())
+	}
+	tt.Key(ui.Cmd, ui.KeyA)
+	tt.Type("Junk")
+	tt.Key(0, ui.KeyEnter)
+	if !reflect.DeepEqual(renamed, []string{"Spam=Junk"}) {
+		t.Errorf("renamed = %q", renamed)
+	}
+	l.StartRename("", "Missing")
+	tt.Frame()
+	if l.Renaming() {
+		t.Error("renaming an item no section holds stays on with no field")
 	}
 }
 

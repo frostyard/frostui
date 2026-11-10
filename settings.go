@@ -234,13 +234,13 @@ func (s *Settings) View(c *ui.Context, pages []SettingsPage) ui.Element {
 
 // results draws what the search found, page by page.
 func (s *Settings) results(c *ui.Context, pages []SettingsPage) {
-	any := false
+	shown := false
 	for _, p := range pages {
 		whole, groups := p.found(s.Query)
 		if !whole && len(groups) == 0 {
 			continue
 		}
-		any = true
+		shown = true
 		ui.Column(c.Key(p.ID)).Gap(18).AlignItems(ui.Stretch).Children(func() {
 			Title(c, p.Title).Role(ui.RoleHeading).Level(1)
 			s.groups(c, p.ID, groups)
@@ -249,7 +249,7 @@ func (s *Settings) results(c *ui.Context, pages []SettingsPage) {
 			}
 		})
 	}
-	if !any {
+	if !shown {
 		Empty(c, "edit-find", "No setting matches", "")
 	}
 }

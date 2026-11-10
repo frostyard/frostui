@@ -169,6 +169,12 @@ field frostui.NavItem.Shortcut string
 field frostui.NavItem.Title string
 field frostui.NavSection.Items []NavItem
 field frostui.NavSection.Title string
+field frostui.Opener.Extensions []string
+field frostui.Opener.Folders bool
+field frostui.Opener.Launch func(url string) error
+field frostui.Opener.LaunchFile func(path string) error
+field frostui.Opener.Roots []string
+field frostui.Opener.Schemes []string
 field frostui.Palette.Open bool
 field frostui.Palette.Query string
 field frostui.Palette.Selected int
@@ -281,7 +287,7 @@ field frostui.SourceList.CanRename func(item K) bool
 field frostui.SourceList.Children func(item K) []K
 field frostui.SourceList.DragItems func(items []K) any
 field frostui.SourceList.Label string
-field frostui.SourceList.Menu func(m *ui.Menu, item K)
+field frostui.SourceList.Menu func(m *ui.Menu, item K, section string)
 field frostui.SourceList.OnActivate func(item K, mods ui.Modifiers)
 field frostui.SourceList.OnSelect func(item K)
 field frostui.SourceList.Rename func(item K, name string)
@@ -337,6 +343,7 @@ func frostui.ColorPill(*ui.Context, string, ui.Color) ui.Element
 func frostui.CommandRow(*ui.Context, CommandItem) ui.Element
 func frostui.ConnectingScreen(*ui.Context, Connection) ui.Element
 func frostui.ConnectionStatus(*ui.Context, Connection) ui.Element
+func frostui.DefaultOpenSchemes() []string
 func frostui.DesktopIconTheme() string
 func frostui.DisclosureCard(*ui.Context, *bool, Disclosure) bool
 func frostui.DotPill(*ui.Context, string, ui.Color) ui.Element
@@ -497,6 +504,10 @@ method (Command) frostui.Resolve() Command
 method (JobState) frostui.Ended() bool
 method (KeyBinding) frostui.Caps() []string
 method (KeyBinding) frostui.String() string
+method (Opener) frostui.CheckFile(string) (string, error)
+method (Opener) frostui.CheckURL(string) (string, error)
+method (Opener) frostui.OpenFile(string) error
+method (Opener) frostui.OpenURL(string) error
 type frostui.About struct
 type frostui.ActionToast struct
 type frostui.Brand struct
@@ -528,6 +539,7 @@ type frostui.LevelSet uint16
 type frostui.Line struct
 type frostui.NavItem struct
 type frostui.NavSection struct
+type frostui.Opener struct
 type frostui.Palette struct
 type frostui.PaletteItem struct
 type frostui.PaletteQuery struct
@@ -560,4 +572,5 @@ type frostui.Tile struct
 type frostui.Tone int
 type frostui.Waker struct
 type frostuitest.Loop struct
+var frostui.ErrNotAllowed = errors.New("not allowed")
 var frostui.LevelNames [levelCount]string
