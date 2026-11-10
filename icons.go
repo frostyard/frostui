@@ -1,9 +1,7 @@
 package frostui
 
 import (
-	"bufio"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -11,11 +9,13 @@ import (
 	"github.com/egoist/mygo/ui"
 )
 
-// Icons finds freedesktop icons in the desktop's own icon theme, so an app
-// shows Adwaita's symbolic icons on GNOME and Breeze's on KDE. A theme
-// without an icon falls back to Adwaita, then hicolor. Lookups are lazy and
-// cached; an icon no theme has is nil, which Icon draws as an empty box of
-// the same size.
+// Icons finds icons by their freedesktop names. On Linux it looks in the
+// desktop's own icon theme, so an app shows Adwaita's symbolic icons on
+// GNOME and Breeze's on KDE; a theme without an icon falls back to
+// Adwaita, then hicolor. Elsewhere (Windows, macOS, a browser) there is no
+// freedesktop theme, and it finds only the icons the app embeds. Lookups
+// are lazy and cached; an icon nobody has is nil, which Icon draws as an
+// empty box of the same size.
 type Icons struct {
 	Theme string
 
@@ -27,64 +27,18 @@ type Icons struct {
 }
 
 // NewIcons returns the icons of the desktop's theme. embedded holds icons
-// the app ships itself, by name, which win over the theme's.
+// the app ships itself, by name, which win over the theme's; off Linux they
+// are the only icons.
 func NewIcons(embedded map[string][]byte) *Icons {
-	home, _ := os.UserHomeDir()
-	theme := DesktopIconTheme()
-	roots := []string{filepath.Join(home, ".local/share/icons"), filepath.Join(home, ".icons")}
-	for _, dir := range filepath.SplitList(os.Getenv("XDG_DATA_DIRS")) {
-		if dir != "" {
-			roots = append(roots, filepath.Join(dir, "icons"))
-		}
-	}
-	roots = append(roots, "/usr/share/icons")
-	themes := []string{theme}
-	for _, fallback := range []string{"Adwaita", "breeze", "hicolor"} {
-		if !strings.EqualFold(fallback, theme) {
-			themes = append(themes, fallback)
-		}
-	}
-	return &Icons{Theme: theme, roots: dedupe(roots), themes: themes, cache: map[string]*ui.SVG{}, embedded: embedded}
+	theme, roots, themes := iconSearch()
+	return &Icons{Theme: theme, roots: roots, themes: themes, cache: map[string]*ui.SVG{}, embedded: embedded}
 }
 
-// DesktopIconTheme is the icon theme the desktop uses: KDE's from
+// DesktopIconTheme is the icon theme the desktop uses. On Linux it is the
+// FROSTUI_ICON_THEME environment variable when set, else KDE's from
 // kdeglobals, GNOME's from gsettings, and Adwaita when neither answers.
-func DesktopIconTheme() string {
-	if env := os.Getenv("FROSTUI_ICON_THEME"); env != "" {
-		return env
-	}
-	if strings.Contains(strings.ToUpper(os.Getenv("XDG_CURRENT_DESKTOP")), "KDE") {
-		home, _ := os.UserHomeDir()
-		if name := kdeIconTheme(filepath.Join(home, ".config", "kdeglobals")); name != "" {
-			return name
-		}
-		return "breeze"
-	}
-	if out, err := exec.Command("gsettings", "get", "org.gnome.desktop.interface", "icon-theme").Output(); err == nil {
-		if name := strings.Trim(strings.TrimSpace(string(out)), "'"); name != "" {
-			return name
-		}
-	}
-	return "Adwaita"
-}
-
-func kdeIconTheme(path string) string {
-	f, err := os.Open(path) //nolint:gosec // the user's own kdeglobals
-	if err != nil {
-		return ""
-	}
-	defer func() { _ = f.Close() }()
-	section := ""
-	for s := bufio.NewScanner(f); s.Scan(); {
-		line := strings.TrimSpace(s.Text())
-		if strings.HasPrefix(line, "[") {
-			section = line
-		} else if section == "[Icons]" && strings.HasPrefix(line, "Theme=") {
-			return strings.TrimPrefix(line, "Theme=")
-		}
-	}
-	return ""
-}
+// Off Linux it is "": the desktop has no freedesktop icon theme.
+func DesktopIconTheme() string { return desktopIconTheme() }
 
 // Get returns the named icon, preferring its symbolic form, or nil.
 func (ic *Icons) Get(name string) *ui.SVG {
@@ -139,18 +93,6 @@ func (ic *Icons) find(name string) string {
 		}
 	}
 	return ""
-}
-
-func dedupe(in []string) []string {
-	seen := map[string]bool{}
-	out := in[:0]
-	for _, s := range in {
-		if !seen[s] {
-			seen[s] = true
-			out = append(out, s)
-		}
-	}
-	return out
 }
 
 // icons is the kit's icon source, set by SetIcons.
