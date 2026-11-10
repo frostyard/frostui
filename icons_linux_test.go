@@ -70,6 +70,33 @@ func TestThemeIconsFindFallbackAndEmbedded(t *testing.T) {
 	}
 }
 
+func TestThemeIconsWinOverTheKitSet(t *testing.T) {
+	data := t.TempDir()
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv("XDG_DATA_DIRS", data)
+	t.Setenv("FROSTUI_ICON_THEME", "Frost")
+	writeIcon(t, data, "icons/Frost/symbolic/actions/edit-copy-symbolic.svg") // 16 wide
+
+	ic := NewIcons(nil)
+	// The search also reads /usr/share/icons, which may have other themes:
+	// keep it to the temporary directory.
+	ic.roots = []string{filepath.Join(data, "icons")}
+	theme := ic.Get("edit-copy")
+	if theme == nil {
+		t.Fatal("the theme's edit-copy is missing")
+	}
+	if w, _ := theme.Size(); w != 16 {
+		t.Errorf("edit-copy is %v wide: the kit's set won over the theme", w)
+	}
+	kit := ic.Get("edit-find")
+	if kit == nil {
+		t.Fatal("edit-find, which the theme lacks, does not come from the kit's set")
+	}
+	if w, _ := kit.Size(); w != 24 {
+		t.Errorf("edit-find is %v wide, want the kit's 24", w)
+	}
+}
+
 func TestDesktopIconThemeFromKDE(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)

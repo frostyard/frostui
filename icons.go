@@ -13,9 +13,10 @@ import (
 // desktop's own icon theme, so an app shows Adwaita's symbolic icons on
 // GNOME and Breeze's on KDE; a theme without an icon falls back to
 // Adwaita, then hicolor. Elsewhere (Windows, macOS, a browser) there is no
-// freedesktop theme, and it finds only the icons the app embeds. Lookups
-// are lazy and cached; an icon nobody has is nil, which Icon draws as an
-// empty box of the same size.
+// freedesktop theme. Everywhere, a name nothing else has comes from the
+// kit's own set of Lucide icons, for the names the kit and frostyard's
+// apps draw. Lookups are lazy and cached; an icon nobody has is nil, which
+// Icon draws as an empty box of the same size.
 type Icons struct {
 	Theme string
 
@@ -27,8 +28,8 @@ type Icons struct {
 }
 
 // NewIcons returns the icons of the desktop's theme. embedded holds icons
-// the app ships itself, by name, which win over the theme's; off Linux they
-// are the only icons.
+// the app ships itself, by name, which win over the theme's; the kit's own
+// set comes last, after the theme on Linux and after embedded elsewhere.
 func NewIcons(embedded map[string][]byte) *Icons {
 	theme, roots, themes := iconSearch()
 	return &Icons{Theme: theme, roots: roots, themes: themes, cache: map[string]*ui.SVG{}, embedded: embedded}
@@ -66,6 +67,13 @@ func (ic *Icons) Get(name string) *ui.SVG {
 				if s, err := ui.ParseSVG(data); err == nil {
 					svg = s
 				}
+			}
+		}
+	}
+	if svg == nil {
+		if data := kitIcon(name); data != nil {
+			if s, err := ui.ParseSVG(data); err == nil {
+				svg = s
 			}
 		}
 	}
