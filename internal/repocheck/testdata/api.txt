@@ -238,6 +238,36 @@ field frostui.Segment.Value float64
 field frostui.Series.Name string
 field frostui.Series.Tone Tone
 field frostui.Series.Values []float64
+field frostui.Setting.Choice *string
+field frostui.Setting.Control func(c *ui.Context)
+field frostui.Setting.Disabled bool
+field frostui.Setting.Keywords string
+field frostui.Setting.Max float64
+field frostui.Setting.Min float64
+field frostui.Setting.Number *float64
+field frostui.Setting.OnChange func()
+field frostui.Setting.Options []string
+field frostui.Setting.Placeholder string
+field frostui.Setting.Step float64
+field frostui.Setting.Subtitle string
+field frostui.Setting.Switch *bool
+field frostui.Setting.Text *string
+field frostui.Setting.Title string
+field frostui.Setting.Value string
+field frostui.Settings.Open bool
+field frostui.Settings.Query string
+field frostui.Settings.Search bool
+field frostui.Settings.Selected string
+field frostui.SettingsGroup.Note string
+field frostui.SettingsGroup.Settings []Setting
+field frostui.SettingsGroup.Title string
+field frostui.SettingsGroup.Values []KeyValue
+field frostui.SettingsPage.Body func(c *ui.Context)
+field frostui.SettingsPage.Groups []SettingsGroup
+field frostui.SettingsPage.ID string
+field frostui.SettingsPage.Icon string
+field frostui.SettingsPage.Keywords string
+field frostui.SettingsPage.Title string
 field frostui.Shell.Brand Brand
 field frostui.Shell.Console ConsoleView
 field frostui.Shell.Dialogs *Dialogs
@@ -341,6 +371,7 @@ func frostui.NewConsole(int) *Console
 func frostui.NewIcons(map[string][]byte) *Icons
 func frostui.NewJobs(func(func()), *Console) *Jobs
 func frostui.NewWaker(func(func()), time.Duration) *Waker
+func frostui.NumberRow(*ui.Context, string, string, *float64, float64, float64, float64) ui.Element
 func frostui.PageHeader(*ui.Context, string, string, func())
 func frostui.PaletteBindings() []KeyBinding
 func frostui.PaletteField(*ui.Context, *Palette) ui.Element
@@ -355,6 +386,7 @@ func frostui.RunSummary([]*Job) string
 func frostui.Section(*ui.Context, string, string, string, func())
 func frostui.SectionHeader(*ui.Context, SectionHead) ui.Element
 func frostui.SegmentBar(*ui.Context, string, float64, []Segment, func(Segment) string) ui.Element
+func frostui.SelectRow(*ui.Context, string, string, *string, []string) ui.Element
 func frostui.SetAppID(string, string) error
 func frostui.SetIcons(*Icons)
 func frostui.Shortcut(*ui.Context, ...string) ui.Element
@@ -368,6 +400,7 @@ func frostui.StepTile(*ui.Context, Tile) ui.Element
 func frostui.Strong(*ui.Context, string) ui.Element
 func frostui.SwitchRow(*ui.Context, string, string, *bool) ui.Element
 func frostui.Text([]Line) string
+func frostui.TextRow(*ui.Context, string, string, *string) ui.Element
 func frostui.TileGrid(*ui.Context) ui.Element
 func frostui.Title(*ui.Context, string) ui.Element
 func frostui.ToggleTile(*ui.Context, string, string, string, bool, bool) bool
@@ -442,6 +475,9 @@ method (*Panes) frostui.Toggle(string)
 method (*Panes) frostui.View(*ui.Context, []Pane) ui.Element
 method (*Progress) frostui.Log(Level, string, ...any)
 method (*Progress) frostui.Set(float64, string)
+method (*Settings) frostui.Dialog(*ui.Context, string, []SettingsPage)
+method (*Settings) frostui.Show(string)
+method (*Settings) frostui.View(*ui.Context, []SettingsPage) ui.Element
 method (*Shell) frostui.View(*ui.Context, Frame)
 method (*SourceList[K]) frostui.ClearSelection()
 method (*SourceList[K]) frostui.CollapseAll()
@@ -506,6 +542,10 @@ type frostui.RowStatus struct
 type frostui.SectionHead struct
 type frostui.Segment struct
 type frostui.Series struct
+type frostui.Setting struct
+type frostui.Settings struct
+type frostui.SettingsGroup struct
+type frostui.SettingsPage struct
 type frostui.Shell struct
 type frostui.ShortcutEntry struct
 type frostui.SourceList[K comparable] struct
