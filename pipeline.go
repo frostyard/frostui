@@ -60,10 +60,12 @@ type Stage struct {
 }
 
 // Pipeline draws stages side by side, left to right, each a column of
-// steps, with arrows between the stages: one run across sources.
+// steps, with arrows between the stages: one run across sources. Screen
+// readers hear it as a list named "Pipeline"; chain Label on the result to
+// name the run.
 func Pipeline(c *ui.Context, stages []Stage) ui.Element {
 	t := c.Theme()
-	return ui.Row(c).Gap(SpaceS).AlignItems(ui.Start).Role(ui.RoleList).Label("Update run").Children(func() {
+	return ui.Row(c).Gap(SpaceS).AlignItems(ui.Start).Role(ui.RoleList).Label("Pipeline").Children(func() {
 		for i, st := range stages {
 			if i > 0 {
 				ui.Box(c.Key(i*2)).Padding(34, 0, 0, 0).Children(func() {

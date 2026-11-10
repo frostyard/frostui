@@ -169,3 +169,16 @@ func TestSetAppIDNamesTheProgram(t *testing.T) {
 		t.Errorf("a second call = %v, want the first call's nil", err)
 	}
 }
+
+func TestPipelineTakesTheCallersName(t *testing.T) {
+	stages := []Stage{{Title: "Inbox", Icon: "mail-unread", Steps: []Step{{Title: "Fetch", State: StepRunning}}}}
+	tt := ui.NewTester(func(c *ui.Context) {
+		Pipeline(c.Key("default"), stages)
+		Pipeline(c.Key("named"), stages).Label("Sync run")
+	}, 900, 400)
+	for _, name := range []string{"Pipeline", "Sync run"} {
+		if _, ok := tt.AccessByRole(ui.RoleList, name); !ok {
+			t.Errorf("no list named %q", name)
+		}
+	}
+}
