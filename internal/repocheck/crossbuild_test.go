@@ -9,7 +9,9 @@ import (
 
 // crossTargets are the GOOS/GOARCH pairs the kit builds for with
 // CGO_ENABLED=0: the desktops frostyard's apps ship on, and js/wasm as a
-// compile check for reuse on the web.
+// compile check for reuse on the web. The Makefile's CROSS_TARGETS and the
+// cross-build matrix of .github/workflows/ci.yml list the same pairs
+// (TestCrossTargetsAreListedEverywhere).
 var crossTargets = []string{
 	"linux/amd64", "linux/arm64",
 	"windows/amd64", "windows/arm64",
