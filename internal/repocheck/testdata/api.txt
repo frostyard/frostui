@@ -247,6 +247,27 @@ field frostui.Shell.Selected string
 field frostui.ShortcutEntry.Group string
 field frostui.ShortcutEntry.Keys []string
 field frostui.ShortcutEntry.Title string
+field frostui.SourceList.CanRename func(item K) bool
+field frostui.SourceList.Children func(item K) []K
+field frostui.SourceList.DragItems func(items []K) any
+field frostui.SourceList.Label string
+field frostui.SourceList.Menu func(m *ui.Menu, item K)
+field frostui.SourceList.OnActivate func(item K, mods ui.Modifiers)
+field frostui.SourceList.OnSelect func(item K)
+field frostui.SourceList.Rename func(item K, name string)
+field frostui.SourceList.Row func(item K) SourceRow
+field frostui.SourceRow.Alert string
+field frostui.SourceRow.Busy bool
+field frostui.SourceRow.Count string
+field frostui.SourceRow.CountTone Tone
+field frostui.SourceRow.Dim bool
+field frostui.SourceRow.Icon string
+field frostui.SourceRow.Spoken string
+field frostui.SourceRow.Tag string
+field frostui.SourceRow.Title string
+field frostui.SourceSection.ID string
+field frostui.SourceSection.Items []K
+field frostui.SourceSection.Title string
 field frostui.Stage.Empty string
 field frostui.Stage.Icon string
 field frostui.Stage.Note string
@@ -289,6 +310,7 @@ func frostui.ConnectionStatus(*ui.Context, Connection) ui.Element
 func frostui.DesktopIconTheme() string
 func frostui.DisclosureCard(*ui.Context, *bool, Disclosure) bool
 func frostui.DotPill(*ui.Context, string, ui.Color) ui.Element
+func frostui.DropOn[K comparable, T any](*SourceList[K], func(item K, v T) bool, func(item K, v T, mods ui.Modifiers))
 func frostui.Duration(time.Duration) string
 func frostui.Empty(*ui.Context, string, string, string) ui.Element
 func frostui.Figures(*ui.Context, []Figure) ui.Element
@@ -421,6 +443,19 @@ method (*Panes) frostui.View(*ui.Context, []Pane) ui.Element
 method (*Progress) frostui.Log(Level, string, ...any)
 method (*Progress) frostui.Set(float64, string)
 method (*Shell) frostui.View(*ui.Context, Frame)
+method (*SourceList[K]) frostui.ClearSelection()
+method (*SourceList[K]) frostui.CollapseAll()
+method (*SourceList[K]) frostui.ExpandAll()
+method (*SourceList[K]) frostui.IsOpen(string, K) bool
+method (*SourceList[K]) frostui.OpenItems(string) []K
+method (*SourceList[K]) frostui.Renaming() bool
+method (*SourceList[K]) frostui.SectionOpen(string) bool
+method (*SourceList[K]) frostui.Select(string, K)
+method (*SourceList[K]) frostui.Selected() (K, string, bool)
+method (*SourceList[K]) frostui.SetOpen(string, K, bool)
+method (*SourceList[K]) frostui.SetSectionOpen(string, bool)
+method (*SourceList[K]) frostui.StartRename(string, K)
+method (*SourceList[K]) frostui.View(*ui.Context, []SourceSection[K]) ui.Element
 method (*Waker) frostui.Wake()
 method (Command) frostui.Resolve() Command
 method (JobState) frostui.Ended() bool
@@ -473,6 +508,9 @@ type frostui.Segment struct
 type frostui.Series struct
 type frostui.Shell struct
 type frostui.ShortcutEntry struct
+type frostui.SourceList[K comparable] struct
+type frostui.SourceRow struct
+type frostui.SourceSection[K comparable] struct
 type frostui.Stage struct
 type frostui.StatusItem struct
 type frostui.Step struct
