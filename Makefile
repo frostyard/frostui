@@ -25,7 +25,7 @@ NODE_MAJOR := $(shell node -p "process.versions.node.split('.')[0]" 2>/dev/null)
 # (TestCrossTargetsAreListedEverywhere).
 CROSS_TARGETS ?= linux/amd64 linux/arm64 windows/amd64 windows/arm64 darwin/amd64 darwin/arm64 js/wasm
 
-# Where make snapshot writes the example's PNGs.
+# Where make snapshot writes the examples' PNGs.
 SNAPSHOT_DIR ?= build/snapshots
 
 # The tests need no display: MyGo's Tester draws on the CPU with Pango and
@@ -60,12 +60,12 @@ cross:
 		GOOS=$$goos GOARCH=$$goarch CGO_ENABLED=0 $(GOCMD) vet ./... || exit 1; \
 	done
 
-# Write the example's frame, light and dark, as PNGs. Copy
-# $(SNAPSHOT_DIR)/commandcenter.png to docs/images/ to refresh the README's
-# picture.
+# Write the examples' frames, light and dark, as PNGs. Copy
+# $(SNAPSHOT_DIR)/commandcenter.png and threepane.png to docs/images/ to
+# refresh the docs' pictures.
 snapshot:
 	@mkdir -p $(SNAPSHOT_DIR)
-	$(HEADLESS) FROSTUI_SNAPSHOT_DIR=$(abspath $(SNAPSHOT_DIR)) CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) test -count=1 -run TestCommandCenterSnapshot -v ./examples/commandcenter
+	$(HEADLESS) FROSTUI_SNAPSHOT_DIR=$(abspath $(SNAPSHOT_DIR)) CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) test -count=1 -run 'Snapshot$$' -v ./examples/...
 
 # Lint (fails when the mise.toml pin is missing or the installed release
 # differs), as the host and as each other system the kit builds for, so the
