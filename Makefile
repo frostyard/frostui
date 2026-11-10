@@ -61,8 +61,8 @@ cross:
 	done
 
 # Write the examples' frames, light and dark, as PNGs. Copy
-# $(SNAPSHOT_DIR)/commandcenter.png and threepane.png to docs/images/ to
-# refresh the docs' pictures.
+# $(SNAPSHOT_DIR)/commandcenter.png, threepane.png and sourcelist.png to
+# docs/images/ to refresh the docs' pictures.
 snapshot:
 	@mkdir -p $(SNAPSHOT_DIR)
 	$(HEADLESS) FROSTUI_SNAPSHOT_DIR=$(abspath $(SNAPSHOT_DIR)) CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) test -count=1 -run 'Snapshot$$' -v ./examples/...

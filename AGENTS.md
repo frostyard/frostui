@@ -33,10 +33,11 @@ the canonical paths; keep content tool-agnostic.
   tests as js/wasm under Node), `make race` and `make cross` (build and vet
   every `CROSS_TARGETS` pair). Run it before you push.
 - `make snapshot` — the examples' frames as PNGs in `build/snapshots`
-  (`FROSTUI_SNAPSHOT_DIR`); copy `commandcenter.png` and `threepane.png` to
-  `docs/images/` to refresh the docs' pictures.
-- `go run ./examples/commandcenter` and `go run ./examples/threepane` — the
-  example windows (need GTK 3 and libepoxy on Linux).
+  (`FROSTUI_SNAPSHOT_DIR`); copy `commandcenter.png`, `threepane.png` and
+  `sourcelist.png` to `docs/images/` to refresh the docs' pictures.
+- `go run ./examples/commandcenter`, `go run ./examples/threepane` and
+  `go run ./examples/sourcelist` — the example windows (need GTK 3 and
+  libepoxy on Linux).
 
 ## Skills (follow these for common tasks)
 
@@ -79,9 +80,10 @@ its skills there (core ADR-0026); start a repo-local one from
   strings, no app configuration, no command tracer. A helper any app could
   use belongs here; one that is about one app stays in it.
 - **UI thread.** Views and every model (`Shell`, `PaneShell`, `Panes`,
-  `Jobs`, `Palette`, `Dialogs`, `ConsoleView`) belong to the UI thread; only
-  `Console.Add`, `Addf`, `Writer`, `Progress.Set`, `Progress.Log` and
-  `Waker.Wake` are safe from any goroutine. Workers hand results back through
+  `Jobs`, `Palette`, `Dialogs`, `ConsoleView`, `CommandTable`, `SourceList`,
+  `Settings`) belong to the UI thread; only `Console.Add`, `Addf`, `Writer`,
+  `Progress.Set`, `Progress.Log`, `Waker.Wake`, `PaletteQuery.Context` and
+  `Opener` are safe from any goroutine. Workers hand results back through
   the post function the app gives `NewJobs` (MyGo's `Window.Update`), which
   rebuilds the view on every call: coalesce bursts (`Waker`).
 - **MyGo's rules.** MyGo resets the theme every build pass, so `Adapt` runs
@@ -94,7 +96,8 @@ its skills there (core ADR-0026); start a repo-local one from
 - **Tests run headless.** Views are tested with `ui.NewTester`; a test that
   stands in for the UI thread posts to a `frostuitest.Loop`. No test
   needs a display, a network or a real desktop app; `LaunchDesktopApp` is
-  tested against a fake `gtk-launch` on `PATH`.
+  tested against a fake `gtk-launch` on `PATH`, and `Opener` through its
+  `Launch` and `LaunchFile` fields.
 - Run `make verify` before you call any change done, and `make ci` before
   you push. CI job `verify` runs `make ci`, which also checks that
   `.memory/corrections.jsonl` is append-only against the PR base.

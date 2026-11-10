@@ -1,6 +1,6 @@
 # frostui: frostyard's desktop UI kit
 
-Living document. Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md), [ADR-0006](../adr/0006-a-frame-without-the-rail.md), [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md).
+Living document. Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md), [ADR-0006](../adr/0006-a-frame-without-the-rail.md), [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md), [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md).
 Contracts: [spec: API stability](../specs/api-stability.md).
 Built in: [roadmap](../plans/roadmap.md).
 
@@ -87,7 +87,9 @@ starts with `Connection`, then `Status`, and ends with `StatusEnd`.
 
 Ctrl K opens the palette, except inside a text editor: an element around the
 focus that binds the key hears it first, and `PaneFrame.InEditor` keeps it
-for an editor that cannot. Ctrl Shift P opens it from everywhere.
+for an editor that cannot. Ctrl Shift P opens it from everywhere. With
+`PaneFrame.Table` the [command table](#command-table) owns the shortcuts
+instead, and `InEditor` is not read.
 
 The console (`ConsoleData`) is a split under the panes, closed by default.
 Ctrl J, the top bar's button and the palette's command toggle it;
@@ -244,6 +246,160 @@ monospaced box with Cancel and an action, and holds no state of its own.
   its run), `JobCard` (the rail's running job with a Stop button) and
   `StateOf` (a job's state as a step's).
 
+### Command table
+
+`commandtable.go`: one `CommandTable` holds an app's commands and drives the
+keys, the palette, the menus and the shortcuts dialog, so a command has one
+ID, title, group, keys and enabled rule. An entry is the palette's own
+`Command`, with three more fields: `Bindings []KeyBinding` (the keys),
+`Enabled func() (ok bool, reason string)` (decides `Disabled` and `Reason`
+as it is read) and `Checked func() bool` (a menu item's check mark);
+`Unlisted` keeps it out of the palette. `Command.Resolve` applies `Enabled`
+and fills `Keys` from the first binding, which bridges a table's command to
+the palette and to anything else that reads `Command`.
+
+- `Bind(c)` binds the keys of the enabled commands at the window, every
+  frame. The first enabled command takes a key two commands share.
+  `BindKeys(c, keys, run)` binds keys outside the table by the same rule.
+- `Commands()` fills the palette; `Menu(ids...)` returns a function for
+  `Frame.Menu`, `ui.MenuButton`, `Element.ContextMenu` and
+  `Element.PopoverMenu` ("" is a separator; nest with `m.Submenu`);
+  `MenuItem(m, id)` adds one item; `Shortcuts()` feeds `ShortcutsBody`, a
+  line per key; `Tooltip(id)` writes "Reply (Ctrl+R)".
+- `Frame.Table` and `PaneFrame.Table` wire a table into a frame, which
+  binds it and lists it in the palette after the frame's `Commands`. The
+  frame adds the palette's command (`Palette.Command`, on `PaletteBindings`)
+  and the console's (`ConsoleCommand`, Ctrl J) to the table, and binds no
+  palette or console key of its own, so a key is never bound twice:
+  a command of the app's with the same ID stays, and one that binds the same
+  key keeps it. While `PaneShell`'s connecting screen covers the window the
+  console's command leaves the table. Without a table a frame binds its keys itself,
+  as before (`PaneFrame.InEditor`).
+
+**How a key yields to an editor.** MyGo decides a key in this order: a text
+input takes what it types and edits with (letters, Backspace, the arrows,
+Ctrl+C), then an element around the focus that bound the key
+(`Element.OnShortcut`), then overlays, then the window. An editor's own key
+handler (`Element.OnTextKey`, or `Element.HandleInput`, which MyGo's code
+and rich text editors use) sees a key only when no shortcut claims it, and
+a window shortcut claims it. So a window that bound Ctrl K would take it
+from the editor. The
+table therefore does not register a key while its scope says to step aside,
+and the key goes to the editor. `KeyBinding.Scope` says where a key works:
+
+| Scope | Works | For |
+| --- | --- | --- |
+| `OutsideEditors` (zero value) | everywhere but a text editor | Ctrl K, which is Insert Link there |
+| `OutsideText` | only where nothing takes text | a key a one-line field should keep |
+| `Everywhere` | wherever the focus is | Ctrl+Shift+P, Ctrl+N |
+
+`c.FocusTakesText()` tells that text is being typed, but not whether into an
+editor or a one-line field, so `CommandTable.Editing` names the editors. It
+is a function of the window's `Context`, usually `c.FocusWithin(handle)` over
+a `ui.Handle` bound to the editor, which reads the focus whatever the build
+order. Left nil, any element that takes text counts, so that a key never
+goes past a field. An element that binds the key itself comes first in
+every scope. A table binds the keys of one window; give each its own. The
+rule is [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md).
+
+### Palette sources
+
+`palette.go`: besides the commands, a `Palette` finds what its `Sources` find
+(notes by name, mailboxes, messages). A `PaletteSource` has an `ID`, a
+`Title` that heads its results, a `Placeholder`, a `Limit` applied while
+other sources show too, and `Query`. The palette calls `Query` on the UI
+thread only while it shows the source, once as it opens and once per new
+query, never per frame. Commands come first, as the source
+`PaletteCommands`, then each source in order, in sections: an item's `Group`
+heads it, or the source's `Title`. A source ranks its own results, with
+`Match` or `Rank`, which reads no UI state and so runs on a worker.
+
+A source answers with `PaletteQuery.Reply`, at once or later: a worker posts
+it through `Window.Update`, since `Reply` belongs to the UI thread. A reply
+to a query the user typed past, or to a closed palette, is dropped, and
+`PaletteQuery.Context` is canceled then so the worker can stop. A source may
+reply several times. The last results stay while a new query is out, so the
+list does not flicker, and the footer says "Searching…". The choice follows
+its item as results come. `Show` opens every source; `ShowSource(id)` opens
+one alone (Ctrl O on notes, Ctrl P on `PaletteCommands`). `PaletteItem.RunWith`
+gets the modifiers held with Enter or the click (Ctrl+Enter, Ctrl+Alt+Enter,
+Alt+Enter, Shift+Enter).
+
+### Source list
+
+`sourcelist.go`: `SourceList[K]` is a sidebar of items in a tree on
+`ui.Outline`, which builds only the rows in view (`ui.Tree` builds every
+item), so 10,000 notes cost what 20 do. `View(c, sections)` draws
+`SourceSection`s; `Children` and `Row` describe the tree. A row's identity
+is its section and item, so one mailbox can show under Favorites and under
+its account.
+
+- **Sections** are outline branches marked as list headers: never chosen,
+  pinned while their rows scroll, and a click hides their items.
+- **Rows** (`SourceRow`): icon, title, `Tag`, `Busy` (spinner), `Alert`
+  (warning sign with a tooltip), `Count` and `Dim`.
+- **Selection:** one item, by a click, Up, Down, Home, End and typing;
+  Left and Right close, open and move as in any tree. `Selected`, `Select`
+  (opens the way to the item and scrolls to it), `OnSelect`, and
+  `OnActivate` for Enter and a double click. A choice survives its section
+  closing and is forgotten when its item goes.
+- **Menus and drops:** `Menu` builds a row's context menu; `DropOn[K, T]`
+  makes rows take values of type `T`, highlights a row that accepts, and
+  passes the modifiers held (Ctrl or Alt to copy); `DragItems` makes rows
+  drag.
+- **Rename:** `Rename`, `CanRename`, F2 or `StartRename`. Enter or the focus
+  leaving keeps the name, Escape gives up. MyGo's `EditableText` has no way
+  to start from a menu, so the list draws its own field.
+- **Assistive technology** sees a tree. A tree item is one accessible name
+  with no elements of its own, so the name carries the state: "Inbox, 12",
+  or the title and `SourceRow.Spoken`.
+
+The rows use `OutlineState.Prefix` only to take the `OutlineRow`, and call
+its `Arrow` inside their own row, so that the whole width takes menus and
+drops, and a header's whole title opens and closes it.
+
+![The source list example](../images/sourcelist.png)
+
+The picture is `examples/sourcelist` drawn by its snapshot test.
+
+### Settings layout
+
+`settings.go`: `Settings` draws a list of `SettingsPage`s at the left and the
+chosen page's `SettingsGroup`s, cards of `Setting` rows, at the right, filling
+a window (`View`) or in a dialog (`Dialog`, `Show(id)`). A `Setting` has a
+title, a subtitle and one control: `Switch` (`SwitchRow`), `Choice`
+(`SelectRow`), `Text` (`TextRow`), `Number` (`NumberRow`), `Control` (the
+app's) or a read-only `Value`. A group's `Values` draw with `KeyValues`, and
+a page's `Body` draws what is not a row, as a list of accounts. With
+`Search`, a field finds settings on every page by the words of the query in
+their title, subtitle, keywords or value; whole words rather than `Match`'s
+scattered letters, which nearly any sentence would hold. A match on a page's
+title or `Keywords` shows the whole page.
+
+### Opener
+
+`opener.go`: `Opener` opens what comes from outside the app (a link in a
+message, an attachment) with the system's handlers, through MyGo's
+`Shell.OpenExternal` and `Shell.OpenPath`, on every platform. It holds no
+state and is safe from any goroutine; it waits for the system, so call it
+from a worker. Anything not allowed returns an error wrapping
+`ErrNotAllowed`; `CheckURL` and `CheckFile` answer without opening.
+
+- `OpenURL`: the scheme must be in `Schemes` (http, https and mailto by
+  default); http and https need a host; spaces and control characters are
+  refused; `file:` is refused even when listed.
+- `OpenFile`: an absolute path that, symbolic links followed, is under one
+  of `Roots` (none opens nothing); a regular file, or a folder with
+  `Folders`; not executable; not on a deny list of types that run, install
+  or redirect, listed in `Extensions` or not; and in `Extensions` when that
+  is set.
+
+The deny list is a backstop and cannot be complete, so an app sets
+`Extensions` for files from outside it, as attachments. The check and the
+open are two steps, so a file swapped between them is opened as swapped: the
+roots are the app's own directories. The policy is
+[ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md).
+
 ### Theming
 
 The look follows the desktop, not a palette of its own: MyGo reads the
@@ -347,15 +503,17 @@ Only the first `SetAppID` call counts, on every system.
   `frostui_test.go` covers palette ranking and running, the console, the
   job queue's order, serialization, cancellation and panic recovery,
   dialogs and the shell; `components_test.go` and `widgets_test.go` the
-  pieces; `*_linux_test.go` the freedesktop parts (`LaunchDesktopApp`
+  pieces; `commandtable_test.go`, `editors_test.go` (MyGo's real rich text
+  and code editors), `palette_sources_test.go`, `sourcelist_test.go`,
+  `settings_test.go` and `opener_test.go` the shared pieces; `*_linux_test.go` the freedesktop parts (`LaunchDesktopApp`
   against a fake `gtk-launch` on `PATH`); `*_other_test.go` the fallbacks,
   which run under `make test-wasm`. `frostuitest.Loop` stands in for the UI
   thread: workers `Post` from any goroutine and the test runs what they
   posted with `Flush`, `RunUntil(t, cond)` or `Settle(quiet)`.
 - **Pictures.** `Tester.Image()` gives a frame as an image.
   `FROSTUI_SNAPSHOT_DIR=<dir>` makes the examples' snapshot tests write
-  `commandcenter.png`, `threepane.png` and their `-dark` forms (`make
-  snapshot` writes them to `build/snapshots`). To prove a refactor changes nothing on screen,
+  `commandcenter.png`, `threepane.png`, `sourcelist.png` and their `-dark`
+  forms (`make snapshot` writes them to `build/snapshots`). To prove a refactor changes nothing on screen,
   render before and after and compare the PNGs: spinners and wall-clock
   times differ between runs, nothing else.
 - **MyGo.** After a MyGo bump, read its source in `GOMODCACHE` for the
@@ -402,6 +560,6 @@ None since the module began.
 
 ## References
 
-- Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md), [ADR-0006](../adr/0006-a-frame-without-the-rail.md), [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md)
+- Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md), [ADR-0006](../adr/0006-a-frame-without-the-rail.md), [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md), [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md)
 - Contracts: [spec: API stability](../specs/api-stability.md)
-- Built in: [roadmap — Phase 1](../plans/roadmap.md#phase-1--extract-the-kit-done), [Phase 5](../plans/roadmap.md#phase-5--the-frame-and-the-layout)
+- Built in: [roadmap — Phase 1](../plans/roadmap.md#phase-1--extract-the-kit-done), [Phase 5](../plans/roadmap.md#phase-5--the-frame-and-the-layout), [Phase 6](../plans/roadmap.md#phase-6--commands-navigation-and-settings-for-v020-medium)

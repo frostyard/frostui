@@ -33,6 +33,11 @@
       "why": "governance: the vendored risk-path validator and matcher"
     },
     {
+      "glob": "opener.go",
+      "level": "L2",
+      "why": "security: the allow-lists that decide what the system's handlers open"
+    },
+    {
       "glob": "mise.toml",
       "level": "L1",
       "why": "supply chain: the tool pins that CI installs"

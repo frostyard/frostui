@@ -60,11 +60,18 @@ type PaneFrame struct {
 	Menu func(m *ui.Menu)
 	// InEditor says a text editor has the focus, so Ctrl K stays with it.
 	// An editor that binds Ctrl K on its own element needs no flag: the
-	// element around the focus hears the key first.
+	// element around the focus hears the key first. With a Table it is
+	// not read: CommandTable.Editing says.
 	InEditor bool
 	// Commands are the palette's commands. The console's is added when
 	// there is a console and none has its ID.
 	Commands []Command
+	// Table, when set, is the app's command table, which owns the window's
+	// shortcuts: the shell adds the palette's command (Palette.Command)
+	// and the console's to it, binds its keys (CommandTable.Bind) and
+	// binds none of its own, and the palette lists Commands and then the
+	// table's commands.
+	Table *CommandTable
 	// Connection is the status bar's first item; its Connecting state
 	// draws the connecting screen over the whole window. Nil for none.
 	Connection *Connection
@@ -82,19 +89,26 @@ type PaneFrame struct {
 }
 
 // View draws the shell. Ctrl K opens the palette, except inside a text
-// editor, which keeps the key for itself (PaneFrame.InEditor); Ctrl Shift P
-// opens it from everywhere. Ctrl J shows or hides the console.
+// editor, which keeps the key for itself (PaneFrame.InEditor, or the
+// Table's Editing); Ctrl Shift P opens it from everywhere. Ctrl J shows or
+// hides the console.
 func (s *PaneShell) View(c *ui.Context, f PaneFrame) {
 	t := Adapt(c)
 	s.Palette.RunPending()
-	if !f.InEditor {
-		c.OnWindowShortcut(ui.Cmd, ui.KeyK, func() { s.Palette.Show() })
+	connecting := f.Connection != nil && f.Connection.State == Connecting
+	if f.Table != nil {
+		s.joinTable(f, connecting)
+		f.Table.Bind(c)
+	} else {
+		if !f.InEditor {
+			c.OnWindowShortcut(ui.Cmd, ui.KeyK, func() { s.Palette.Show() })
+		}
+		c.OnWindowShortcut(ui.Cmd|ui.Shift, ui.KeyP, func() { s.Palette.Show() })
 	}
-	c.OnWindowShortcut(ui.Cmd|ui.Shift, ui.KeyP, func() { s.Palette.Show() })
-	if f.Connection != nil && f.Connection.State == Connecting {
+	if connecting {
 		connectingWindow(c, *f.Connection, func() { s.mainMenu(c, f) })
 	} else {
-		if f.ConsoleData != nil {
+		if f.ConsoleData != nil && f.Table == nil {
 			c.OnWindowShortcut(ui.Cmd, ui.KeyJ, s.toggleConsole)
 		}
 		ui.Column(c).Fill().AlignItems(ui.Stretch).Background(t.Background).Children(func() {
@@ -131,11 +145,47 @@ func (s *PaneShell) ConsoleCommand() Command {
 	if s.Console.Open {
 		verb = "Hide "
 	}
-	return Command{ID: ConsoleCommandID, Title: verb + s.Console.title(), Group: "View", Icon: "utilities-terminal",
-		Keys: []string{"Ctrl", "J"}, Run: s.toggleConsole}
+	return consoleCommand(verb+s.Console.title(), s.toggleConsole)
+}
+
+// consoleCommand is the command that shows or hides a frame's console.
+func consoleCommand(title string, toggle func()) Command {
+	return Command{ID: ConsoleCommandID, Title: title, Group: "View", Icon: "utilities-terminal",
+		Keys: []string{"Ctrl", "J"}, Bindings: []KeyBinding{{Mods: ui.Cmd, Key: ui.KeyJ, Scope: Everywhere}}, Run: toggle}
+}
+
+// joinConsole brings a frame's console command to the table, whose keys
+// are then the window's only ones, or takes it back with show false. An
+// app's own console command in cmds goes in the table, so its key works.
+func joinConsole(t *CommandTable, console Command, cmds []Command, show bool) {
+	if !show {
+		t.withdraw(ConsoleCommandID)
+		return
+	}
+	for _, cmd := range cmds {
+		if cmd.ID == ConsoleCommandID {
+			bindings := console.Bindings
+			console = cmd
+			if len(console.Bindings) == 0 {
+				console.Bindings = bindings
+			}
+		}
+	}
+	t.provide(console)
+}
+
+// joinTable brings the palette's and the console's commands to the table.
+// There is no console to toggle while the connecting screen covers the
+// window.
+func (s *PaneShell) joinTable(f PaneFrame, connecting bool) {
+	f.Table.provide(s.Palette.Command())
+	joinConsole(f.Table, s.ConsoleCommand(), f.Commands, f.ConsoleData != nil && !connecting)
 }
 
 func (s *PaneShell) commands(f PaneFrame) []Command {
+	if f.Table != nil {
+		return f.Table.merged(f.Commands)
+	}
 	if f.ConsoleData == nil {
 		return f.Commands
 	}

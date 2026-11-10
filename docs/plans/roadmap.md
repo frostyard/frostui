@@ -59,6 +59,21 @@ The first half of v0.2.0's shared pieces, for Frostmail and Frostnotes:
 **Done when:** `examples/threepane` shows all of them, and `make ci` passes
 on branch `feat/frame-panes`.
 
+## Phase 6 — Commands, navigation and settings for v0.2.0 (medium)
+
+- The second half: a command table, palette sources, a source list, a settings layout and
+  an allow-listed opener, for Frostmail's and Frostnotes' desktop apps
+  ([design: command table](../design/frostui.md#command-table),
+  [palette sources](../design/frostui.md#palette-sources),
+  [source list](../design/frostui.md#source-list),
+  [settings layout](../design/frostui.md#settings-layout),
+  [opener](../design/frostui.md#opener),
+  [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md)),
+  additive to the API ([spec](../specs/api-stability.md)).
+
+**Done when:** `examples/sourcelist` draws them all, `make ci` passes, and
+`api.txt` only gains lines against v0.1.0.
+
 ## Open questions
 
 - Should `Adapt` leave MyGo's inactive-window accent alone on macOS, where

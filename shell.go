@@ -71,12 +71,32 @@ type Frame struct {
 	Content func()
 	// Commands are the palette's commands.
 	Commands []Command
+	// Table, when set, is the app's command table, which owns the window's
+	// shortcuts: the shell adds the palette's command (Palette.Command)
+	// and, with a console, the console's (Shell.ConsoleCommand) to it,
+	// binds its keys (CommandTable.Bind), binds none of its own, and lists
+	// its commands in the palette after Commands. Ctrl K then steps aside
+	// in editors, by the table's rule, in place of a plain Ctrl K.
+	Table *CommandTable
 	// Status and StatusEnd are the status bar's items at its start and
 	// at its end.
 	Status, StatusEnd []StatusItem
 	// ConsoleData is the console the console pane shows, nil for no
 	// console.
 	ConsoleData *Console
+}
+
+func (s *Shell) toggleConsole() { s.Console.Open = !s.Console.Open }
+
+// ConsoleCommand is the command that shows or hides the console, in the
+// group "View". With Frame.Table the shell adds it to the table, unless
+// the table or Frame.Commands holds a command with its ID.
+func (s *Shell) ConsoleCommand() Command {
+	verb := "Show "
+	if s.Console.Open {
+		verb = "Hide "
+	}
+	return consoleCommand(verb+s.Console.title(), s.toggleConsole)
 }
 
 // View draws the shell.
@@ -86,9 +106,17 @@ func (s *Shell) View(c *ui.Context, f Frame) {
 	if s.splitPercent == 0 {
 		s.splitPercent = 64
 	}
-	c.OnWindowShortcut(ui.Cmd, ui.KeyK, func() { s.Palette.Show() })
-	if f.ConsoleData != nil {
-		c.OnWindowShortcut(ui.Cmd, ui.KeyJ, func() { s.Console.Open = !s.Console.Open })
+	cmds := f.Commands
+	if f.Table != nil {
+		f.Table.provide(s.Palette.Command())
+		joinConsole(f.Table, s.ConsoleCommand(), f.Commands, f.ConsoleData != nil)
+		f.Table.Bind(c)
+		cmds = f.Table.merged(f.Commands)
+	} else {
+		c.OnWindowShortcut(ui.Cmd, ui.KeyK, func() { s.Palette.Show() })
+	}
+	if f.ConsoleData != nil && f.Table == nil {
+		c.OnWindowShortcut(ui.Cmd, ui.KeyJ, s.toggleConsole)
 	}
 	ui.Column(c).Fill().AlignItems(ui.Stretch).Background(t.Background).Children(func() {
 		s.topBar(c, f)
@@ -116,7 +144,7 @@ func (s *Shell) View(c *ui.Context, f Frame) {
 		s.Dialogs.View(c)
 	}
 	s.Info.View(c)
-	s.Palette.View(c, f.Commands)
+	s.Palette.View(c, cmds)
 }
 
 func (s *Shell) topBar(c *ui.Context, f Frame) {
