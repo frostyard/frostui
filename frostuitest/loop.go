@@ -3,8 +3,8 @@
 // from any goroutine, as they would through MyGo's Window.Update, and the
 // test runs what they posted on its own goroutine, as the UI thread would.
 //
-// It imports only the standard library, so it leaves ChairLift with
-// frostui.
+// It imports only the standard library, so an app's tests can use it
+// whatever UI they draw.
 package frostuitest
 
 import (

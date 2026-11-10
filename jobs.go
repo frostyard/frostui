@@ -35,13 +35,13 @@ const (
 // Ended reports whether the job is over.
 func (s JobState) Ended() bool { return s >= JobDone }
 
-// Job is one unit of work the queue runs: one command, one package, one
-// device. Run runs on a goroutine of its own; Done runs on the UI thread
+// Job is one unit of work the queue runs: one command, one download, one
+// sync. Run runs on a goroutine of its own; Done runs on the UI thread
 // after it, with Run's error.
 type Job struct {
-	// Title says what the job does, as "Updating Firefox".
+	// Title says what the job does, as "Syncing the inbox".
 	Title string
-	// Source groups jobs, as the update source they belong to.
+	// Source groups jobs, as the account or the service they work for.
 	Source string
 	// Key identifies what the job works on within its source, so a view
 	// can show the job's state on that item's row.
@@ -51,8 +51,8 @@ type Job struct {
 	Done func(err error)
 
 	// Unstoppable marks a job whose work a cancel cannot stop: one that
-	// runs as root through pkexec (only the unprivileged parent can be
-	// signaled) or flashes firmware. CancelAll drops the jobs queued after
+	// runs as another user (only the unprivileged parent can be signaled)
+	// or writes to a device. CancelAll drops the jobs queued after
 	// it but lets it run to its end and report what really happened, and
 	// the queue stays busy until then, so no other change overlaps it.
 	Unstoppable bool
@@ -112,8 +112,8 @@ func (p *Progress) Log(level Level, format string, args ...any) {
 }
 
 // Jobs runs jobs one at a time, in the order they were queued, so that two
-// changes never race (one privileged prompt at a time, one firmware flash at
-// a time). Every method is for the UI thread.
+// changes never race (one password prompt at a time, one write to a device
+// at a time). Every method is for the UI thread.
 type Jobs struct {
 	post    func(func())
 	console *Console

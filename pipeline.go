@@ -18,8 +18,8 @@ const (
 	StepDone
 	// StepFailed ended with an error.
 	StepFailed
-	// StepHeld is left out of the run, as a package of an untrusted tap
-	// or firmware that waits for a confirmation.
+	// StepHeld is left out of the run, as an item that waits for the
+	// user's confirmation.
 	StepHeld
 	// StepSkipped was left out by the user or canceled.
 	StepSkipped
@@ -43,14 +43,14 @@ func StateOf(j *Job) StepState {
 	return StepSkipped
 }
 
-// Step is one item of a pipeline stage: a package, a device, an image.
+// Step is one item of a pipeline stage: a package, a mailbox, a file.
 type Step struct {
 	Title string
 	Note  string
 	State StepState
 }
 
-// Stage is one column of a Pipeline: an update source.
+// Stage is one column of a Pipeline: a source of work, as an account.
 type Stage struct {
 	Title, Icon string
 	Note        string
@@ -60,7 +60,7 @@ type Stage struct {
 }
 
 // Pipeline draws stages side by side, left to right, each a column of
-// steps, with arrows between the stages: one update run across sources.
+// steps, with arrows between the stages: one run across sources.
 func Pipeline(c *ui.Context, stages []Stage) ui.Element {
 	t := c.Theme()
 	return ui.Row(c).Gap(SpaceS).AlignItems(ui.Start).Role(ui.RoleList).Label("Update run").Children(func() {

@@ -11,8 +11,8 @@ import (
 	"github.com/frostyard/frostui/frostuitest"
 )
 
-// The tests of the pieces the page ports first wrote as helpers of their
-// own (docs/design/frostui.md).
+// The tests of the rows, wizard parts, toasts and other pieces that apps
+// first wrote as helpers of their own (docs/design/frostui.md).
 
 func TestDurationFormats(t *testing.T) {
 	for d, want := range map[time.Duration]string{

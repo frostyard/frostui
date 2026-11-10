@@ -294,7 +294,7 @@ func TestPaletteRunsTheChosenCommand(t *testing.T) {
 
 func TestShellShowsRailStatusAndConsole(t *testing.T) {
 	var s Shell
-	s.Brand = Brand{Name: "ChairLift", Tagline: "Snow Linux command center"}
+	s.Brand = Brand{Name: "Example", Tagline: "A frostui command center"}
 	s.Selected = "overview"
 	con := NewConsole(32)
 	con.Add(LevelCommand, "brew", "brew outdated --json=v2")
@@ -306,13 +306,13 @@ func TestShellShowsRailStatusAndConsole(t *testing.T) {
 				{ID: "updates", Title: "Updates", Icon: "software-update-available", Badge: "12", BadgeTone: Accent},
 			}}},
 			Content:     func() { Title(c, s.Selected) },
-			Status:      []StatusItem{{Text: "Snow 2026.11.05", Progress: -1}},
+			Status:      []StatusItem{{Text: "Example 2026.11.05", Progress: -1}},
 			StatusEnd:   []StatusItem{{Text: "12 updates", Progress: -1, OnClick: func() { clicked = true }}},
 			ConsoleData: con,
 		})
 	}
 	tt := ui.NewTester(view, 1280, 800)
-	for _, want := range []string{"ChairLift", "Overview", "Updates", "12", "Snow 2026.11.05", "12 updates"} {
+	for _, want := range []string{"Example", "Overview", "Updates", "12", "Example 2026.11.05", "12 updates"} {
 		if !tt.HasText(want) {
 			t.Errorf("missing %q in %q", want, tt.Texts())
 		}

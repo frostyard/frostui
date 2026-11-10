@@ -6,12 +6,12 @@
 // desktop's icon theme, its accent kept in inactive windows, and the
 // Wayland app ID).
 //
-// It is written to leave ChairLift: it imports only MyGo, purego and the
-// standard library, never a github.com/frostyard/chairlift package, which
-// internal/installcheck.TestFrostUIImportsNoChairLift enforces. Other
-// frostyard desktop apps (frostmail, frostnotes, frostread) can take it
-// as a module of its own, github.com/frostyard/frostui; see
-// docs/design/frostui.md for what moves and what stays.
+// It imports only the standard library, MyGo and purego, so any frostyard
+// desktop app can take it, and it builds with CGO_ENABLED=0 for Linux,
+// Windows, macOS and js/wasm. The freedesktop parts (SetAppID,
+// DesktopIconTheme, the icon theme of NewIcons, LaunchDesktopApp) work on
+// Linux and fall back elsewhere, as each one's comment says. The
+// repository's docs/design/frostui.md describes the parts and the rules.
 //
 // # Threads
 //

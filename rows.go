@@ -15,7 +15,7 @@ type RowStatus struct {
 	// "Cleaned".
 	Text string
 	// Label names the spinner, and a compact failure's icon, for screen
-	// readers, as "Updating Firefox": Text when empty.
+	// readers, as "Syncing the inbox": Text when empty.
 	Label string
 	// Tooltip says more on hover: when it ended, or the error.
 	Tooltip string
@@ -132,8 +132,7 @@ func CommandRow(c *ui.Context, it CommandItem) ui.Element {
 // Tile is what a StepTile shows.
 type Tile struct {
 	Icon string
-	// Caption names the tile's place above its value: "Booted · running
-	// now".
+	// Caption names the tile's place above its value: "Running now".
 	Caption string
 	// Value is the tile's value, in monospace: a version.
 	Value string
@@ -150,9 +149,9 @@ type Tile struct {
 }
 
 // StepTile is one tile of a short chain of values read top to bottom, as
-// a system's deployments (staged, booted, rollback): an icon, a caption
-// over the value and a smaller line under it. The current one is in the
-// accent, an empty one dimmed.
+// versions of a system (the next, the running, the previous): an icon, a
+// caption over the value and a smaller line under it. The current one is
+// in the accent, an empty one dimmed.
 func StepTile(c *ui.Context, s Tile) ui.Element {
 	t := c.Theme()
 	bg, border, iconColor := t.Background, t.Border, t.TextMuted

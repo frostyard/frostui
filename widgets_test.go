@@ -146,13 +146,13 @@ func TestDialogsShowShortcutsAndAbout(t *testing.T) {
 	if err := tt.Click("Close"); err != nil || info.Open {
 		t.Errorf("close: %v, open %v", err, info.Open)
 	}
-	info.Show("About ChairLift", AboutBody(About{
-		Name: "ChairLift", Version: "v0.12.0", Summary: "The system manager of Snow Linux.", Logo: "computer",
+	info.Show("About Example", AboutBody(About{
+		Name: "Example", Version: "v0.12.0", Summary: "A frostui command center.", Logo: "computer",
 		Website: "https://example.org/site", Issues: "https://example.org/issues", License: "GNU GPL 3.0",
 		Copyright: "© Frostyard", Developers: []string{"Brian", "Contributors"},
 	}))
 	tt.Frame()
-	hasAll(t, tt, "ChairLift", "v0.12.0", "The system manager of Snow Linux.", "Developers", "Brian", "Contributors",
+	hasAll(t, tt, "Example", "v0.12.0", "A frostui command center.", "Developers", "Brian", "Contributors",
 		"GNU GPL 3.0", "© Frostyard", "Website", "Report an issue")
 }
 
