@@ -12,10 +12,10 @@ windows are edge-to-edge panes that do not scroll as a whole.
 
 Frostmail's top bar is Mail.app's unified toolbar, in segments that follow
 the widths of the panes below them. Frostnotes' is a bar with a centered
-palette field. The orchestrating session's rules bind both: the sidebar
-toggle at the far left of the bar, the same palette field in every app, the
-main menu last before the window controls, the connection first in the
-status bar, and Ctrl K opening the palette except inside a text editor.
+palette field. Both apps need the same window rules: the sidebar toggle at
+the far left of the bar, the same palette field in every app, the main menu
+last before the window controls, the connection first in the status bar, and
+Ctrl K opening the palette except inside a text editor.
 
 MyGo's `ui.Split` has two panes and a fixed 40 DIP minimum, and its divider's
 value is its own: it has no maximum, no N panes, and no collapsing.
