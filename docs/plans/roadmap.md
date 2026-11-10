@@ -50,5 +50,3 @@ has no `internal/frostui`, and its `make ci` passes.
   off Linux need not embed them?
 - Should `Adapt` leave MyGo's inactive-window accent alone on macOS, where
   fading it is the native look?
-- The GPL applies to every app that imports the kit; does any app need a
-  more permissive license for it?

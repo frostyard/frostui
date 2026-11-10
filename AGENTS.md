@@ -136,8 +136,9 @@ by hand (`make verify` checks their hashes).
 - **A library, not a product.** No binaries are published: no GoReleaser,
   no packages, no `dev` prerelease. `examples/` holds programs that show
   the kit, never an app.
-- **License.** GPL-3.0-or-later, as ChairLift, where the code comes from.
-  Code copied in must be GPL-compatible.
+- **License.** MIT, as Frostmail and Frostnotes, which import the kit. The
+  kit's code came from ChairLift (GPL-3.0-or-later), whose author relicensed
+  it. Code copied in must be MIT-compatible: never copy from a GPL source.
 - No secrets, credentials or personal data anywhere in the repository.
 
 ## Documentation rules (enforced)

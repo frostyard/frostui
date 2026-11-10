@@ -82,4 +82,4 @@ Design and invariants: [docs/design/frostui.md](docs/design/frostui.md).
 - [AGENTS.md](AGENTS.md): the rules for agents and contributors.
 - [docs/README.md](docs/README.md): the decisions, designs, specs and plans.
 - [SECURITY.md](SECURITY.md): report a vulnerability privately.
-- [LICENSE](LICENSE): GPL-3.0.
+- [LICENSE](LICENSE): MIT.

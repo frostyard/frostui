@@ -245,7 +245,7 @@ func (d *demo) showShortcuts() {
 func (d *demo) showAbout() {
 	d.shell.Info.Show("About Command center", frostui.AboutBody(frostui.About{
 		Name: "Command center", Version: "example", Summary: "The command-center shell of frostui, with a pretend mail sync.",
-		Logo: "commandcenter", Website: "https://github.com/frostyard/frostui", License: "GPL-3.0-or-later",
+		Logo: "commandcenter", Website: "https://github.com/frostyard/frostui", License: "MIT",
 	}))
 }
 
