@@ -1,5 +1,7 @@
 const frostui.Accent Tone
 const frostui.AllLevels = LevelSet(1<<levelCount - 1)
+const frostui.Connected ConnectionState
+const frostui.Connecting ConnectionState
 const frostui.Danger Tone
 const frostui.DefaultLevels = AllLevels &^ (1 << LevelDebug)
 const frostui.HeroSize = 64
@@ -19,6 +21,7 @@ const frostui.Neutral Tone
 const frostui.RadiusCard = 12
 const frostui.RadiusChip = 8
 const frostui.RailWidth = 232
+const frostui.Reconnecting ConnectionState
 const frostui.SpaceL = 16
 const frostui.SpaceM = 12
 const frostui.SpaceS = 8
@@ -72,6 +75,13 @@ field frostui.Confirm.Note string
 field frostui.Confirm.OnCancel func()
 field frostui.Confirm.OnConfirm func()
 field frostui.Confirm.Title string
+field frostui.Connection.Daemon string
+field frostui.Connection.Host string
+field frostui.Connection.OnClick func()
+field frostui.Connection.OnDetails func()
+field frostui.Connection.OnRetry func()
+field frostui.Connection.Reason string
+field frostui.Connection.State ConnectionState
 field frostui.ConsoleView.Levels LevelSet
 field frostui.ConsoleView.Open bool
 field frostui.ConsoleView.Query string
@@ -211,6 +221,8 @@ func frostui.Chrome(*ui.Theme) ui.Color
 func frostui.CodeDialog(*ui.Context, string, string, string, string) (bool, bool)
 func frostui.ColorPill(*ui.Context, string, ui.Color) ui.Element
 func frostui.CommandRow(*ui.Context, CommandItem) ui.Element
+func frostui.ConnectingScreen(*ui.Context, Connection) ui.Element
+func frostui.ConnectionStatus(*ui.Context, Connection) ui.Element
 func frostui.DesktopIconTheme() string
 func frostui.DisclosureCard(*ui.Context, *bool, Disclosure) bool
 func frostui.DotPill(*ui.Context, string, ui.Color) ui.Element
@@ -327,6 +339,8 @@ type frostui.Brand struct
 type frostui.Command struct
 type frostui.CommandItem struct
 type frostui.Confirm struct
+type frostui.Connection struct
+type frostui.ConnectionState int
 type frostui.Console struct
 type frostui.ConsoleView struct
 type frostui.ConsoleWriter struct
