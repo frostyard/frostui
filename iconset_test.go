@@ -53,11 +53,14 @@ func TestKitIconSetHoldsOnlyMappedIcons(t *testing.T) {
 
 // iconCall finds the icon names the kit's source passes to its drawing
 // functions, and to the Icon field of a struct.
-var iconCall = regexp.MustCompile(`(?:\b(?:Icon|IconButton|IconTile|IconPill|LabeledButton|Empty)\(c[^,"]*, "([a-z][a-z0-9-]*)"|\bIcon: "([a-z][a-z0-9-]*)")`)
+var iconCall = regexp.MustCompile(`(?:\b(?:Icon|IconButton|IconTile|IconPill|LabeledButton|Empty|toggleButton)\(c[^,"]*, "([a-z][a-z0-9-]*)"|\bIcon: "([a-z][a-z0-9-]*)")`)
 
 // TestKitDrawsOnlyMappedIcons fails when the kit starts to draw a name its
 // own set lacks, which off Linux would be an empty box.
 func TestKitDrawsOnlyMappedIcons(t *testing.T) {
+	if !iconCall.MatchString(`toggleButton(c, "sidebar-show", "Sidebar", open)`) {
+		t.Error("the pattern does not see toggleButton's icon")
+	}
 	paths, err := filepath.Glob("*.go")
 	if err != nil {
 		t.Fatal(err)
