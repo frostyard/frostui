@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"image/color"
 	"strings"
 	"sync"
 	"testing"
@@ -488,5 +489,108 @@ func TestPaletteCommandShowsInTheNextFrame(t *testing.T) {
 	tt.Frame()
 	if !tt.HasText("Page updates") {
 		t.Errorf("the chosen command's page waits a frame: %q", tt.Texts())
+	}
+}
+
+// paletteShows reports whether the palette's list shows the row title
+// whole, between its search field and its footer: a row the list built
+// but scrolled out of sight does not count.
+func paletteShows(tt *ui.Tester, title string) bool {
+	r, ok := tt.Find(title)
+	field, fok := tt.Find("Command")
+	foot, nok := tt.Find("Navigate")
+	if !ok || !fok || !nok {
+		return false
+	}
+	return r.Y >= field.Y+field.H && r.Y+r.H <= foot.Y
+}
+
+// paletteTint returns the color of the row of title at the right end of
+// its title, where the row's background shows.
+func paletteTint(tt *ui.Tester, title string) color.RGBA {
+	r, _ := tt.Find(title)
+	return tt.Image().RGBAAt(int(r.X+r.W)-2, int(r.Y+r.H/2))
+}
+
+func longPalette(ran *string) []Command {
+	var cmds []Command
+	for i := range 40 {
+		id := fmt.Sprintf("c%02d", i)
+		cmds = append(cmds, Command{ID: id, Title: fmt.Sprintf("Command %02d", i), Group: "Actions", Run: func() { *ran = id }})
+	}
+	return cmds
+}
+
+func TestPaletteReopensAtTheFirstCommand(t *testing.T) {
+	var s Shell
+	ran := ""
+	cmds := longPalette(&ran)
+	tt := ui.NewTester(func(c *ui.Context) {
+		s.View(c, Frame{Content: func() { Title(c, "Page") }, Commands: cmds})
+	}, 1280, 800)
+	open := func() {
+		t.Helper()
+		if err := tt.Click("Search or run a command"); err != nil {
+			t.Fatal(err)
+		}
+		if !s.Palette.Open {
+			t.Fatal("the palette did not open")
+		}
+	}
+	open()
+	for range 35 {
+		tt.Key(0, ui.KeyDown)
+	}
+	if s.Palette.Selected != 35 || !paletteShows(tt, "Command 35") || paletteShows(tt, "Command 00") {
+		t.Fatalf("Down 35 times: selected %d, shows 35 %v, shows 00 %v", s.Palette.Selected,
+			paletteShows(tt, "Command 35"), paletteShows(tt, "Command 00"))
+	}
+	tt.Key(0, ui.KeyEscape)
+	if s.Palette.Open {
+		t.Fatal("Escape did not close the palette")
+	}
+	open()
+	if s.Palette.Selected != 0 {
+		t.Errorf("reopened with %d selected, want 0", s.Palette.Selected)
+	}
+	if !paletteShows(tt, "Command 00") {
+		t.Fatalf("the reopened palette kept its old scroll: the first command, which Enter runs, is off screen: %q", tt.Texts())
+	}
+	if paletteTint(tt, "Command 00") == paletteTint(tt, "Command 01") {
+		t.Error("the first command is not highlighted")
+	}
+	tt.Key(0, ui.KeyEnter)
+	tt.Frame()
+	if ran != "c00" {
+		t.Errorf("Enter ran %q, want c00, the command shown highlighted", ran)
+	}
+}
+
+func TestPaletteQueryStartsAtTheFirstMatch(t *testing.T) {
+	var s Shell
+	ran := ""
+	cmds := longPalette(&ran)
+	tt := ui.NewTester(func(c *ui.Context) {
+		s.View(c, Frame{Content: func() { Title(c, "Page") }, Commands: cmds})
+	}, 1280, 800)
+	if err := tt.Click("Search or run a command"); err != nil {
+		t.Fatal(err)
+	}
+	for range 35 {
+		tt.Key(0, ui.KeyDown)
+	}
+	if paletteShows(tt, "Command 00") {
+		t.Fatal("Down 35 times did not scroll the list")
+	}
+	tt.Type("Command") // every command still matches, in its order
+	tt.Frame()
+	if s.Palette.Selected != 0 {
+		t.Errorf("a new query left %d selected, want 0", s.Palette.Selected)
+	}
+	if !paletteShows(tt, "Command 00") {
+		t.Fatalf("a new query kept the old scroll: the first match, which Enter runs, is off screen: %q", tt.Texts())
+	}
+	if paletteTint(tt, "Command 00") == paletteTint(tt, "Command 01") {
+		t.Error("the first match is not highlighted")
 	}
 }

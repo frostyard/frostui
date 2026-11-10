@@ -114,9 +114,19 @@ type Palette struct {
 	pending  func()
 }
 
-// Show opens the palette with an empty query.
+// Show opens the palette with an empty query, at its first command,
+// selected: the list scrolls back to its top, so the command Enter runs
+// is the one shown highlighted.
 func (p *Palette) Show() {
-	p.Open, p.Query, p.Selected = true, "", 0
+	p.Open, p.Query = true, ""
+	p.selectFirst()
+}
+
+// selectFirst selects the first command and scrolls the list to it, for
+// a list that kept the offset of an earlier query or opening.
+func (p *Palette) selectFirst() {
+	p.Selected = 0
+	p.list.ScrollTo(0, ui.Start)
 }
 
 // RunPending runs the command chosen in the last frame, once the palette
@@ -155,7 +165,7 @@ func (p *Palette) View(c *ui.Context, cmds []Command) {
 		ui.Column(c).Width(620).Height(440).Gap(0).AlignItems(ui.Stretch).Children(func() {
 			field := ui.SearchField(c, &p.Query).Label("Command").Placeholder("Type a command or search").AutoFocus()
 			if field.Changed() {
-				p.Selected = 0
+				p.selectFirst()
 			}
 			field.OnShortcut(0, ui.KeyDown, func() {
 				if p.Selected < len(shown)-1 {

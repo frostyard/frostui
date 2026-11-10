@@ -64,7 +64,10 @@ Run}`. `Match` scores an ordered subsequence, ignoring case: word starts,
 runs and a match at the start count more, and shorter texts win among
 equals. `Filter` ranks by title and hint (a hint match counts 4 less) and,
 with an empty query, keeps the commands in order, grouped by first-seen
-group. Up, Down, Enter and Escape work in the field. A chosen command runs
+group. Up, Down, Enter and Escape work in the field. Opening the palette
+(`Show`) and changing the query select the first command and scroll the
+list back to it, so the command Enter runs is the one shown highlighted,
+never one scrolled off by an earlier opening. A chosen command runs
 after the palette closes, before the page is built (`RunPending`), so a
 command that changes the page or asks a question shows in the same frame.
 
