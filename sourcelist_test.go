@@ -92,6 +92,35 @@ func TestSourceListSectionHeaderHidesItsItems(t *testing.T) {
 	}
 }
 
+func TestSourceListChoosesNothingAtFirst(t *testing.T) {
+	l := mailList()
+	fired := 0
+	l.OnSelect = func(string) { fired++ }
+	// Calls before the first frame must not make the first row a choice.
+	l.SetSectionOpen("files", true)
+	l.SetOpen("files", "Projects", true)
+	tt := listTester(l, []SourceSection[string]{{ID: "files", Items: []string{"Projects", "Spam"}}})
+	tt.Frame()
+	if item, _, ok := l.Selected(); ok || fired != 0 {
+		t.Errorf("Selected = %q, %v; OnSelect ran %d times", item, ok, fired)
+	}
+}
+
+func TestSourceListF2WhileRenamingKeepsTheDraft(t *testing.T) {
+	l := mailList()
+	l.Rename = func(string, string) {}
+	tt := listTester(l, mailSections())
+	l.StartRename("work", "Spam")
+	tt.Frame()
+	tt.Key(ui.Cmd, ui.KeyA)
+	tt.Type("Junk")
+	tt.Key(0, ui.KeyF2)
+	tt.Frame()
+	if l.draft != "Junk" {
+		t.Errorf("draft = %q after F2 in the field", l.draft)
+	}
+}
+
 func TestSourceListWithoutATitleHasNoHeader(t *testing.T) {
 	l := mailList()
 	tt := listTester(l, []SourceSection[string]{{ID: "files", Items: []string{"Projects", "Spam"}}})

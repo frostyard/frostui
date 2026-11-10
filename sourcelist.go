@@ -110,6 +110,7 @@ type SourceList[K comparable] struct {
 	DragItems func(items []K) any
 
 	state    ui.OutlineState[sourceKey[K]]
+	started  bool
 	row      int
 	sel      sourceKey[K]
 	hasSel   bool
@@ -437,7 +438,12 @@ func (s *SourceList[K]) View(c *ui.Context, sections []SourceSection[K]) ui.Elem
 	s.sections = sections
 	if s.seen == nil {
 		s.seen = map[string]bool{}
-		s.row = -1
+	}
+	if !s.started {
+		s.started = true
+		if !s.hasSel {
+			s.row = -1 // the zero row would be a choice
+		}
 	}
 	roots := s.roots()
 	st := &s.state
@@ -501,7 +507,7 @@ func (s *SourceList[K]) View(c *ui.Context, sections []SourceSection[K]) ui.Elem
 	}
 	if s.Rename != nil {
 		out.OnShortcut(0, ui.KeyF2, func() {
-			if s.hasSel {
+			if s.hasSel && !s.renaming {
 				s.StartRename(s.sel.section, s.sel.item)
 			}
 		})
