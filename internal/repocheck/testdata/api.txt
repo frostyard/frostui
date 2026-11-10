@@ -1,0 +1,350 @@
+const frostui.Accent Tone
+const frostui.AllLevels = LevelSet(1<<levelCount - 1)
+const frostui.Danger Tone
+const frostui.DefaultLevels = AllLevels &^ (1 << LevelDebug)
+const frostui.HeroSize = 64
+const frostui.JobCanceled JobState
+const frostui.JobDone JobState
+const frostui.JobFailed JobState
+const frostui.JobQueued JobState
+const frostui.JobRunning JobState
+const frostui.LevelCommand Level
+const frostui.LevelDebug Level
+const frostui.LevelDryRun Level
+const frostui.LevelError Level
+const frostui.LevelInfo Level
+const frostui.LevelOutput Level
+const frostui.LevelWarn Level
+const frostui.Neutral Tone
+const frostui.RadiusCard = 12
+const frostui.RadiusChip = 8
+const frostui.RailWidth = 232
+const frostui.SpaceL = 16
+const frostui.SpaceM = 12
+const frostui.SpaceS = 8
+const frostui.SpaceXL = 24
+const frostui.SpaceXS = 4
+const frostui.StepDone StepState
+const frostui.StepFailed StepState
+const frostui.StepHeld StepState
+const frostui.StepQueued StepState
+const frostui.StepReady StepState
+const frostui.StepRunning StepState
+const frostui.StepSkipped StepState
+const frostui.Success Tone
+const frostui.ToastWidth = 640
+const frostui.TopBarHeight = 52
+const frostui.Warning Tone
+const frostuitest.Timeout = 5 * time.Second
+field frostui.About.Copyright string
+field frostui.About.Developers []string
+field frostui.About.Issues string
+field frostui.About.License string
+field frostui.About.Logo string
+field frostui.About.Name string
+field frostui.About.Summary string
+field frostui.About.Version string
+field frostui.About.Website string
+field frostui.Brand.Logo *ui.SVG
+field frostui.Brand.Name string
+field frostui.Brand.Tagline string
+field frostui.Command.Disabled bool
+field frostui.Command.Group string
+field frostui.Command.Hint string
+field frostui.Command.ID string
+field frostui.Command.Icon string
+field frostui.Command.Keys []string
+field frostui.Command.Reason string
+field frostui.Command.Run func()
+field frostui.Command.Title string
+field frostui.CommandItem.Action func()
+field frostui.CommandItem.Admin bool
+field frostui.CommandItem.Command string
+field frostui.CommandItem.Icon string
+field frostui.CommandItem.Status func()
+field frostui.CommandItem.Title string
+field frostui.Confirm.Action string
+field frostui.Confirm.Body string
+field frostui.Confirm.Cancel string
+field frostui.Confirm.Destructive bool
+field frostui.Confirm.Details []KeyValue
+field frostui.Confirm.Note string
+field frostui.Confirm.OnCancel func()
+field frostui.Confirm.OnConfirm func()
+field frostui.Confirm.Title string
+field frostui.ConsoleView.Levels LevelSet
+field frostui.ConsoleView.Open bool
+field frostui.ConsoleView.Query string
+field frostui.ConsoleView.Subtitle string
+field frostui.ConsoleWriter.Classify func(text string) Level
+field frostui.Disclosure.Body func()
+field frostui.Disclosure.Icon string
+field frostui.Disclosure.Subtitle string
+field frostui.Disclosure.Title string
+field frostui.Disclosure.Trailing func()
+field frostui.Figure.Label string
+field frostui.Figure.Note string
+field frostui.Figure.OnClick func()
+field frostui.Figure.Tone Tone
+field frostui.Figure.Value string
+field frostui.Frame.Actions func()
+field frostui.Frame.Commands []Command
+field frostui.Frame.ConsoleData *Console
+field frostui.Frame.Content func()
+field frostui.Frame.Menu func(m *ui.Menu)
+field frostui.Frame.Nav []NavSection
+field frostui.Frame.RailFooter func()
+field frostui.Frame.Status []StatusItem
+field frostui.Frame.StatusEnd []StatusItem
+field frostui.HeroIcon.Busy bool
+field frostui.HeroIcon.Logo *ui.SVG
+field frostui.HeroIcon.Name string
+field frostui.HeroIcon.Tone Tone
+field frostui.Icons.Theme string
+field frostui.Info.Open bool
+field frostui.Job.Done func(err error)
+field frostui.Job.Ended time.Time
+field frostui.Job.Err error
+field frostui.Job.Fraction float64
+field frostui.Job.ID int
+field frostui.Job.Key string
+field frostui.Job.Run func(ctx context.Context, p *Progress) error
+field frostui.Job.Source string
+field frostui.Job.Started time.Time
+field frostui.Job.State JobState
+field frostui.Job.Status string
+field frostui.Job.Title string
+field frostui.Job.Unstoppable bool
+field frostui.Jobs.OnIdle func(batch []*Job)
+field frostui.KeyValue.Key string
+field frostui.KeyValue.Mono bool
+field frostui.KeyValue.Value string
+field frostui.KeyValuesStyle.FontSize float32
+field frostui.KeyValuesStyle.Gap float32
+field frostui.KeyValuesStyle.KeyWidth float32
+field frostui.Line.At time.Time
+field frostui.Line.Level Level
+field frostui.Line.Seq uint64
+field frostui.Line.Source string
+field frostui.Line.Text string
+field frostui.NavItem.Badge string
+field frostui.NavItem.BadgeTone Tone
+field frostui.NavItem.ID string
+field frostui.NavItem.Icon string
+field frostui.NavItem.Shortcut string
+field frostui.NavItem.Title string
+field frostui.NavSection.Items []NavItem
+field frostui.NavSection.Title string
+field frostui.Palette.Open bool
+field frostui.Palette.Query string
+field frostui.Palette.Selected int
+field frostui.RowStatus.Compact bool
+field frostui.RowStatus.Label string
+field frostui.RowStatus.State StepState
+field frostui.RowStatus.Text string
+field frostui.RowStatus.Tooltip string
+field frostui.SectionHead.Aside string
+field frostui.SectionHead.Icon string
+field frostui.SectionHead.Note string
+field frostui.SectionHead.Quiet bool
+field frostui.SectionHead.Title string
+field frostui.Segment.Label string
+field frostui.Segment.Tone Tone
+field frostui.Segment.Value float64
+field frostui.Series.Name string
+field frostui.Series.Tone Tone
+field frostui.Series.Values []float64
+field frostui.Shell.Brand Brand
+field frostui.Shell.Console ConsoleView
+field frostui.Shell.Dialogs *Dialogs
+field frostui.Shell.Info Info
+field frostui.Shell.Palette Palette
+field frostui.Shell.Selected string
+field frostui.ShortcutEntry.Group string
+field frostui.ShortcutEntry.Keys []string
+field frostui.ShortcutEntry.Title string
+field frostui.Stage.Empty string
+field frostui.Stage.Icon string
+field frostui.Stage.Note string
+field frostui.Stage.Steps []Step
+field frostui.Stage.Title string
+field frostui.StatusItem.Icon string
+field frostui.StatusItem.OnClick func()
+field frostui.StatusItem.Progress float64
+field frostui.StatusItem.Text string
+field frostui.StatusItem.Tone Tone
+field frostui.StatusItem.Tooltip string
+field frostui.Step.Note string
+field frostui.Step.State StepState
+field frostui.Step.Title string
+field frostui.Tab.Icon string
+field frostui.Tab.Title string
+field frostui.Tile.Caption string
+field frostui.Tile.Current bool
+field frostui.Tile.Detail string
+field frostui.Tile.DetailTooltip string
+field frostui.Tile.Dim bool
+field frostui.Tile.Icon string
+field frostui.Tile.Pill string
+field frostui.Tile.PillIcon string
+field frostui.Tile.Value string
+func frostui.AboutBody(About) func(c *ui.Context)
+func frostui.Adapt(*ui.Context) *ui.Theme
+func frostui.Banner(*ui.Context, Tone, string, string, string, bool) (bool, bool)
+func frostui.Body(*ui.Context, string) ui.Element
+func frostui.Caption(*ui.Context, string) ui.Element
+func frostui.Card(*ui.Context) ui.Element
+func frostui.CardHeader(*ui.Context, string, string, func())
+func frostui.Chrome(*ui.Theme) ui.Color
+func frostui.CodeDialog(*ui.Context, string, string, string, string) (bool, bool)
+func frostui.ColorPill(*ui.Context, string, ui.Color) ui.Element
+func frostui.CommandRow(*ui.Context, CommandItem) ui.Element
+func frostui.DesktopIconTheme() string
+func frostui.DisclosureCard(*ui.Context, *bool, Disclosure) bool
+func frostui.DotPill(*ui.Context, string, ui.Color) ui.Element
+func frostui.Duration(time.Duration) string
+func frostui.Empty(*ui.Context, string, string, string) ui.Element
+func frostui.Figures(*ui.Context, []Figure) ui.Element
+func frostui.Filter([]Command, string) []Command
+func frostui.Gauge(*ui.Context, float64, float64, string, string, Tone, float32) ui.Element
+func frostui.Heading(*ui.Context, string) ui.Element
+func frostui.Hero(*ui.Context, HeroIcon, string, string) ui.Element
+func frostui.Icon(*ui.Context, string) ui.Element
+func frostui.IconButton(*ui.Context, string, string) ui.Element
+func frostui.IconPill(*ui.Context, string, string, Tone) ui.Element
+func frostui.IconSVG(string) *ui.SVG
+func frostui.IconTile(*ui.Context, string, Tone, float32) ui.Element
+func frostui.Initials(string) string
+func frostui.JobCard(*ui.Context, *Jobs)
+func frostui.JobStatus(*ui.Context, RowStatus)
+func frostui.Kbd(*ui.Context, string) ui.Element
+func frostui.KeyValues(*ui.Context, []KeyValue, ...KeyValuesStyle) ui.Element
+func frostui.LabeledButton(*ui.Context, string, string, bool) ui.Element
+func frostui.LaunchDesktopApp(string) error
+func frostui.Legend(*ui.Context, Tone, string) ui.Element
+func frostui.LiveChart(*ui.Context, string, float32, ...Series) ui.Element
+func frostui.Loading(*ui.Context, string) ui.Element
+func frostui.Match(string, string) (int, bool)
+func frostui.Mono(*ui.Context, string) ui.Element
+func frostui.Muted(*ui.Context, string) ui.Element
+func frostui.NewConsole(int) *Console
+func frostui.NewIcons(map[string][]byte) *Icons
+func frostui.NewJobs(func(func()), *Console) *Jobs
+func frostui.PageHeader(*ui.Context, string, string, func())
+func frostui.Panel(*ui.Theme) ui.Color
+func frostui.Pill(*ui.Context, string, Tone) ui.Element
+func frostui.PillTabs(*ui.Context, *int, []Tab) ui.Element
+func frostui.Pipeline(*ui.Context, []Stage) ui.Element
+func frostui.Problem(*ui.Context, string) ui.Element
+func frostui.RowDivider(*ui.Context) ui.Element
+func frostui.RunSummary([]*Job) string
+func frostui.Section(*ui.Context, string, string, string, func())
+func frostui.SectionHeader(*ui.Context, SectionHead) ui.Element
+func frostui.SegmentBar(*ui.Context, string, float64, []Segment, func(Segment) string) ui.Element
+func frostui.SetAppID(string, string) error
+func frostui.SetIcons(*Icons)
+func frostui.Shortcut(*ui.Context, ...string) ui.Element
+func frostui.ShortcutsBody([]ShortcutEntry) func(c *ui.Context)
+func frostui.SoftSelection(*ui.Theme) *ui.Theme
+func frostui.SquareAvatar(*ui.Context, string, float32) ui.Element
+func frostui.StateOf(*Job) StepState
+func frostui.StepDots(*ui.Context, int, int) ui.Element
+func frostui.StepTile(*ui.Context, Tile) ui.Element
+func frostui.Strong(*ui.Context, string) ui.Element
+func frostui.SwitchRow(*ui.Context, string, string, *bool) ui.Element
+func frostui.Text([]Line) string
+func frostui.TileGrid(*ui.Context) ui.Element
+func frostui.Title(*ui.Context, string) ui.Element
+func frostui.ToggleTile(*ui.Context, string, string, string, bool, bool) bool
+func frostui.ToneColor(*ui.Theme, Tone) ui.Color
+func frostui.ToneFill(*ui.Theme, Tone) ui.Color
+func frostui.Toned(*ui.Context, string, Tone) ui.Element
+func frostui.TopToasts(*ui.Context, string)
+func frostui.VersionChange(*ui.Context, string, string) ui.Element
+func frostuitest.NewLoop() *Loop
+method (*Console) frostui.Add(Level, string, string)
+method (*Console) frostui.Addf(Level, string, string, ...any)
+method (*Console) frostui.Clear()
+method (*Console) frostui.Counts() (int, int)
+method (*Console) frostui.Lines(*LevelSet, string) []Line
+method (*Console) frostui.Seq() uint64
+method (*Console) frostui.SetNotify(func())
+method (*Console) frostui.Writer(Level, string) *ConsoleWriter
+method (*ConsoleView) frostui.View(*ui.Context, *Console)
+method (*ConsoleWriter) frostui.Write([]byte) (int, error)
+method (*Dialogs) frostui.Ask(Confirm)
+method (*Dialogs) frostui.Showing() bool
+method (*Dialogs) frostui.View(*ui.Context)
+method (*Icons) frostui.Get(string) *ui.SVG
+method (*Info) frostui.Show(string, func(c *ui.Context))
+method (*Info) frostui.View(*ui.Context)
+method (*Jobs) frostui.Batch() (int, int)
+method (*Jobs) frostui.BatchFraction() float64
+method (*Jobs) frostui.BatchJobs() []*Job
+method (*Jobs) frostui.Busy() bool
+method (*Jobs) frostui.CanStop() bool
+method (*Jobs) frostui.CancelAll()
+method (*Jobs) frostui.Current() *Job
+method (*Jobs) frostui.Enqueue(...*Job)
+method (*Jobs) frostui.Find(string, string) *Job
+method (*Jobs) frostui.History() []*Job
+method (*Jobs) frostui.Pending(string, string) bool
+method (*Jobs) frostui.Queued() []*Job
+method (*Jobs) frostui.Stopping() bool
+method (*LevelSet) frostui.Has(Level) bool
+method (*LevelSet) frostui.Toggle(Level)
+method (*Loop) frostuitest.Flush() int
+method (*Loop) frostuitest.Pending() int
+method (*Loop) frostuitest.Post(func())
+method (*Loop) frostuitest.Ran() int
+method (*Loop) frostuitest.RunUntil(testing.TB, func() bool)
+method (*Loop) frostuitest.Settle(time.Duration)
+method (*Palette) frostui.RunPending()
+method (*Palette) frostui.Show()
+method (*Palette) frostui.View(*ui.Context, []Command)
+method (*Progress) frostui.Log(Level, string, ...any)
+method (*Progress) frostui.Set(float64, string)
+method (*Shell) frostui.View(*ui.Context, Frame)
+method (JobState) frostui.Ended() bool
+type frostui.About struct
+type frostui.Brand struct
+type frostui.Command struct
+type frostui.CommandItem struct
+type frostui.Confirm struct
+type frostui.Console struct
+type frostui.ConsoleView struct
+type frostui.ConsoleWriter struct
+type frostui.Dialogs struct
+type frostui.Disclosure struct
+type frostui.Figure struct
+type frostui.Frame struct
+type frostui.HeroIcon struct
+type frostui.Icons struct
+type frostui.Info struct
+type frostui.Job struct
+type frostui.JobState int
+type frostui.Jobs struct
+type frostui.KeyValue struct
+type frostui.KeyValuesStyle struct
+type frostui.Level uint8
+type frostui.LevelSet uint16
+type frostui.Line struct
+type frostui.NavItem struct
+type frostui.NavSection struct
+type frostui.Palette struct
+type frostui.Progress struct
+type frostui.RowStatus struct
+type frostui.SectionHead struct
+type frostui.Segment struct
+type frostui.Series struct
+type frostui.Shell struct
+type frostui.ShortcutEntry struct
+type frostui.Stage struct
+type frostui.StatusItem struct
+type frostui.Step struct
+type frostui.StepState int
+type frostui.Tab struct
+type frostui.Tile struct
+type frostui.Tone int
+type frostuitest.Loop struct
+var frostui.LevelNames [levelCount]string
