@@ -1,15 +1,17 @@
 # After you create a repository from this template
 
+The admin steps that a template does not copy, for frostyard/frostui.
+
 [Back to the README](../README.md).
 
 1. Create the 5 labels:
 
    ```sh
-   gh label create risk:high --repo OWNER/REPO --color B60205 --description "Touches a path in .github/risk-paths.json"
-   gh label create level:L1 --repo OWNER/REPO --color B60205 --description "Read every line"
-   gh label create level:L2 --repo OWNER/REPO --color D93F0B --description "Read the diff"
-   gh label create level:L3 --repo OWNER/REPO --color FBCA04 --description "Skim"
-   gh label create level:L4 --repo OWNER/REPO --color 0E8A16 --description "Title and CI"
+   gh label create risk:high --repo frostyard/frostui --color B60205 --description "Touches a path in .github/risk-paths.json"
+   gh label create level:L1 --repo frostyard/frostui --color B60205 --description "Read every line"
+   gh label create level:L2 --repo frostyard/frostui --color D93F0B --description "Read the diff"
+   gh label create level:L3 --repo frostyard/frostui --color FBCA04 --description "Skim"
+   gh label create level:L4 --repo frostyard/frostui --color 0E8A16 --description "Title and CI"
    ```
 
    Labels are not copied from a template. Without `risk:high`, the PR triage job
@@ -19,7 +21,7 @@
    never changes an existing label:
 
    ```sh
-   scripts/apply-triage-settings.sh OWNER/REPO --apply
+   scripts/apply-triage-settings.sh frostyard/frostui --apply
    ```
 
 2. Add a ruleset on the default branch: it requires the `verify` check and a
@@ -27,7 +29,7 @@
    Repository admins can bypass it. Run it as a repository admin:
 
    ```sh
-   gh api -X POST repos/OWNER/REPO/rulesets --input - <<'EOF'
+   gh api -X POST repos/frostyard/frostui/rulesets --input - <<'EOF'
    {"name":"main: require verify","target":"branch","enforcement":"active",
     "conditions":{"ref_name":{"include":["~DEFAULT_BRANCH"],"exclude":[]}},
     "bypass_actors":[{"actor_id":5,"actor_type":"RepositoryRole","bypass_mode":"always"}],
@@ -47,7 +49,7 @@
    repository admin:
 
    ```sh
-   gh api -X PUT repos/OWNER/REPO/private-vulnerability-reporting
+   gh api -X PUT repos/frostyard/frostui/private-vulnerability-reporting
    ```
 
 4. Add your repository's high-risk paths to `.github/risk-paths.json`. The list

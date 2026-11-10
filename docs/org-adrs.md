@@ -3,8 +3,9 @@
 Some conventions are decided at org level. They are ADRs in
 [frostyard/core](https://github.com/frostyard/core/tree/main/docs/adr).
 
-These ADRs bind a repository made from this template. The list below says what
-each one binds here, and where it lives in this repository.
+These ADRs bind this repository, which is made from the agentic template. The
+list below says what each one binds here, and where it lives in this
+repository.
 
 ## Baseline decisions
 
@@ -25,14 +26,15 @@ each one binds here, and where it lives in this repository.
 
 ## When they apply
 
-Some decisions apply only when the repository gains a certain kind of code:
+Some decisions apply only when the repository has a certain kind of code:
 
-- [ADR-0012 — svu-derived versions, make bump, and the rolling dev prerelease](https://github.com/frostyard/core/blob/main/docs/adr/0012-svu-versioning-and-rolling-dev-prerelease.md) and [ADR-0053 — Name the svu config file `.svu.yml`](https://github.com/frostyard/core/blob/main/docs/adr/0053-name-the-svu-config-svu-yml.md) — for a released Go repository: add `.svu.yml` and a `bump` target that runs `svu next`.
-- [ADR-0070 — Build tool docs sites with ProperDocs and MaterialX on GitHub Pages](https://github.com/frostyard/core/blob/main/docs/adr/0070-build-tool-docs-sites-with-materialx-on-github-pages.md) — for a user-facing tool: add a `site/` docs site.
+- [ADR-0012 — svu-derived versions, make bump, and the rolling dev prerelease](https://github.com/frostyard/core/blob/main/docs/adr/0012-svu-versioning-and-rolling-dev-prerelease.md) and [ADR-0053 — Name the svu config file `.svu.yml`](https://github.com/frostyard/core/blob/main/docs/adr/0053-name-the-svu-config-svu-yml.md) — this is a released Go library: [`.svu.yml`](../.svu.yml) and the `bump` target of the [`Makefile`](../Makefile) tag `svu next`. A library publishes no binaries, so it has no GoReleaser configuration and no rolling `dev` prerelease.
+- [ADR-0070 — Build tool docs sites with ProperDocs and MaterialX on GitHub Pages](https://github.com/frostyard/core/blob/main/docs/adr/0070-build-tool-docs-sites-with-materialx-on-github-pages.md) — for a user-facing tool only; a library documents itself on pkg.go.dev, so this repository has no `site/`.
 
-A Go repository uses the Go minor and the golangci-lint version in core's
+This Go repository uses the Go minor and the golangci-lint version in core's
 `frostyard-go-repo` skill, section
-[Fleet toolchain](https://github.com/frostyard/core/blob/main/.agents/skills/frostyard-go-repo/SKILL.md#fleet-toolchain).
+[Fleet toolchain](https://github.com/frostyard/core/blob/main/.agents/skills/frostyard-go-repo/SKILL.md#fleet-toolchain):
+go.mod's `go 1.27.3` and `golangci-lint = "2.15.0"` in [`mise.toml`](../mise.toml).
 
 When you change behavior that one of these ADRs covers, update or supersede the
 ADR in frostyard/core first.
