@@ -199,6 +199,16 @@ func LabeledButton(c *ui.Context, icon, label string, primary bool) ui.Element {
 // Banner is a full-width notice in a tone, with an optional action and a
 // close button. It reports a click on the action and on close.
 func Banner(c *ui.Context, tone Tone, icon, text, action string, closable bool) (acted, closed bool) {
+	closeLabel := ""
+	if closable {
+		closeLabel = "Dismiss"
+	}
+	return BannerClose(c, tone, icon, text, action, closeLabel)
+}
+
+// BannerClose is Banner with its close button named closeLabel, for
+// assistive technology and its tooltip; "" draws no close button.
+func BannerClose(c *ui.Context, tone Tone, icon, text, action, closeLabel string) (acted, closed bool) {
 	t := c.Theme()
 	color := ToneColor(t, tone)
 	ui.Row(c).Gap(SpaceM).Padding(SpaceM, SpaceL).Radius(RadiusCard).
@@ -209,7 +219,7 @@ func Banner(c *ui.Context, tone Tone, icon, text, action string, closable bool) 
 			if action != "" && ui.Button(c, action).Clicked() {
 				acted = true
 			}
-			if closable && IconButton(c, "window-close", "Dismiss").Clicked() {
+			if closeLabel != "" && IconButton(c, "window-close", closeLabel).Clicked() {
 				closed = true
 			}
 		})

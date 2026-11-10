@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync/atomic"
 	"time"
 
 	"github.com/egoist/mygo/ui"
@@ -57,7 +56,7 @@ var pageKeys = []ui.Key{ui.Key1, ui.Key2, ui.Key3}
 // (Window.Update in the program, a frostuitest.Loop in the tests).
 func newDemo(post func(func()), fetch fetchFunc) *demo {
 	con := frostui.NewConsole(4000)
-	con.SetNotify(coalesce(post))
+	con.SetNotify(frostui.NewWaker(post, 60*time.Millisecond).Wake)
 	d := &demo{console: con, jobs: frostui.NewJobs(post, con), fetch: fetch, openConsoleOnError: true}
 	d.shell.Brand = frostui.Brand{Name: "Command center", Tagline: "A frostui example", Logo: ui.MustParseSVG([]byte(logoSVG))}
 	d.shell.Selected = "overview"
@@ -78,17 +77,6 @@ func newDemo(post func(func()), fetch fetchFunc) *demo {
 	}
 	con.Add(frostui.LevelInfo, "app", "Command center started")
 	return d
-}
-
-// coalesce returns a wake function for the console: a burst of lines
-// posts one rebuild, since Window.Update rebuilds the view on every call.
-func coalesce(post func(func())) func() {
-	var pending atomic.Bool
-	return func() {
-		if pending.CompareAndSwap(false, true) {
-			post(func() { pending.Store(false) })
-		}
-	}
 }
 
 // sync queues one job per folder of each account, after the jobs that

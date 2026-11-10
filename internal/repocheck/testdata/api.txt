@@ -1,5 +1,8 @@
 const frostui.Accent Tone
 const frostui.AllLevels = LevelSet(1<<levelCount - 1)
+const frostui.Connected ConnectionState
+const frostui.Connecting ConnectionState
+const frostui.ConsoleCommandID = "frostui.console"
 const frostui.Danger Tone
 const frostui.DefaultLevels = AllLevels &^ (1 << LevelDebug)
 const frostui.HeroSize = 64
@@ -19,6 +22,7 @@ const frostui.Neutral Tone
 const frostui.RadiusCard = 12
 const frostui.RadiusChip = 8
 const frostui.RailWidth = 232
+const frostui.Reconnecting ConnectionState
 const frostui.SpaceL = 16
 const frostui.SpaceM = 12
 const frostui.SpaceS = 8
@@ -45,6 +49,13 @@ field frostui.About.Name string
 field frostui.About.Summary string
 field frostui.About.Version string
 field frostui.About.Website string
+field frostui.ActionToast.Action string
+field frostui.ActionToast.Countdown bool
+field frostui.ActionToast.OnAction func()
+field frostui.ActionToast.OnExpire func()
+field frostui.ActionToast.Timeout time.Duration
+field frostui.ActionToast.Title string
+field frostui.ActionToast.Type string
 field frostui.Brand.Logo *ui.SVG
 field frostui.Brand.Name string
 field frostui.Brand.Tagline string
@@ -72,10 +83,20 @@ field frostui.Confirm.Note string
 field frostui.Confirm.OnCancel func()
 field frostui.Confirm.OnConfirm func()
 field frostui.Confirm.Title string
+field frostui.Connection.Daemon string
+field frostui.Connection.Host string
+field frostui.Connection.OnClick func()
+field frostui.Connection.OnDetails func()
+field frostui.Connection.OnRetry func()
+field frostui.Connection.Reason string
+field frostui.Connection.State ConnectionState
+field frostui.ConsoleView.EmptyNote string
 field frostui.ConsoleView.Levels LevelSet
+field frostui.ConsoleView.Offered LevelSet
 field frostui.ConsoleView.Open bool
 field frostui.ConsoleView.Query string
 field frostui.ConsoleView.Subtitle string
+field frostui.ConsoleView.Title string
 field frostui.ConsoleWriter.Classify func(text string) Level
 field frostui.Disclosure.Body func()
 field frostui.Disclosure.Icon string
@@ -138,6 +159,38 @@ field frostui.NavSection.Title string
 field frostui.Palette.Open bool
 field frostui.Palette.Query string
 field frostui.Palette.Selected int
+field frostui.Pane.Bar func()
+field frostui.Pane.Collapsible bool
+field frostui.Pane.Content func()
+field frostui.Pane.ID string
+field frostui.Pane.Label string
+field frostui.Pane.Max float32
+field frostui.Pane.Min float32
+field frostui.Pane.Width float32
+field frostui.PaneFrame.Commands []Command
+field frostui.PaneFrame.Connection *Connection
+field frostui.PaneFrame.ConsoleData *Console
+field frostui.PaneFrame.Content func()
+field frostui.PaneFrame.End func()
+field frostui.PaneFrame.InEditor bool
+field frostui.PaneFrame.Menu func(m *ui.Menu)
+field frostui.PaneFrame.Panes []Pane
+field frostui.PaneFrame.SidebarPane string
+field frostui.PaneFrame.SidebarPanes *Panes
+field frostui.PaneFrame.Start func()
+field frostui.PaneFrame.Status []StatusItem
+field frostui.PaneFrame.StatusEnd []StatusItem
+field frostui.PaneFrame.ToastCloseLabel string
+field frostui.PaneLayout.Collapsed map[string]bool
+field frostui.PaneLayout.Widths map[string]float32
+field frostui.PaneShell.Console ConsoleView
+field frostui.PaneShell.ConsoleHeight float32
+field frostui.PaneShell.Dialogs *Dialogs
+field frostui.PaneShell.Info Info
+field frostui.PaneShell.Palette Palette
+field frostui.PaneShell.Panes Panes
+field frostui.Panes.Layout PaneLayout
+field frostui.Panes.Step float32
 field frostui.RowStatus.Compact bool
 field frostui.RowStatus.Label string
 field frostui.RowStatus.State StepState
@@ -191,6 +244,7 @@ field frostui.Tile.Value string
 func frostui.AboutBody(About) func(c *ui.Context)
 func frostui.Adapt(*ui.Context) *ui.Theme
 func frostui.Banner(*ui.Context, Tone, string, string, string, bool) (bool, bool)
+func frostui.BannerClose(*ui.Context, Tone, string, string, string, string) (bool, bool)
 func frostui.Body(*ui.Context, string) ui.Element
 func frostui.Caption(*ui.Context, string) ui.Element
 func frostui.Card(*ui.Context) ui.Element
@@ -199,6 +253,8 @@ func frostui.Chrome(*ui.Theme) ui.Color
 func frostui.CodeDialog(*ui.Context, string, string, string, string) (bool, bool)
 func frostui.ColorPill(*ui.Context, string, ui.Color) ui.Element
 func frostui.CommandRow(*ui.Context, CommandItem) ui.Element
+func frostui.ConnectingScreen(*ui.Context, Connection) ui.Element
+func frostui.ConnectionStatus(*ui.Context, Connection) ui.Element
 func frostui.DesktopIconTheme() string
 func frostui.DisclosureCard(*ui.Context, *bool, Disclosure) bool
 func frostui.DotPill(*ui.Context, string, ui.Color) ui.Element
@@ -230,7 +286,9 @@ func frostui.Muted(*ui.Context, string) ui.Element
 func frostui.NewConsole(int) *Console
 func frostui.NewIcons(map[string][]byte) *Icons
 func frostui.NewJobs(func(func()), *Console) *Jobs
+func frostui.NewWaker(func(func()), time.Duration) *Waker
 func frostui.PageHeader(*ui.Context, string, string, func())
+func frostui.PaletteField(*ui.Context, *Palette) ui.Element
 func frostui.Panel(*ui.Theme) ui.Color
 func frostui.Pill(*ui.Context, string, Tone) ui.Element
 func frostui.PillTabs(*ui.Context, *int, []Tab) ui.Element
@@ -245,6 +303,7 @@ func frostui.SetAppID(string, string) error
 func frostui.SetIcons(*Icons)
 func frostui.Shortcut(*ui.Context, ...string) ui.Element
 func frostui.ShortcutsBody([]ShortcutEntry) func(c *ui.Context)
+func frostui.ShowActionToast(*ui.Context, ActionToast) string
 func frostui.SoftSelection(*ui.Theme) *ui.Theme
 func frostui.SquareAvatar(*ui.Context, string, float32) ui.Element
 func frostui.StateOf(*Job) StepState
@@ -302,15 +361,25 @@ method (*Loop) frostuitest.Settle(time.Duration)
 method (*Palette) frostui.RunPending()
 method (*Palette) frostui.Show()
 method (*Palette) frostui.View(*ui.Context, []Command)
+method (*PaneShell) frostui.ConsoleCommand() Command
+method (*PaneShell) frostui.View(*ui.Context, PaneFrame)
+method (*Panes) frostui.SetCollapsed(string, bool)
+method (*Panes) frostui.Shown(string) bool
+method (*Panes) frostui.Toggle(string)
+method (*Panes) frostui.View(*ui.Context, []Pane) ui.Element
 method (*Progress) frostui.Log(Level, string, ...any)
 method (*Progress) frostui.Set(float64, string)
 method (*Shell) frostui.View(*ui.Context, Frame)
+method (*Waker) frostui.Wake()
 method (JobState) frostui.Ended() bool
 type frostui.About struct
+type frostui.ActionToast struct
 type frostui.Brand struct
 type frostui.Command struct
 type frostui.CommandItem struct
 type frostui.Confirm struct
+type frostui.Connection struct
+type frostui.ConnectionState int
 type frostui.Console struct
 type frostui.ConsoleView struct
 type frostui.ConsoleWriter struct
@@ -332,6 +401,11 @@ type frostui.Line struct
 type frostui.NavItem struct
 type frostui.NavSection struct
 type frostui.Palette struct
+type frostui.Pane struct
+type frostui.PaneFrame struct
+type frostui.PaneLayout struct
+type frostui.PaneShell struct
+type frostui.Panes struct
 type frostui.Progress struct
 type frostui.RowStatus struct
 type frostui.SectionHead struct
@@ -346,5 +420,6 @@ type frostui.StepState int
 type frostui.Tab struct
 type frostui.Tile struct
 type frostui.Tone int
+type frostui.Waker struct
 type frostuitest.Loop struct
 var frostui.LevelNames [levelCount]string

@@ -1,6 +1,6 @@
 # 0005 — Build everywhere, with the freedesktop parts behind build tags
 
-- **Status:** Accepted
+- **Status:** Accepted; its icon fallback superseded by [0007](0007-embed-a-lucide-icon-set-as-the-last-fallback.md)
 - **Date:** 2026-11-10
 
 ## Context

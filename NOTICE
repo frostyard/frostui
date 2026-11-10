@@ -1,0 +1,8 @@
+frostui
+Copyright (c) the frostui authors, under the MIT license (LICENSE).
+
+The SVG files in icons/ are icons of Lucide (https://lucide.dev), taken from
+the icon data of the lucide-react package, version 1.52.0, and written as
+plain SVG files with their upstream names. Lucide is under the ISC license,
+and the icons Lucide derived from Feather are also under the MIT license;
+icons/LICENSE holds both, as Lucide publishes them.
