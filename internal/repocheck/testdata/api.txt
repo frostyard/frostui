@@ -220,6 +220,7 @@ field frostui.Tile.Value string
 func frostui.AboutBody(About) func(c *ui.Context)
 func frostui.Adapt(*ui.Context) *ui.Theme
 func frostui.Banner(*ui.Context, Tone, string, string, string, bool) (bool, bool)
+func frostui.BannerClose(*ui.Context, Tone, string, string, string, string) (bool, bool)
 func frostui.Body(*ui.Context, string) ui.Element
 func frostui.Caption(*ui.Context, string) ui.Element
 func frostui.Card(*ui.Context) ui.Element
