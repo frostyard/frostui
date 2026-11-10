@@ -74,6 +74,11 @@ type PaneFrame struct {
 	// ConsoleData is the console the console pane shows, nil for no
 	// console.
 	ConsoleData *Console
+	// ToastCloseLabel names the close button of the window's toasts;
+	// empty is "Close". The shell draws the toasts as TopToasts does,
+	// under the top bar, so that a toast does not land on the button that
+	// raised it and stop its own time under the pointer.
+	ToastCloseLabel string
 }
 
 // View draws the shell. Ctrl K opens the palette, except inside a text
@@ -104,6 +109,11 @@ func (s *PaneShell) View(c *ui.Context, f PaneFrame) {
 			}
 		})
 	}
+	closeLabel := f.ToastCloseLabel
+	if closeLabel == "" {
+		closeLabel = "Close"
+	}
+	toastsAt(c, closeLabel, TopBarHeight+SpaceS)
 	if s.Dialogs != nil {
 		s.Dialogs.View(c)
 	}

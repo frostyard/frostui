@@ -2,6 +2,7 @@ package frostui
 
 import (
 	"testing"
+	"time"
 
 	"github.com/egoist/mygo/ui"
 )
@@ -388,6 +389,35 @@ func TestPaneShellConnectingCoversTheWindow(t *testing.T) {
 	tt.Frame()
 	if !tt.HasText("side body") {
 		t.Errorf("reconnecting hides the content: %q", tt.Texts())
+	}
+}
+
+// TestPaneShellDrawsToastsUnderTheBar keeps a toast off the bar's buttons:
+// one under the pointer that raised it would stop its own time.
+func TestPaneShellDrawsToastsUnderTheBar(t *testing.T) {
+	var s PaneShell
+	expired := false
+	tt := ui.NewTester(func(c *ui.Context) {
+		s.View(c, PaneFrame{ToastCloseLabel: "Shut", Start: func() {
+			if ui.Button(c, "Raise").Clicked() {
+				ShowActionToast(c, ActionToast{Title: "Moved", Action: "Undo", OnExpire: func() { expired = true }})
+			}
+		}})
+	}, 800, 500)
+	tt.Frame()
+	if err := tt.Click("Raise"); err != nil {
+		t.Fatal(err)
+	}
+	tt.Frame()
+	if r := rect(t, tt, "Moved"); r.Y < TopBarHeight {
+		t.Errorf("the toast is at %v, over the bar", r.Y)
+	}
+	if _, ok := tt.Find("Shut"); !ok {
+		t.Errorf("no close button named Shut in %q", tt.Texts())
+	}
+	tt.Advance(9 * time.Second)
+	if !expired {
+		t.Error("the toast stopped its time under the pointer that raised it")
 	}
 }
 

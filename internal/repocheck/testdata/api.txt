@@ -180,6 +180,7 @@ field frostui.PaneFrame.SidebarPanes *Panes
 field frostui.PaneFrame.Start func()
 field frostui.PaneFrame.Status []StatusItem
 field frostui.PaneFrame.StatusEnd []StatusItem
+field frostui.PaneFrame.ToastCloseLabel string
 field frostui.PaneLayout.Collapsed map[string]bool
 field frostui.PaneLayout.Widths map[string]float32
 field frostui.PaneShell.Console ConsoleView

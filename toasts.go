@@ -18,14 +18,18 @@ const ToastWidth = 640
 // its time. A toast of Type "error" leads with a warning icon, and one
 // made by ShowActionToast has its action button and its countdown. Plain
 // text only (the Title). Call it once per frame, as ui.ToastViewportBase.
-func TopToasts(c *ui.Context, closeLabel string) {
+func TopToasts(c *ui.Context, closeLabel string) { toastsAt(c, closeLabel, SpaceM) }
+
+// toastsAt is TopToasts with the first toast top DIPs from the top of the
+// window.
+func toastsAt(c *ui.Context, closeLabel string, top float32) {
 	t := c.Theme()
 	fill, text := t.Inverse, t.InverseText
 	if fill.A == 0 {
 		fill, text = t.Text, t.Background
 	}
 	ui.ToastViewportBase(c, func(viewport ui.Element, toasts []ui.Toast) {
-		viewport.Justify(ui.Start).AlignItems(ui.Center).Padding(SpaceM, SpaceXL).Gap(SpaceS)
+		viewport.Justify(ui.Start).AlignItems(ui.Center).Padding(top, SpaceXL, SpaceM, SpaceXL).Gap(SpaceS)
 		for _, toast := range toasts {
 			p := ui.ToastBase(c, toast)
 			p.Root.Row().Gap(SpaceM).Padding(8, 8, 8, 16).Radius(10).MaxWidth(ToastWidth).AlignItems(ui.Center).
