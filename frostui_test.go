@@ -221,6 +221,62 @@ func TestJobsRunOneAtATimeInOrder(t *testing.T) {
 	}
 }
 
+func TestJobsFindTheNewestJobOfAKey(t *testing.T) {
+	sp := frostuitest.NewLoop()
+	q := NewJobs(sp.Post, nil)
+	release := make(chan struct{})
+	job := func(title, key string, unstoppable bool) *Job {
+		return &Job{Title: title, Source: "svc", Key: key, Unstoppable: unstoppable, Run: func(context.Context, *Progress) error {
+			if title == "a" {
+				<-release
+			}
+			return nil
+		}}
+	}
+	// a runs (an Unstoppable job, so CancelAll leaves it running) while b,
+	// then c, of the same source and key wait behind it.
+	a, b, other, c := job("a", "k", true), job("b", "k", false), job("other", "x", false), job("c", "k", false)
+	q.Enqueue(a)
+	q.Enqueue(b)
+	name := func(j *Job) string {
+		if j == nil {
+			return "nil"
+		}
+		return fmt.Sprintf("%s (ID %d)", j.Title, j.ID)
+	}
+	if got := q.Find("svc", "k"); got != b {
+		t.Errorf("a running, b queued: Find = %s, want b (ID %d), the newest", name(got), b.ID)
+	}
+	q.Enqueue(other, c)
+	if got := q.Find("svc", "k"); got != c {
+		t.Errorf("b and c queued: Find = %s, want c (ID %d), the newest", name(got), c.ID)
+	}
+	if !q.Pending("svc", "k") || !q.Pending("svc", "x") || q.Pending("svc", "none") {
+		t.Error("Pending does not follow the queue")
+	}
+	q.CancelAll() // drops b, other and c; a finishes first
+	if b.State != JobCanceled || c.State != JobCanceled || a.State != JobRunning {
+		t.Fatalf("after CancelAll: a %v, b %v, c %v", a.State, b.State, c.State)
+	}
+	if got := q.Find("svc", "k"); got != a {
+		t.Errorf("b and c dropped while a runs: Find = %s, want a (ID %d), the work that still runs", name(got), a.ID)
+	}
+	if !q.Pending("svc", "k") {
+		t.Error("a job of the key still runs, but Pending is false after its newer jobs were dropped")
+	}
+	if q.Pending("svc", "x") {
+		t.Error("a dropped job is still pending")
+	}
+	if got := q.Find("svc", "x"); got != other {
+		t.Errorf("Find = %s, want the dropped job, which ended in this batch", name(got))
+	}
+	close(release)
+	sp.RunUntil(t, func() bool { return !q.Busy() })
+	if q.Pending("svc", "k") || q.Find("svc", "k") != nil {
+		t.Error("an idle queue still reports a job of the key")
+	}
+}
+
 func TestJobsCancelAll(t *testing.T) {
 	sp := frostuitest.NewLoop()
 	q := NewJobs(sp.Post, nil)

@@ -80,15 +80,19 @@ race. `Run` works on a goroutine with a cancelable context and a `Progress`
 UI thread with `Run`'s error. The queue counts batches (`Batch`: "Job 3 of
 10"; a batch is every job queued since the queue was last idle), lists the
 batch's jobs in queue order (`BatchJobs`), finds the job of an item by
-`Source` and `Key` (`Find`, `Pending`), and calls `OnIdle` with the batch
-when the last job ends. It recovers a panic in `Run` as the job's error and
-logs each job's start ("» title"), success ("✓ title"), cancel and failure
-to the console. `CancelAll` drops the queued jobs (their `Done` gets
-`context.Canceled`) and cancels the running one, except an `Unstoppable`
-job, which finishes and reports its own result while the queue stays busy
-(`Stopping`, `CanStop`). A job that finished despite a cancel keeps its own
-result. `Duration` formats a job's time ("1m 03s") and `RunSummary` how a
-batch ended ("9 done · 1 failed").
+`Source` and `Key`, and calls `OnIdle` with the batch when the last job
+ends. `Find` returns the newest job of the pair that waits or runs, in
+`Enqueue` order (the newest queued one, else the running one), else the
+newest that ended in the current batch; `Pending` reports whether any job
+of the pair waits or runs, so a newer job that `CancelAll` dropped does not
+hide an `Unstoppable` one of the same pair that still runs. It recovers a
+panic in `Run` as the job's error and logs each job's start ("» title"),
+success ("✓ title"), cancel and failure to the console. `CancelAll` drops
+the queued jobs (their `Done` gets `context.Canceled`) and cancels the
+running one, except an `Unstoppable` job, which finishes and reports its
+own result while the queue stays busy (`Stopping`, `CanStop`). A job that
+finished despite a cancel keeps its own result. `Duration` formats a job's
+time ("1m 03s") and `RunSummary` how a batch ended ("9 done · 1 failed").
 
 ### Console
 

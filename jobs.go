@@ -189,17 +189,23 @@ func (q *Jobs) BatchFraction() float64 {
 	return f / float64(q.batchTotal)
 }
 
-// Find returns the newest job of source and key that is queued, running,
-// or ended in the current batch; nil when there is none.
+// Find returns the newest job of source and key that waits or runs, else
+// the newest that ended in the current batch; nil when there is none.
+// Newest is the order of Enqueue: a queued job is newer than the running
+// one. Work still to end comes first, so a job CancelAll dropped while an
+// Unstoppable job of the same source and key runs does not hide that
+// running job.
 func (q *Jobs) Find(source, key string) *Job {
-	if q.current != nil && q.current.Source == source && q.current.Key == key {
-		return q.current
-	}
-	for _, j := range q.queue {
-		if j.Source == source && j.Key == key {
+	for i := len(q.queue) - 1; i >= 0; i-- {
+		if j := q.queue[i]; j.Source == source && j.Key == key {
 			return j
 		}
 	}
+	if j := q.current; j != nil && j.Source == source && j.Key == key {
+		return j
+	}
+	// The batch holds the running and queued jobs too, which matched
+	// nothing above: what matches here ended.
 	for i := len(q.batch) - 1; i >= 0; i-- {
 		if j := q.batch[i]; j.Source == source && j.Key == key {
 			return j
@@ -208,10 +214,18 @@ func (q *Jobs) Find(source, key string) *Job {
 	return nil
 }
 
-// Pending reports whether a job of source and key waits or runs.
+// Pending reports whether a job of source and key waits or runs, whatever
+// became of newer jobs of the same source and key.
 func (q *Jobs) Pending(source, key string) bool {
-	j := q.Find(source, key)
-	return j != nil && !j.State.Ended()
+	if j := q.current; j != nil && j.Source == source && j.Key == key {
+		return true
+	}
+	for _, j := range q.queue {
+		if j.Source == source && j.Key == key {
+			return true
+		}
+	}
+	return false
 }
 
 // CancelAll cancels the running job and drops the queued ones; each
