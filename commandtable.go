@@ -334,7 +334,7 @@ func (t *CommandTable) Menu(ids ...string) func(m *ui.Menu) {
 
 // Shortcuts lists the commands that have keys, in the table's order, for
 // ShortcutsBody: grouped by Group, in the order the groups first come,
-// each with its first key.
+// with a line for each key.
 func (t *CommandTable) Shortcuts() []ShortcutEntry {
 	order := map[string]int{}
 	var groups [][]ShortcutEntry
@@ -348,7 +348,9 @@ func (t *CommandTable) Shortcuts() []ShortcutEntry {
 			order[cmd.Group] = g
 			groups = append(groups, nil)
 		}
-		groups[g] = append(groups[g], ShortcutEntry{Group: cmd.Group, Title: cmd.Title, Keys: cmd.Bindings[0].Caps()})
+		for _, b := range cmd.Bindings {
+			groups[g] = append(groups[g], ShortcutEntry{Group: cmd.Group, Title: cmd.Title, Keys: b.Caps()})
+		}
 	}
 	var out []ShortcutEntry
 	for _, g := range groups {

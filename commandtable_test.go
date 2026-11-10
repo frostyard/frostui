@@ -368,13 +368,13 @@ func TestCommandTableFeedsTheShortcutsDialog(t *testing.T) {
 		Command{ID: "a", Title: "Archive", Group: "Mail", Bindings: []KeyBinding{{Mods: ui.Ctrl, Key: ui.KeyE}}},
 		Command{ID: "n", Title: "Next pane", Group: "View", Bindings: []KeyBinding{{Key: ui.KeyF6}}},
 		Command{ID: "x", Title: "No keys", Group: "Mail"},
-		Command{ID: "r", Title: "Reply", Group: "Mail", Bindings: []KeyBinding{{Mods: ui.Ctrl, Key: ui.KeyR}}},
+		Command{ID: "r", Title: "Reply", Group: "Mail", Bindings: []KeyBinding{{Mods: ui.Ctrl, Key: ui.KeyR}, {Key: ui.KeyF5}}},
 	)
 	var titles []string
 	for _, e := range table.Shortcuts() {
 		titles = append(titles, e.Group+"/"+e.Title)
 	}
-	if want := []string{"Mail/Archive", "Mail/Reply", "View/Next pane"}; !reflect.DeepEqual(titles, want) {
+	if want := []string{"Mail/Archive", "Mail/Reply", "Mail/Reply", "View/Next pane"}; !reflect.DeepEqual(titles, want) {
 		t.Errorf("Shortcuts = %v, want %v", titles, want)
 	}
 	if runtime.GOOS != "darwin" {

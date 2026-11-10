@@ -15,7 +15,7 @@ frostui is a Go module that gives desktop apps on [MyGo](https://github.com/egoi
 
 | Package | What it gives you |
 | --- | --- |
-| `frostui` | The shell (top bar with a command palette, rail, console and status bar), a frame without the rail for apps made of panes, a serial job queue, dialogs, cards, rows, charts, and the desktop's icons (with an embedded set) and accent. |
+| `frostui` | The shell (top bar with a command palette, rail, console and status bar), a frame without the rail for apps made of panes, a serial job queue, a command table behind keys, menus and the palette, a source list, a settings layout, an allow-listed opener, dialogs, cards, rows, charts, and the desktop's icons (with an embedded set) and accent. |
 | `frostuitest` | A stand-in for the UI thread, so tests run what workers post without a window. |
 
 It builds without CGO for Linux, Windows and macOS on amd64 and arm64, and for js/wasm. The freedesktop parts (app ID, icon theme, launching desktop apps) work on Linux and fall back elsewhere.
@@ -66,7 +66,7 @@ func main() {
 }
 ```
 
-[examples/commandcenter](examples/commandcenter) adds the palette, the console, the job queue and the status bar: `go run ./examples/commandcenter`. [examples/threepane](examples/threepane) is a window of panes with no rail: `go run ./examples/threepane`.
+[examples/commandcenter](examples/commandcenter) adds the palette, the console, the job queue and the status bar: `go run ./examples/commandcenter`. [examples/threepane](examples/threepane) is a window of panes with no rail: `go run ./examples/threepane`. [examples/sourcelist](examples/sourcelist) shows a source list, a command table, a lazy palette source and a settings dialog: `go run ./examples/sourcelist`.
 
 ## Develop
 
