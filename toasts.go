@@ -62,7 +62,8 @@ const actionToastTime = 8 * time.Second
 
 // ActionToast is a toast with an action, as Undo after a delete, and an
 // optional countdown, as Undo Send's seconds. Exactly one of OnAction and
-// OnExpire runs.
+// OnExpire runs while the window is open. Neither runs when the window
+// closes while the toast shows, so finish the pending work on close.
 type ActionToast struct {
 	// Title says what happened.
 	Title string

@@ -118,8 +118,9 @@ side.
 
 `Panes.Layout` is a `PaneLayout`, a plain struct of widths and collapsed
 panes that the app saves and restores; widths out of bounds are clamped when
-drawn. `Toggle` and `SetCollapsed` hide a `Collapsible` pane, and `Shown` says
-what shows. A narrow window first shrinks the panes in proportion to what
+drawn. `Toggle` and `SetCollapsed` hide a `Collapsible` pane and ignore any
+other ID, every ID before the first frame (a pane that starts collapsed is
+set in `Layout`), and `Shown` says what shows. A narrow window first shrinks the panes in proportion to what
 they have above their minimums, then hides `Collapsible` panes, the last
 first and the one the app last showed after them; that is not saved. A
 hidden pane is not built, so what it must remember lives in the app's state.
@@ -142,7 +143,8 @@ and, with `Countdown`, the seconds left, for Undo and Undo Send. Exactly one
 of `OnAction` and `OnExpire` runs: `OnExpire` when the toast closes without
 the action, by its time, its close button or `CloseToast`. Each call shows a
 toast of its own, because MyGo replaces a toast of the same ID without
-running its `OnClose`. `TopToasts` draws the action only for these toasts:
+running its `OnClose`. Neither callback runs when the window closes while
+the toast shows, so an app finishes the pending work on close. `TopToasts` draws the action only for these toasts:
 others look as before. MyGo stops a toast's time while the pointer rests on
 it.
 
