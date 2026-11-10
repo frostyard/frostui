@@ -1,59 +1,85 @@
-<!-- readme-kind: org -->
-# agentic-template
+<!-- readme-kind: library -->
+# frostui
 
-A GitHub template for repositories that LLM agents build and maintain, for maintainers and teams who want reliable, reviewable agent work. It provides no application code; it provides portable agent instructions, a documentation structure with templates, a verify gate, and a starting point for skills.
+[![Go Reference](https://pkg.go.dev/badge/github.com/frostyard/frostui.svg)](https://pkg.go.dev/github.com/frostyard/frostui)
 
-**Status:** in production. New repositories copy it from `main`; it has no versioned releases.
+frostui is a Go module that gives desktop apps on [MyGo](https://github.com/egoist/mygo) a command-center window and the pieces to fill it, for frostyard's apps: ChairLift, Frostmail and Frostnotes.
 
-**Documentation:** [docs/README.md](docs/README.md)
+**Status:** pre-release. Until v1, a minor version may change the API, and each change is listed in the [design doc](docs/design/frostui.md#api-changes).
 
-## What is here
+**Documentation:** [pkg.go.dev/github.com/frostyard/frostui](https://pkg.go.dev/github.com/frostyard/frostui)
 
-| Path | What it is |
+![The command-center example in the middle of a sync](docs/images/commandcenter.png)
+
+## What it does
+
+| Package | What it gives you |
 | --- | --- |
-| `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.cursorrules`, `.github/copilot-instructions.md` | Canonical agent instructions and tool-facing symlinks |
-| `.agents/skills/`, `.claude/skills` | Canonical shared skills and the Claude skills symlink |
-| `docs/` | ADRs, designs, specs, plans and documentation indexes |
-| `Makefile` | The verify, check and CI gate |
-| `mise.toml`, `mise.lock` | Pinned tool versions |
-| `scripts/` | Template and corrections validation scripts |
-| `test/` | Node.js fixtures and gate tests |
-| `.memory/` | The append-only corrections inbox |
-| `.github/` | Risk paths, dependabot settings, pull request guidance and workflows |
-| `LICENSE`, `SECURITY.md` | License text and private vulnerability reporting |
+| `frostui` | The shell (top bar with a command palette, rail, console and status bar), a serial job queue, dialogs, cards, rows, charts and the desktop's icons and accent. |
+| `frostuitest` | A stand-in for the UI thread, so tests run what workers post without a window. |
+
+It builds without CGO for Linux, Windows and macOS on amd64 and arm64, and for js/wasm. The freedesktop parts (app ID, icon theme, launching desktop apps) work on Linux and fall back elsewhere.
+
+## Requirements
+
+- Go 1.27.
+- At run time, what MyGo needs: GTK 3, libepoxy and Pango on Linux.
+- For the tests: Pango and cairo, and no display.
+
+## Install
+
+```sh
+go get github.com/frostyard/frostui
+```
 
 ## Use
 
-1. Click **Use this template** on GitHub, or run `gh repo create myproject --template bketelsen/agentic-template`.
-2. In `AGENTS.md`, replace the title and intro, then fill in the commented placeholder sections as the project takes shape. Put project checks behind `make verify` in the `Makefile`; CI runs the gate.
-3. Set the dates in `docs/adr/0001`, `0002` and `0003` to today; these ADRs are pre-accepted because this template implements them.
-4. Set the copyright holder and year in `LICENSE`. Keep MIT unless the project inherits GPL-3.0.
-5. Replace the repository URL and supported-versions section in `SECURITY.md` with your own values.
-6. Add a `.github/dependabot.yml` entry for each package ecosystem that the project adds: `gomod`, `npm`, `cargo`, `docker`. Give each entry 1 group with `patterns: ["*"]` and no `applies-to`, like the `github-actions` entry (core [ADR-0075](https://github.com/frostyard/core/blob/main/docs/adr/0075-batch-routine-pull-requests.md)).
-7. For a released Go project, add `.svu.yml` and a `bump` target that runs `svu next`; use the Go and golangci-lint versions of core's `frostyard-go-repo` skill.
-8. For a user-facing tool, add a `site/` documentation site (core [ADR-0070](https://github.com/frostyard/core/blob/main/docs/adr/0070-build-tool-docs-sites-with-materialx-on-github-pages.md)).
-9. Write the first real ADR, `0004`, for the first significant choice — language, framework or storage — and continue for later choices.
-10. Write `README.md` for the new project from core's [frostyard-readme skill](https://github.com/frostyard/core/blob/main/.agents/skills/frostyard-readme/SKILL.md) and [core ADR-0072](https://github.com/frostyard/core/blob/main/docs/adr/0072-write-every-readme-to-one-standard.md). Run its checker, `check-readme.mjs`, until it prints `ok`. Update [docs/design/agent-ready-repository.md](docs/design/agent-ready-repository.md) when the project changes its structure.
-11. Complete the repository admin steps for the labels, ruleset, private vulnerability reporting and risk paths in [docs/new-repository.md](docs/new-repository.md).
+```go
+import (
+	"log"
 
-The full checklist is core's [repository baseline spec](https://github.com/frostyard/core/blob/main/docs/specs/repository-baseline.md).
+	"github.com/egoist/mygo"
+	"github.com/egoist/mygo/ui"
 
-## How it works
+	"github.com/frostyard/frostui"
+)
 
-The template makes agents use one canonical instruction surface, category-based documentation, reusable templates and skills, two-way cross-links, live conventions and a verify gate. It keeps the mechanism in `AGENTS.md`, docs and code, so each agent sees the same repository. For the full design, read [agent-ready repository](docs/design/agent-ready-repository.md).
+func main() {
+	shell := &frostui.Shell{Brand: frostui.Brand{Name: "Notes"}, Selected: "all"}
+	nav := []frostui.NavSection{{Title: "Notebooks", Items: []frostui.NavItem{
+		{ID: "all", Title: "All notes", Icon: "folder"},
+	}}}
+	mygo.App.WhenReady(func() {
+		mygo.NewWindow(mygo.WindowOptions{
+			Title: "Notes", Width: 1100, Height: 720, TitleBarStyle: mygo.TitleBarHidden,
+			Content: ui.View(func(c *ui.Context) {
+				shell.View(c, frostui.Frame{
+					Nav:     nav,
+					Content: func() { frostui.PageHeader(c, "All notes", "3 notes", nil) },
+				})
+			}),
+		})
+	})
+	if err := mygo.App.Run(); err != nil {
+		log.Fatal(err)
+	}
+}
+```
+
+[examples/commandcenter](examples/commandcenter) adds the palette, the console, the job queue and the status bar: `go run ./examples/commandcenter`.
 
 ## Develop
 
 ```sh
-mise install
-make ci
+mise install   # golangci-lint and Node; Go comes from go.mod
+make ci        # what CI runs
 ```
 
-`make verify` needs only Node.js 22 or later and `make`; it uses no package manager and no third-party dependency. Clone with `core.symlinks=true` on Windows.
+Design and invariants: [docs/design/frostui.md](docs/design/frostui.md).
 
 ## Where to go next
 
 - [AGENTS.md](AGENTS.md): the rules for agents and contributors.
-- [docs/README.md](docs/README.md): the index of decisions, designs, specs and plans.
+- [docs/README.md](docs/README.md): the decisions, designs, specs and plans.
 - [SECURITY.md](SECURITY.md): report a vulnerability privately.
-- [LICENSE](LICENSE): MIT.
+- [LICENSE](LICENSE): GPL-3.0.

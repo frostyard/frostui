@@ -1,11 +1,13 @@
-# Project Name
+# frostui
 
-<!-- One paragraph: what this project is and who it serves. Point at
-docs/README.md as the entry point for everything else. Keep this file under
-~200 lines — it is loaded into every agent session; long files dilute the
-rules that matter. -->
-
-One or two sentences describing the project. Start at
+frostui is frostyard's desktop UI kit, a Go library on
+[MyGo](https://github.com/egoist/mygo) (`github.com/egoist/mygo/ui`): the
+command-center shell (top bar with a command palette, left rail, console,
+status bar), a serial job queue, dialogs, cards, rows and visualizations,
+and desktop integration. ChairLift, Frostmail and Frostnotes build their
+windows from it. It came out of ChairLift's `internal/frostui`
+([ADR-0004](docs/adr/0004-extract-the-ui-kit-into-its-own-module.md)). Start
+at [docs/design/frostui.md](docs/design/frostui.md), then
 [docs/README.md](docs/README.md).
 
 This file (`AGENTS.md`) is the CANONICAL agent instructions — `CLAUDE.md`,
@@ -14,38 +16,88 @@ to it, and `.claude/skills` symlinks to `.agents/skills/`
 ([ADR-0002](docs/adr/0002-agent-portable-instruction-surface.md)). Edit only
 the canonical paths; keep content tool-agnostic.
 
+## Build, test, lint
+
+- `mise install` — the pinned golangci-lint and Node (`mise.toml`,
+  checksums in `mise.lock`). Go comes from go.mod's `go` line, the only Go
+  pin. Change a pin only with `mise lock`, in a commit of its own.
+- `make test` — every test, headless (`env -u DISPLAY -u WAYLAND_DISPLAY`,
+  `CGO_ENABLED=0`). MyGo's Tester needs Pango and cairo, no display, no GTK.
+- `make verify` — the gate that leaves `git status` unchanged: `go mod tidy
+  -diff`, `go vet`, the gofmt check, the pinned golangci-lint (as linux,
+  windows, darwin and js/wasm), the template gate (`scripts/check-template.mjs`
+  and `test/*.test.mjs`, Node 22 or later), then `make test`.
+- `make check` — `make fmt`, then `make verify`.
+- `make ci` — what CI's `verify` job runs: `make verify`, the corrections
+  check against `BASE` (`make ci BASE=origin/main`), `make test-wasm` (the
+  tests as js/wasm under Node), `make race` and `make cross` (build and vet
+  every `CROSS_TARGETS` pair). Run it before you push.
+- `make snapshot` — the example's frame as PNGs in `build/snapshots`
+  (`FROSTUI_SNAPSHOT_DIR`); copy `commandcenter.png` to `docs/images/` to
+  refresh the README's picture.
+- `go run ./examples/commandcenter` — the example window (needs GTK 3 and
+  libepoxy on Linux).
+
 ## Skills (follow these for common tasks)
 
 Step-by-step procedures live in [.agents/skills/](.agents/skills/); follow
-them rather than improvising, whichever agent you are:
+them rather than improvising, whichever agent you are. frostyard/core syncs
+its skills there (core ADR-0026); start a repo-local one from
+`.agents/skills/TEMPLATE/SKILL.md`.
 
-<!-- One bullet per skill: **When to use it** → [.agents/skills/<name>/SKILL.md].
-Add a skill whenever you find yourself re-explaining a multi-step procedure.
-Start from .agents/skills/TEMPLATE/SKILL.md. -->
-
-- *(none yet — add the first one when a procedure repeats)*
+- *(no repo-local skill yet)*
 
 ## Code conventions (live — the code exists)
 
-<!-- The most important section. Rules here must describe the code AS IT IS,
-not aspirations — an agent that follows a stale rule produces broken work.
-Graduate a rule into this list only when the code enforcing or exemplifying
-it has landed; until then it lives in a design doc as intent.
-
-Write rules imperatively and concretely, each with enough mechanism to be
-followed without asking ("Storage only via db.Open(slug, migrations)" — not
-"use the database layer"). Point at one canonical example in the code for
-every structural rule. Rules that remove a degree of freedom are the
-valuable ones: every choice an agent doesn't have to make is a failure mode
-removed. -->
-
-- *(add rules as the code that enforces them lands)*
-- Run `make verify` before you call any change done. CI job `verify` runs
-  `make ci`, which also checks that `.memory/corrections.jsonl` is append-only
-  against the PR base; run `make ci BASE=origin/main` for the same check locally.
-- `mise.toml` and `mise.lock` pin every tool the gate runs (ADR-0043 in core);
-  run `mise install` to get those versions. Change a pin only with `mise lock`,
-  in a commit of its own.
+- **Imports.** Every file of the kit, tests included, imports only the
+  standard library, MyGo (`github.com/egoist/mygo/...`), purego
+  (`github.com/ebitengine/purego`) and the kit's own packages; `frostuitest`
+  imports the standard library only. The kit never imports `internal/` or
+  `examples/`. go.mod requires MyGo and purego directly and nothing else.
+  Guards: `internal/repocheck.TestKitImportsOnlyMyGoAndPurego` (with
+  fixtures) and `TestModuleRequiresOnlyMyGoAndPurego`.
+- **Cross-platform builds.** The module builds and vets with
+  `CGO_ENABLED=0` for linux, windows and darwin on amd64 and arm64, and for
+  js/wasm ([ADR-0005](docs/adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md)).
+  A freedesktop or Linux-only call goes in a `*_linux.go` file, with a
+  fallback in a `*_other.go` file (`//go:build !linux`); the exported
+  function stays in the untagged file (`appid.go` + `appid_linux.go` +
+  `appid_other.go` is the model). A platform file exports nothing. Guards:
+  `TestKitCrossCompiles`, `TestPlatformFilesExportNothing`,
+  `TestCrossTargetsAreListedEverywhere` (the test's, the Makefile's and
+  CI's targets agree).
+- **API stability and semver.** `internal/repocheck/testdata/api.txt` pins
+  every exported declaration (`TestExportedAPIIsUnchanged`). Adding is a
+  minor change (`feat:`). Removing or changing a line breaks every app: it
+  needs a major version, or a minor one while the module is v0, a `feat!:`
+  commit or `BREAKING CHANGE:` footer, and an entry under "API changes" in
+  `docs/design/frostui.md` ([spec](docs/specs/api-stability.md)). Rewrite
+  the file with `go test ./internal/repocheck -run
+  TestExportedAPIIsUnchanged -update` in the same commit, never by hand.
+- **No app-specific code.** Nothing here names or serves one app: no
+  ChairLift, Frostmail or Frostnotes wording in code, comments or default
+  strings, no app configuration, no command tracer. A helper any app could
+  use belongs here; one that is about one app stays in it.
+- **UI thread.** Views and every model (`Shell`, `Jobs`, `Palette`,
+  `Dialogs`, `ConsoleView`) belong to the UI thread; only `Console.Add`,
+  `Addf`, `Writer`, `Progress.Set` and `Progress.Log` are safe from any
+  goroutine. Workers hand results back through the post function the app
+  gives `NewJobs` (MyGo's `Window.Update`), which rebuilds the view on every
+  call: coalesce bursts (the example's `coalesce`).
+- **MyGo's rules.** MyGo resets the theme every build pass, so `Adapt` runs
+  first in every frame (`Shell.View` does it). State (`ListState`, dialog
+  and palette state, parsed SVGs) lives in structs, never in a view
+  function; a `ListState` belongs to one window. Never load a UI library in
+  an `init` function or a package-level variable. After a MyGo bump, read
+  its source in `GOMODCACHE` (the theme reset, `Window.Update`, the Tester)
+  before merging.
+- **Tests run headless.** Views are tested with `ui.NewTester`; a test that
+  stands in for the UI thread posts to a `frostuitest.Loop`. No test
+  needs a display, a network or a real desktop app; `LaunchDesktopApp` is
+  tested against a fake `gtk-launch` on `PATH`.
+- Run `make verify` before you call any change done, and `make ci` before
+  you push. CI job `verify` runs `make ci`, which also checks that
+  `.memory/corrections.jsonl` is append-only against the PR base.
 
 **Test reliability.** No sleeps for timing (wait on a condition or inject a
 clock). No network and no wall clock in unit tests (inject them). A flaky test
@@ -63,11 +115,11 @@ when no test can catch it. The same PR appends 1 line to
 every glob carries a level, and a PR that touches one gets that level label from
 `.github/workflows/risk-paths.yml` (`level:L1` read every line, `level:L2` read
 the diff, `level:L3` skim, `level:L4` title and CI), plus `risk:high` at L1 and
-L2, which declares tier 3. Core computes the level from the matched globs, the
-`default_level` and the org floors, and it never lowers a level label that the
-PR already has. The same caller removes `ready-for-human` when the head moves
-after the label. Add a path when you add a file of that kind (signing, auth,
-publish, secrets, destructive operations, CI), with a `why` that names its
+L2, which declares tier 3. Here go.mod, go.sum, the guards
+(`internal/repocheck/**`, with `api.txt`), `.golangci.yml` and
+`appid_linux.go` are L2, and `.svu.yml` and the tool pins are L1. Add a path
+when you add a file of that kind (signing, auth, publish, secrets,
+destructive operations, CI, native code), with a `why` that names its
 category. The gate requires schema version 2.
 
 **Vendored files.** `scripts/lib/risk-paths.mjs` and
@@ -76,9 +128,17 @@ by hand (`make verify` checks their hashes).
 
 ## Repository boundary
 
-<!-- What does NOT belong in this repo (secrets, personal data, generated
-files that are actually build outputs, apps that belong elsewhere)? How are
-releases cut? Delete the section if genuinely not applicable. -->
+- **Releases.** Tags are `vMAJOR.MINOR.PATCH`; svu derives the next one from
+  the Conventional Commits since the last tag (`.svu.yml`: prefix `v`, `v0:
+  true`). The maintainer (Brian) runs `make bump`. Agents never run it,
+  create or push a tag, or cut a release; an agent that finds a release due
+  proposes `svu next` and asks.
+- **A library, not a product.** No binaries are published: no GoReleaser,
+  no packages, no `dev` prerelease. `examples/` holds programs that show
+  the kit, never an app.
+- **License.** GPL-3.0-or-later, as ChairLift, where the code comes from.
+  Code copied in must be GPL-compatible.
+- No secrets, credentials or personal data anywhere in the repository.
 
 ## Documentation rules (enforced)
 
@@ -86,14 +146,18 @@ Docs live in `docs/` in four categories. **Every new doc starts from its
 category's `TEMPLATE.md`** and follows its structure:
 
 - `docs/adr/` — why we decided. Immutable once Accepted; reversals are new
-  ADRs that mark the old one Superseded. This includes ADRs 0001 to 0003 that
-  come with the template: their `YYYY-MM-DD` date is a placeholder, not a
-  draft status. A new org-wide rule goes in a core ADR listed in
-  `docs/org-adrs.md`; a new project rule goes in a new ADR.
+  ADRs that mark the old one Superseded. This includes ADRs 0001 to 0003
+  that came with the template: never edit their decision or consequences.
+  A new org-wide rule goes in a core ADR listed in `docs/org-adrs.md`; a new
+  project rule goes in a new ADR.
 - `docs/design/` — how it fits together. Living; updated in place to match
-  reality.
+  reality. `docs/design/frostui.md` is the entry point.
 - `docs/specs/` — exact contracts. Change only alongside implementing code.
 - `docs/plans/` — order of work. Phases with "Done when" outcomes.
+
+After a change to the kit, update `docs/design/frostui.md`, `README.md` and
+this file where they describe it; check a current-state claim against the
+source, never against an old document.
 
 ### Cross-linking is mandatory
 

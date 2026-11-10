@@ -2,15 +2,14 @@
 
 ## Supported versions
 
-This template has no releases. Only the `main` branch gets fixes.
-
-A repository made from this template must replace this section with its own
-release policy.
+Only the latest release tag (`vX.Y.Z`) and the `main` branch get fixes. While
+the module is v0, a fix ships in a new patch or minor release, never as a
+change to an old tag.
 
 ## Reporting a vulnerability
 
 Use GitHub private vulnerability reporting:
-https://github.com/bketelsen/agentic-template/security
+https://github.com/frostyard/frostui/security
 
 Open the Security tab and click **Report a vulnerability**.
 
@@ -19,6 +18,6 @@ credentials in an issue, a pull request or a discussion.
 
 ## What to include
 
-- The affected commit.
+- The affected version or commit.
 - The impact: what an attacker can do.
 - The steps to reproduce it.
