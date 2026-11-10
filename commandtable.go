@@ -2,6 +2,7 @@ package frostui
 
 import (
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -127,6 +128,8 @@ type CommandTable struct {
 
 	cmds  []Command
 	index map[string]int
+	// provided are the IDs of the commands a frame brought (provide).
+	provided map[string]bool
 }
 
 // NewCommandTable returns a table of cmds, in their order.
@@ -143,6 +146,7 @@ func (t *CommandTable) Add(cmds ...Command) {
 		t.index = map[string]int{}
 	}
 	for _, cmd := range cmds {
+		delete(t.provided, cmd.ID)
 		if i, ok := t.index[cmd.ID]; ok {
 			t.cmds[i] = cmd
 			continue
@@ -157,6 +161,7 @@ func (t *CommandTable) Remove(ids ...string) {
 	gone := map[string]bool{}
 	for _, id := range ids {
 		gone[id] = true
+		delete(t.provided, id)
 	}
 	kept := t.cmds[:0]
 	for _, cmd := range t.cmds {
@@ -170,6 +175,47 @@ func (t *CommandTable) Remove(ids ...string) {
 	for i, cmd := range t.cmds {
 		t.index[cmd.ID] = i
 	}
+}
+
+// provide adds a command a frame brings to the table, as the palette's,
+// or refreshes the one it brought in an earlier frame. A command of the
+// app's with the ID stays as it is, and the frame's gives up the keys
+// another command binds, so that no key is bound twice.
+func (t *CommandTable) provide(cmd Command) {
+	if _, ok := t.index[cmd.ID]; ok && !t.provided[cmd.ID] {
+		return
+	}
+	cmd.Bindings = slices.DeleteFunc(slices.Clone(cmd.Bindings), func(b KeyBinding) bool {
+		return slices.ContainsFunc(t.cmds, func(other Command) bool {
+			return other.ID != cmd.ID && slices.ContainsFunc(other.Bindings, func(o KeyBinding) bool {
+				return o.Mods == b.Mods && o.Key == b.Key
+			})
+		})
+	})
+	t.Add(cmd)
+	if t.provided == nil {
+		t.provided = map[string]bool{}
+	}
+	t.provided[cmd.ID] = true
+}
+
+// withdraw takes back a command a frame brought; one of the app's stays.
+func (t *CommandTable) withdraw(id string) {
+	if t.provided[id] {
+		t.Remove(id)
+	}
+}
+
+// merged returns cmds, less those whose ID the table holds, then the
+// table's commands: what a frame gives the palette.
+func (t *CommandTable) merged(cmds []Command) []Command {
+	out := make([]Command, 0, len(cmds)+len(t.cmds))
+	for _, cmd := range cmds {
+		if _, ok := t.index[cmd.ID]; !ok {
+			out = append(out, cmd)
+		}
+	}
+	return append(out, t.Commands()...)
 }
 
 // Command returns the command with the ID, as Commands gives it.
@@ -230,10 +276,16 @@ func (t *CommandTable) Tooltip(id string) string {
 // Bind binds the keys of the table's enabled commands at c's window,
 // with ui.Context.OnWindowShortcut, where their scopes let them work:
 // call it in every frame, as the shell does with Frame.Table. When two
-// commands bind one key, the first enabled one in the table takes it.
-// Keys bound behind a dialog wait, as every window shortcut does.
+// commands bind one key, the first enabled one in the table takes it, and
+// the key is bound once. Keys bound behind a dialog wait, as every window
+// shortcut does.
 func (t *CommandTable) Bind(c *ui.Context) {
 	editing, text := t.focus(c)
+	type chord struct {
+		mods ui.Modifiers
+		key  ui.Key
+	}
+	bound := map[chord]bool{}
 	for _, cmd := range t.cmds {
 		if len(cmd.Bindings) == 0 {
 			continue
@@ -243,7 +295,8 @@ func (t *CommandTable) Bind(c *ui.Context) {
 		}
 		id := cmd.ID
 		for _, b := range cmd.Bindings {
-			if b.works(editing, text) {
+			if k := (chord{b.Mods, b.Key}); !bound[k] && b.works(editing, text) {
+				bound[k] = true
 				c.OnWindowShortcut(b.Mods, b.Key, func() { t.Run(id) })
 			}
 		}
@@ -251,8 +304,8 @@ func (t *CommandTable) Bind(c *ui.Context) {
 }
 
 // BindKeys binds keys that run run at c's window, with the table's rule
-// of where each scope works, for keys outside the table: the shell binds
-// PaletteBindings so.
+// of where each scope works, for keys outside the table, as a window of
+// the app's own binds PaletteBindings.
 func (t *CommandTable) BindKeys(c *ui.Context, keys []KeyBinding, run func()) {
 	editing, text := t.focus(c)
 	for _, b := range keys {

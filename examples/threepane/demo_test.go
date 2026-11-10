@@ -141,3 +141,18 @@ func TestThreePanePanesAndConsole(t *testing.T) {
 		t.Error("the console offers levels the example has no lines of")
 	}
 }
+
+// TestTableBindsTheDeleteKey deletes a message with the key its command
+// binds in the example's table.
+func TestTableBindsTheDeleteKey(t *testing.T) {
+	d := newDemo(frostuitest.NewLoop().Post)
+	d.connected()
+	tt := ui.NewTester(d.view, 1200, 760)
+	tt.Frame()
+	n := len(d.messages)
+	tt.Key(0, ui.KeyDelete)
+	tt.Frame()
+	if len(d.messages) != n-1 {
+		t.Errorf("Delete left %d messages of %d", len(d.messages), n)
+	}
+}

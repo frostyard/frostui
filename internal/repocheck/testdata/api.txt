@@ -22,6 +22,7 @@ const frostui.LevelWarn Level
 const frostui.Neutral Tone
 const frostui.OutsideEditors KeyScope
 const frostui.OutsideText KeyScope
+const frostui.PaletteCommandID = "frostui.palette"
 const frostui.PaletteCommands = "commands"
 const frostui.RadiusCard = 12
 const frostui.RadiusChip = 8
@@ -217,6 +218,7 @@ field frostui.PaneFrame.SidebarPanes *Panes
 field frostui.PaneFrame.Start func()
 field frostui.PaneFrame.Status []StatusItem
 field frostui.PaneFrame.StatusEnd []StatusItem
+field frostui.PaneFrame.Table *CommandTable
 field frostui.PaneFrame.ToastCloseLabel string
 field frostui.PaneLayout.Collapsed map[string]bool
 field frostui.PaneLayout.Widths map[string]float32
@@ -466,6 +468,7 @@ method (*Loop) frostuitest.Post(func())
 method (*Loop) frostuitest.Ran() int
 method (*Loop) frostuitest.RunUntil(testing.TB, func() bool)
 method (*Loop) frostuitest.Settle(time.Duration)
+method (*Palette) frostui.Command() Command
 method (*Palette) frostui.RunPending()
 method (*Palette) frostui.Show()
 method (*Palette) frostui.ShowSource(string)

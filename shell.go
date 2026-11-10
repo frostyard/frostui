@@ -71,10 +71,11 @@ type Frame struct {
 	Content func()
 	// Commands are the palette's commands.
 	Commands []Command
-	// Table, when set, is the app's command table: the shell binds its
-	// keys (CommandTable.Bind), lists its commands in the palette after
-	// Commands, and opens the palette with PaletteBindings by the table's
-	// rule (Ctrl K steps aside in editors) in place of a plain Ctrl K.
+	// Table, when set, is the app's command table: the shell adds the
+	// palette's command to it (Palette.Command), binds its keys
+	// (CommandTable.Bind) and lists its commands in the palette after
+	// Commands. Ctrl K then steps aside in editors, by the table's rule,
+	// in place of a plain Ctrl K.
 	Table *CommandTable
 	// Status and StatusEnd are the status bar's items at its start and
 	// at its end.
@@ -93,9 +94,9 @@ func (s *Shell) View(c *ui.Context, f Frame) {
 	}
 	cmds := f.Commands
 	if f.Table != nil {
-		f.Table.BindKeys(c, PaletteBindings(), s.Palette.Show)
+		f.Table.provide(s.Palette.Command())
 		f.Table.Bind(c)
-		cmds = append(append([]Command(nil), f.Commands...), f.Table.Commands()...)
+		cmds = f.Table.merged(f.Commands)
 	} else {
 		c.OnWindowShortcut(ui.Cmd, ui.KeyK, func() { s.Palette.Show() })
 	}

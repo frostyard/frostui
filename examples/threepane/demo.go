@@ -22,6 +22,7 @@ type message struct {
 // models do.
 type demo struct {
 	shell    frostui.PaneShell
+	table    *frostui.CommandTable
 	dialogs  frostui.Dialogs
 	console  *frostui.Console
 	conn     frostui.Connection
@@ -42,7 +43,7 @@ var mailboxes = []frostui.NavItem{
 func newDemo(post func(func())) *demo {
 	con := frostui.NewConsole(2000)
 	con.SetNotify(frostui.NewWaker(post, 60*time.Millisecond).Wake)
-	d := &demo{console: con, mailbox: "inbox", messages: []message{
+	d := &demo{console: con, table: frostui.NewCommandTable(), mailbox: "inbox", messages: []message{
 		{"Ada Lovelace", "The analytical engine", "9:41", "The engine might compose elaborate pieces of music."},
 		{"Grace Hopper", "A nanosecond of wire", "9:12", "Here is what a nanosecond looks like: 11.8 inches."},
 		{"Alan Turing", "Can machines think?", "Yesterday", "I propose to consider the question."},
@@ -83,6 +84,7 @@ func (d *demo) showDetails() {
 
 func (d *demo) view(c *ui.Context) {
 	conn := d.conn
+	d.table.Add(d.commands(c)...)
 	d.shell.View(c, frostui.PaneFrame{
 		SidebarPane: "mailboxes",
 		Panes: []frostui.Pane{
@@ -94,7 +96,7 @@ func (d *demo) view(c *ui.Context) {
 				Bar: func() { d.readerBar(c) }, Content: func() { d.readerPane(c) }},
 		},
 		Menu:        d.menu,
-		Commands:    d.commands(c),
+		Table:       d.table,
 		Connection:  &conn,
 		Status:      []frostui.StatusItem{{Text: "Work: Inbox synced 9:41", Progress: -1}},
 		StatusEnd:   []frostui.StatusItem{{Text: fmt.Sprintf("%d messages", len(d.messages)), Progress: -1}},
@@ -151,9 +153,7 @@ func (d *demo) menu(m *ui.Menu) {
 	if m.Item("Command palette").Shortcut(ui.Cmd, ui.KeyK).Chosen() {
 		d.shell.Palette.Show()
 	}
-	if m.Item("About Three panes").Chosen() {
-		d.showAbout()
-	}
+	d.table.MenuItem(m, "about")
 	if d.quit != nil {
 		m.Separator()
 		if m.Item("Quit").Shortcut(ui.Cmd, ui.KeyQ).Chosen() {
@@ -165,6 +165,7 @@ func (d *demo) menu(m *ui.Menu) {
 func (d *demo) commands(c *ui.Context) []frostui.Command {
 	return []frostui.Command{
 		{ID: "delete", Title: "Delete the message", Group: "Message", Icon: "edit-delete",
+			Bindings: []frostui.KeyBinding{{Key: ui.KeyDelete, Scope: frostui.OutsideText}},
 			Disabled: len(d.messages) == 0, Reason: "no message", Run: func() { d.deleteSelected(c) }},
 		{ID: "sidebar", Title: "Show or hide the mailboxes", Group: "View", Icon: "sidebar-show",
 			Run: func() { d.shell.Panes.Toggle("mailboxes") }},

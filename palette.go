@@ -169,6 +169,9 @@ func Rank[T any](items []T, query string, limit int, text func(T) string) []T {
 	return out
 }
 
+// PaletteCommandID is the ID of Palette.Command.
+const PaletteCommandID = "frostui.palette"
+
 // PaletteCommands is the ID of the palette's own source, the commands it
 // is given: ShowSource(PaletteCommands) opens it on the commands alone.
 const PaletteCommands = "commands"
@@ -320,6 +323,14 @@ func (p *Palette) drop() {
 		p.cancel()
 		p.cancel = nil
 	}
+}
+
+// Command is the command that opens the palette, on PaletteBindings; the
+// palette does not list it. A frame with a table adds it there; an app may
+// add it first, with another Title or Group.
+func (p *Palette) Command() Command {
+	return Command{ID: PaletteCommandID, Title: "Command Palette", Group: "View", Icon: "system-search",
+		Bindings: PaletteBindings(), Unlisted: true, Run: p.Show}
 }
 
 // ShownSource returns the ID of the source the palette shows alone, ""

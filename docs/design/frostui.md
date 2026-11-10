@@ -87,7 +87,9 @@ starts with `Connection`, then `Status`, and ends with `StatusEnd`.
 
 Ctrl K opens the palette, except inside a text editor: an element around the
 focus that binds the key hears it first, and `PaneFrame.InEditor` keeps it
-for an editor that cannot. Ctrl Shift P opens it from everywhere.
+for an editor that cannot. Ctrl Shift P opens it from everywhere. With
+`PaneFrame.Table` the [command table](#command-table) owns the shortcuts
+instead, and `InEditor` is not read.
 
 The console (`ConsoleData`) is a split under the panes, closed by default.
 Ctrl J, the top bar's button and the palette's command toggle it;
@@ -264,9 +266,15 @@ the palette and to anything else that reads `Command`.
   `Element.PopoverMenu` ("" is a separator; nest with `m.Submenu`);
   `MenuItem(m, id)` adds one item; `Shortcuts()` feeds `ShortcutsBody`, a
   line per key; `Tooltip(id)` writes "Reply (Ctrl+R)".
-- `Frame.Table` wires a table into the shell, which binds it, lists it in
-  the palette after `Frame.Commands`, and opens the palette with
-  `PaletteBindings`. Without a table the shell keeps its plain Ctrl K.
+- `Frame.Table` and `PaneFrame.Table` wire a table into a frame, which
+  binds it and lists it in the palette after the frame's `Commands`. The
+  frame adds the palette's command (`Palette.Command`, on `PaletteBindings`)
+  and `PaneShell` the console's (`ConsoleCommand`, Ctrl J) to the table, and
+  binds no palette or console key of its own, so a key is never bound twice:
+  a command of the app's with the same ID stays, and one that binds the same
+  key keeps it. While the connecting screen covers the window the console's
+  command leaves the table. Without a table a frame binds its keys itself,
+  as before (`PaneFrame.InEditor`).
 
 **How a key yields to an editor.** MyGo decides a key in this order: a text
 input takes what it types and edits with (letters, Backspace, the arrows,
