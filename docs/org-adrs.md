@@ -34,7 +34,7 @@ Some decisions apply only when the repository has a certain kind of code:
 This Go repository uses the Go minor and the golangci-lint version in core's
 `frostyard-go-repo` skill, section
 [Fleet toolchain](https://github.com/frostyard/core/blob/main/.agents/skills/frostyard-go-repo/SKILL.md#fleet-toolchain):
-go.mod's `go 1.27.3` and `golangci-lint = "2.15.0"` in [`mise.toml`](../mise.toml).
+go.mod's `go 1.27.4` and `golangci-lint = "2.15.0"` in [`mise.toml`](../mise.toml).
 
 When you change behavior that one of these ADRs covers, update or supersede the
 ADR in frostyard/core first.
