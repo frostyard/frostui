@@ -48,6 +48,102 @@ func TestOpenerSchemesReplaceTheDefaultsButNeverAddFiles(t *testing.T) {
 	}
 }
 
+// mailtoCases are mailto links and what SanitizeMailto makes of them
+// (ADR-0010). An opener opens the same, except a link that names nothing,
+// which it refuses.
+var mailtoCases = []struct {
+	name, in, want string
+	namesNothing   bool
+}{
+	// The cases of an app that filtered mailto links itself before the
+	// kit had the rule: the rule gives the same, so the app can drop its
+	// copy.
+	{"attach between kept fields", "mailto:a@example.com?subject=hi&attach=/etc/passwd&body=x", "mailto:a@example.com?subject=hi&body=x", false},
+	{"attach, attachment and case", "mailto:a@e.test?attach=/etc/passwd&subject=Hi%20there&Attachment=x&cc=b@e.test&ATTACH=y&body=a+b", "mailto:a@e.test?subject=Hi%20there&cc=b@e.test&body=a+b", false},
+	{"attach alone", "mailto:a@e.test?attach=/home/u/.ssh/id_ed25519", "mailto:a@e.test", false},
+	{"encoded attach, kept To", "mailto:a@e.test?%61ttach=x&To=c@e.test", "mailto:a@e.test?To=c@e.test", false},
+	{"no fields", "mailto:a@e.test", "mailto:a@e.test", false},
+
+	{"each kept field", "mailto:a@e.test?to=b@e.test&cc=c@e.test&bcc=d@e.test&subject=s&body=b", "mailto:a@e.test?to=b@e.test&cc=c@e.test&bcc=d@e.test&subject=s&body=b", false},
+	{"kept fields in any case", "mailto:a@e.test?TO=b@e.test&Cc=c@e.test&bCC=d@e.test&SuBjEcT=s&BODY=b", "mailto:a@e.test?TO=b@e.test&Cc=c@e.test&bCC=d@e.test&SuBjEcT=s&BODY=b", false},
+	{"file and other headers", "mailto:a@e.test?file=/etc/passwd&in-reply-to=%3Cx@e.test%3E&references=r&from=f@e.test&reply-to=r@e.test&X-Mailer=m&sender=s@e.test", "mailto:a@e.test", false},
+	{"the scheme in capitals", "MAILTO:a@e.test?Subject=x&FILE=y", "mailto:a@e.test?Subject=x", false},
+	{"repeated fields, in order", "mailto:a@e.test?to=b@e.test&attach=x&to=c@e.test&subject=1&subject=2&body=1&body=2", "mailto:a@e.test?to=b@e.test&to=c@e.test&subject=1&subject=2&body=1&body=2", false},
+	{"repeated attach", "mailto:a@e.test?attach=x&attach=y&ATTACH=z", "mailto:a@e.test", false},
+	{"plus and %20 as written", "mailto:a@e.test?subject=a+b&body=c%20d+e", "mailto:a@e.test?subject=a+b&body=c%20d+e", false},
+	{"encoded kept names", "mailto:a@e.test?%74o=b@e.test&%53ubject=x&body=y", "mailto:a@e.test?body=y", false},
+	{"double encoded attach", "mailto:a@e.test?%2561ttach=x&subject=y", "mailto:a@e.test?subject=y", false},
+	{"Unicode folding", "mailto:a@e.test?ſubject=x&body=y", "mailto:a@e.test?body=y", false},
+	{"fields without =", "mailto:a@e.test?subject&body=x&attach&to", "mailto:a@e.test?body=x", false},
+	{"empty fields and values", "mailto:a@e.test?&&subject=&&body=x&", "mailto:a@e.test?subject=&body=x", false},
+	{"an address and to=", "mailto:a@e.test?to=b@e.test&attach=x", "mailto:a@e.test?to=b@e.test", false},
+	{"to= without an address", "mailto:?to=b@e.test&attach=x", "mailto:?to=b@e.test", false},
+	{"a fragment carrying a field", "mailto:a@e.test?subject=x#&attach=/etc/passwd", "mailto:a@e.test?subject=x", false},
+	{"a fragment without fields", "mailto:a@e.test#attach=x", "mailto:a@e.test", false},
+	{"malformed escapes", "mailto:a@e.test?subject=100%&body=%zz&%zzattach=x&%=y", "mailto:a@e.test?subject=100%&body=%zz", false},
+	{"encoded separators in a value", "mailto:a@e.test?body=x%26attach%3D/etc/passwd", "mailto:a@e.test?body=x%26attach%3D/etc/passwd", false},
+	{"a ? and nothing after it", "mailto:a@e.test?", "mailto:a@e.test", false},
+	{"no address, no field", "mailto:", "mailto:", true},
+	{"no address, only attach", "mailto:?attach=/etc/passwd", "mailto:", true},
+	{"no address, only a fragment", "mailto:?#&attach=x", "mailto:", true},
+}
+
+func TestSanitizeMailtoKeepsOnlyAddresseesSubjectAndBody(t *testing.T) {
+	for _, tc := range mailtoCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := SanitizeMailto(tc.in)
+			if err != nil || got != tc.want {
+				t.Fatalf("SanitizeMailto(%q) = %q, %v, want %q", tc.in, got, err, tc.want)
+			}
+			if again, err := SanitizeMailto(got); err != nil || again != got {
+				t.Errorf("SanitizeMailto(%q) = %q, %v: not idempotent", got, again, err)
+			}
+		})
+	}
+}
+
+func TestOpenerOpensMailtoLinksSanitized(t *testing.T) {
+	for _, tc := range mailtoCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var opened []string
+			o := Opener{Launch: func(u string) error { opened = append(opened, u); return nil }}
+			got, err := o.CheckURL(tc.in)
+			openErr := o.OpenURL(tc.in)
+			if tc.namesNothing {
+				if !errors.Is(err, ErrNotAllowed) || !errors.Is(openErr, ErrNotAllowed) || len(opened) != 0 {
+					t.Errorf("CheckURL(%q) = %q, %v; OpenURL: %v, opened %q; want a refusal", tc.in, got, err, openErr, opened)
+				}
+				return
+			}
+			if err != nil || got != tc.want {
+				t.Errorf("CheckURL(%q) = %q, %v, want %q", tc.in, got, err, tc.want)
+			}
+			if openErr != nil || len(opened) != 1 || opened[0] != tc.want {
+				t.Errorf("OpenURL(%q) = %v, opened %q, want %q", tc.in, openErr, opened, tc.want)
+			}
+		})
+	}
+}
+
+func TestOpenerSanitizesMailtoWhateverTheSchemes(t *testing.T) {
+	o := Opener{Schemes: []string{"MAILTO:"}}
+	if got, err := o.CheckURL("mailto:a@e.test?attach=/etc/passwd&subject=x"); err != nil || got != "mailto:a@e.test?subject=x" {
+		t.Errorf("mailto listed by the app: %q, %v", got, err)
+	}
+}
+
+func TestSanitizeMailtoRefusesOtherLinks(t *testing.T) {
+	for _, raw := range []string{
+		"", "a@e.test", "https://example.org/?attach=x", "file:///etc/passwd", "javascript:alert(1)",
+		"mailto:a@e.test?subject=a b", "mailto:a@e.test?subject=x\nattach=y", "mailto:a@e.test\x7f",
+		"mailto:a@e.test#%zz", "mailto:a@e.test?\tattach=x",
+	} {
+		if got, err := SanitizeMailto(raw); !errors.Is(err, ErrNotAllowed) {
+			t.Errorf("SanitizeMailto(%q) = %q, %v, want a refusal", raw, got, err)
+		}
+	}
+}
+
 func TestOpenerReturnsTheSystemsError(t *testing.T) {
 	boom := errors.New("no handler")
 	o := Opener{Launch: func(string) error { return boom }}
