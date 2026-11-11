@@ -38,7 +38,10 @@ type Pane struct {
 	Collapsible bool
 	// Bar draws the pane's segment of a PaneShell's top bar, which is as
 	// wide as the pane; nil leaves the segment empty. Panes.View does not
-	// draw it.
+	// draw it. The bar's end (the palette field, the frame's End, the
+	// console's button and the main menu) lies over the end of the last
+	// pane's segment, and of the ones before it when that pane is too
+	// narrow for it: a Bar's items give way there.
 	Bar func()
 	// Content draws the pane, which is full height and does not scroll.
 	Content func()
@@ -212,10 +215,15 @@ func (p *Panes) squeeze(panes []Pane, flex int, total float32, shown []bool) {
 	hide(true)
 }
 
-// view draws the panes; bar, when set, draws each one's top-bar segment,
-// told whether it is the first or the last shown. The segments are in the
-// panes' columns, so they are always as wide as the panes under them.
-func (p *Panes) view(c *ui.Context, panes []Pane, bar func(pn Pane, first, last bool)) ui.Element {
+// segmentFunc draws a pane's top-bar segment, told whether it is the first
+// or the last shown, how wide the pane is, and how much room the panes shown
+// after it take with their separators, toward the bar's end.
+type segmentFunc func(pn Pane, first, last bool, width, after float32)
+
+// view draws the panes; bar, when set, draws each one's top-bar segment.
+// The segments are in the panes' columns, so they are always as wide as the
+// panes under them.
+func (p *Panes) view(c *ui.Context, panes []Pane, bar segmentFunc) ui.Element {
 	row := ui.Row(c).AlignItems(ui.Stretch).Clip()
 	if len(panes) == 0 {
 		return row
@@ -248,6 +256,19 @@ func (p *Panes) view(c *ui.Context, panes []Pane, bar func(pn Pane, first, last 
 		}
 		last = i
 	}
+	// after[i] is the room the panes shown after pane i take, each with the
+	// 1 DIP of its separator, worked out in this frame as the widths are.
+	var after []float32
+	if bar != nil {
+		after = make([]float32, len(panes))
+		var sum float32
+		for i := len(panes) - 1; i >= 0; i-- {
+			after[i] = sum
+			if shown[i] {
+				sum += widths[i] + 1
+			}
+		}
+	}
 	row.Children(func() {
 		prev := -1
 		for i, pn := range panes {
@@ -266,7 +287,7 @@ func (p *Panes) view(c *ui.Context, panes []Pane, bar func(pn Pane, first, last 
 			}
 			col.Children(func() {
 				if bar != nil {
-					bar(pn, i == first, i == last)
+					bar(pn, i == first, i == last, widths[i], after[i])
 				}
 				body := ui.Column(c).Grow(1).MinHeight(0).AlignItems(ui.Stretch).Clip()
 				if pn.Label != "" {

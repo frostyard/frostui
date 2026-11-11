@@ -1,6 +1,6 @@
 # frostui: frostyard's desktop UI kit
 
-Living document. Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md), [ADR-0006](../adr/0006-a-frame-without-the-rail.md), [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md), [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md).
+Living document. Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md), [ADR-0006](../adr/0006-a-frame-without-the-rail.md), [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md), [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md), [ADR-0009](../adr/0009-the-top-bars-end-belongs-to-the-window.md).
 Contracts: [spec: API stability](../specs/api-stability.md).
 Built in: [roadmap](../plans/roadmap.md).
 
@@ -44,6 +44,12 @@ job's `JobCard`, a host card), `Content` (the selected page), `Commands`,
 `Status` and `StatusEnd`, and `ConsoleData`. `Shell.Selected` is the rail's
 page; the app reads it to pick `Content` and writes it to navigate.
 
+In a narrow window the brand and the bar's trailing controls (`Actions`,
+the console's button, the main menu) keep their size, and the palette field
+gives way: from 380 DIPs down to 180, then to its compact button
+([ADR-0009](../adr/0009-the-top-bars-end-belongs-to-the-window.md), see
+[narrow bars](#narrow-bars)).
+
 The shell binds Ctrl K (palette) and, with a console, Ctrl J (console), and
 draws the shell's `Dialogs`, its `Info` dialog and the palette over the
 page. An app binds its own shortcuts with `c.OnWindowShortcut` and lists
@@ -74,7 +80,14 @@ The top bar takes one of two shapes:
 
 - **Segments.** `PaneFrame.Panes` draws panes, and each `Pane.Bar` is the
   part of the top bar over its pane, in the pane's own column, so it follows
-  the pane's width exactly. A collapsed pane takes its segment with it.
+  the pane's width exactly. A collapsed pane takes its segment with it. The
+  bar's end (the palette field, `End`, the console's button and the main
+  menu) is the window's, not the last pane's
+  ([ADR-0009](../adr/0009-the-top-bars-end-belongs-to-the-window.md)): it is
+  drawn once, above the segments and their separators, before the window
+  controls, and the part of a segment under it is padding. It lies over the
+  end of the last segment and, when the last pane is too narrow, over the
+  segments before it.
 - **A bar not split.** Without `Panes`, `Start` follows the toggle, the
   palette field is in the middle of the window, and `Content` draws the
   rest: full height, not scrolled, not padded.
@@ -82,8 +95,10 @@ The top bar takes one of two shapes:
 Either way the frame owns the order every app shares: `SidebarPane` puts the
 toggle at the far left (of `SidebarPanes`, or the shell's `Panes`);
 `PaletteField`, the same widget everywhere; then `End`, the console's button
-and the main menu (`Menu`) last before the window controls. The status bar
-starts with `Connection`, then `Status`, and ends with `StatusEnd`.
+and the main menu (`Menu`) last before the window controls. Right to left
+the order is mirrored, and the end is by the window controls at the left.
+The status bar starts with `Connection`, then `Status`, and ends with
+`StatusEnd`.
 
 Ctrl K opens the palette, except inside a text editor: an element around the
 focus that binds the key hears it first, and `PaneFrame.InEditor` keeps it
@@ -103,6 +118,36 @@ what it says while empty.
 The shell draws the window's toasts as `TopToasts` does, under the top bar,
 so an app does not call `TopToasts` (`ToastCloseLabel` names their close
 button).
+
+#### Narrow bars
+
+The sidebar toggle and the trailing controls (`End`, the console's button,
+the main menu) never shrink; the apps' items and the palette field give
+way, so the main menu stays inside the window and clear of
+`c.TitleBar()`'s room at any width
+([ADR-0009](../adr/0009-the-top-bars-end-belongs-to-the-window.md)):
+
+- Over segments, the panes' `Bar` items under the bar's end give way first.
+  The field then fits the room the last segment has beyond the trailing
+  controls, from 300 DIPs down to 160. With less, the field is drawn
+  compact, and when even that end is wider than the last segment, it
+  reaches over the segments before it, whose `Bar` items give way too.
+- In a bar not split, the field shrinks first, staying in the middle, from
+  380 DIPs down to 180; then `Start` gives way (it clips); then the field
+  is drawn compact.
+- The compact field is an icon button with the field's name ("Search or
+  run a command"), its tooltip ("Command palette (Ctrl K)") and its key for
+  assistive technology; a click opens the palette, as Ctrl K does. Being
+  the same control in the same place of the shared order, it keeps the
+  shared look better than moving the field to another segment would.
+
+The bar reads the widths of the toggle, the trailing controls and its end
+from the last frame, and asks for one more frame when one changes, as
+`Panes` does with its room. The end of a bar of segments comes after the
+panes in the order Tab moves the focus and assistive technology reads.
+`TestPaneShellBarEndStaysInTheWindow`, `TestPaneShellPlainBarEndStaysInTheWindow`
+and `TestShellBarEndStaysInTheWindow` (`barend_test.go`) keep the controls
+inside the window, apart, and working.
 
 ### Panes
 
@@ -578,6 +623,6 @@ its own snapshot without sorting or allocating during idle frames.
 
 ## References
 
-- Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md), [ADR-0006](../adr/0006-a-frame-without-the-rail.md), [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md), [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md)
+- Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md), [ADR-0006](../adr/0006-a-frame-without-the-rail.md), [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md), [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md), [ADR-0009](../adr/0009-the-top-bars-end-belongs-to-the-window.md)
 - Contracts: [spec: API stability](../specs/api-stability.md)
 - Built in: [roadmap — Phase 1](../plans/roadmap.md#phase-1--extract-the-kit-done), [Phase 5](../plans/roadmap.md#phase-5--the-frame-and-the-layout), [Phase 6](../plans/roadmap.md#phase-6--commands-navigation-and-settings-for-v020-medium)

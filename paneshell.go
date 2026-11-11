@@ -34,6 +34,14 @@ type PaneShell struct {
 
 	window float32 // the window's height in the last build
 	total  float32 // the height the console split last laid out
+
+	// The widths the top bar had in the last frame: the sidebar toggle,
+	// the end of a bar of segments (barEnd) and the trailing controls in
+	// it (trailRow).
+	toggleW, endW, trailW measured
+	// room is the width of the last segment shown less its start, worked
+	// out in this frame: the room the bar's end fits the palette field to.
+	room float32
 }
 
 // PaneFrame is what the app gives the shell to draw each frame. With Panes
@@ -214,7 +222,10 @@ func (s *PaneShell) area(c *ui.Context, f PaneFrame) {
 		main.Children(func() {
 			switch {
 			case len(f.Panes) > 0:
-				s.Panes.view(c, f.Panes, func(pn Pane, first, last bool) { s.segment(c, f, pn, first, last) }).Grow(1)
+				s.Panes.view(c, f.Panes, func(pn Pane, first, last bool, width, after float32) {
+					s.segment(c, f, pn, first, last, width, after)
+				}).Grow(1)
+				s.barEnd(c, f)
 			case f.Content != nil:
 				f.Content()
 			}
@@ -252,40 +263,67 @@ func (s *PaneShell) consoleHeight(total float32) float32 {
 }
 
 // topBar is the bar of a frame without panes: its sides share the room
-// left, so the palette field is in the middle of the window.
+// left, so the palette field is in the middle of the window. The toggle
+// and the trailing controls keep their size. The field gives way first,
+// staying in the middle, down to its least width; then Start, then the
+// field again, to its compact button.
 func (s *PaneShell) topBar(c *ui.Context, f PaneFrame) {
 	t := c.Theme()
 	tb := c.TitleBar()
+	w, _ := c.Size()
+	var lead float32
+	if f.SidebarPane != "" {
+		lead = s.toggleW.w
+		if f.Start != nil {
+			lead += SpaceXS
+		}
+	}
+	room := w - 2*SpaceL - tb.Left - tb.Right - 2*SpaceM
+	var width float32 // compact
+	if room-lead-s.trailW.w >= paletteFieldLeast {
+		// As wide as sides of the same width allow, so that it stays in
+		// the middle, and no narrower than its least.
+		width = min(max(room-2*max(lead, s.trailW.w), paletteFieldLeast), paletteFieldWidth)
+	}
 	ui.Row(c).Height(TopBarHeight).Padding(0, SpaceL+tb.Right, 0, SpaceL+tb.Left).Gap(SpaceM).AlignItems(ui.Center).
 		Background(Chrome(t)).DragWindow().Children(func() {
 		ui.Row(c).Grow(1).Shrink(1).Basis(0).MinWidth(0).Gap(SpaceXS).AlignItems(ui.Center).Children(func() {
 			s.sidebarToggle(c, f)
 			if f.Start != nil {
-				f.Start()
+				ui.Row(c).Grow(1).MinWidth(0).Gap(SpaceXS).AlignItems(ui.Center).Clip().Children(f.Start)
 			}
 		})
-		PaletteField(c, &s.Palette).Shrink(1).MinWidth(180)
-		ui.Row(c).Grow(1).Shrink(1).Basis(0).MinWidth(0).Gap(SpaceXS).AlignItems(ui.Center).Justify(ui.End).Children(func() {
-			s.trailing(c, f)
+		paletteControl(c, &s.Palette, width)
+		// No MinWidth: the side is never narrower than the trailing
+		// controls.
+		ui.Row(c).Grow(1).Shrink(1).Basis(0).AlignItems(ui.Center).Justify(ui.End).Children(func() {
+			s.trailRow(c, f)
 		})
 	})
 }
 
-// segment is the part of the top bar over one pane: the first shown starts
-// with the sidebar toggle and the last shown ends with the palette field,
-// End, the console's button and the main menu.
-func (s *PaneShell) segment(c *ui.Context, f PaneFrame, pn Pane, first, last bool) {
+// segment is the part of the top bar over one pane, width DIPs wide, with
+// after DIPs of panes after it: the first shown starts with the sidebar
+// toggle. The bar's end (barEnd) lies over the end of the last one shown,
+// and over the ones before it when the last is too narrow for it: the
+// part of a segment under it is padding, so the pane's Bar gives way.
+func (s *PaneShell) segment(c *ui.Context, f PaneFrame, pn Pane, first, last bool, width, after float32) {
 	t := c.Theme()
-	tb := c.TitleBar()
-	var left, right float32 = SpaceM, SpaceM
+	start, end := barEdges(c)
+	lead := float32(SpaceM)
 	if first {
-		left += tb.Left
+		lead += start
 	}
-	if last {
-		right += tb.Right
+	under := s.endW.w + SpaceXS + SpaceM + end - after
+	trail := max(min(under, width-lead), SpaceM)
+	row := ui.Row(c).Height(TopBarHeight).Shrink(0).Gap(SpaceXS).AlignItems(ui.Center).
+		Background(Chrome(t)).DragWindow().Clip()
+	if c.Direction() == ui.RightToLeft {
+		row.Padding(0, lead, 0, trail)
+	} else {
+		row.Padding(0, trail, 0, lead)
 	}
-	ui.Row(c).Height(TopBarHeight).Shrink(0).Padding(0, right, 0, left).Gap(SpaceXS).AlignItems(ui.Center).
-		Background(Chrome(t)).DragWindow().Clip().Children(func() {
+	row.Children(func() {
 		if first {
 			s.sidebarToggle(c, f)
 		}
@@ -293,12 +331,60 @@ func (s *PaneShell) segment(c *ui.Context, f PaneFrame, pn Pane, first, last boo
 		if pn.Bar != nil {
 			items.Children(pn.Bar)
 		}
-		if last {
-			PaletteField(c, &s.Palette).Width(300).Shrink(1).MinWidth(160)
-			s.trailing(c, f)
-		}
 	})
+	if last {
+		s.room = width - lead
+		if first && f.SidebarPane != "" {
+			s.room -= s.toggleW.w + SpaceXS
+		}
+	}
 	ui.Box(c).Height(1).Shrink(0).Background(t.Border)
+}
+
+// barEnd draws the end of a bar of segments: the palette field, End, the
+// console's button and the main menu, last before the window controls. It
+// is the window's, not the last pane's: it lies over the segments at its
+// own width, above the separators, and they give way under it. The field
+// fits the room the last segment has; with less than its least width there
+// it is drawn compact, and when the end is still wider than the last
+// segment it reaches over the segments before it.
+func (s *PaneShell) barEnd(c *ui.Context, f PaneFrame) {
+	t := c.Theme()
+	_, end := barEdges(c)
+	row := ui.Row(c.Key("bar-end")).Absolute().Top(0).Height(TopBarHeight).Gap(SpaceXS).AlignItems(ui.Center).
+		Background(Chrome(t)).DragWindow().ZIndex(1)
+	if c.Direction() == ui.RightToLeft {
+		row.Left(SpaceM + end)
+	} else {
+		row.Right(SpaceM + end)
+	}
+	s.endW.of(c, row)
+	// The room left for the field: the last segment less the gap before
+	// the end, the trailing controls with the gap before them, and the
+	// room by the window controls.
+	room := s.room - SpaceXS - s.trailW.w - SpaceXS - SpaceM - end
+	row.Children(func() {
+		paletteControl(c, &s.Palette, fieldWidth(room, segmentFieldWidth, segmentFieldLeast))
+		s.trailRow(c, f)
+	})
+}
+
+// barEdges returns the room the window controls take at the bar's start,
+// where the sidebar toggle is, and at its end, where the main menu is:
+// right to left, the title bar's right and left.
+func barEdges(c *ui.Context) (start, end float32) {
+	tb := c.TitleBar()
+	if c.Direction() == ui.RightToLeft {
+		return tb.Right, tb.Left
+	}
+	return tb.Left, tb.Right
+}
+
+// trailRow draws the trailing controls, which never shrink.
+func (s *PaneShell) trailRow(c *ui.Context, f PaneFrame) {
+	row := ui.Row(c).Shrink(0).Gap(SpaceXS).AlignItems(ui.Center)
+	s.trailW.of(c, row)
+	row.Children(func() { s.trailing(c, f) })
 }
 
 func (s *PaneShell) sidebarToggle(c *ui.Context, f PaneFrame) {
@@ -310,7 +396,9 @@ func (s *PaneShell) sidebarToggle(c *ui.Context, f PaneFrame) {
 		panes = &s.Panes
 	}
 	open := panes.Shown(f.SidebarPane)
-	if toggleButton(c, "sidebar-show", "Sidebar", open).Clicked() {
+	b := toggleButton(c, "sidebar-show", "Sidebar", open).Shrink(0)
+	s.toggleW.of(c, b)
+	if b.Clicked() {
 		panes.Toggle(f.SidebarPane)
 	}
 }
@@ -364,9 +452,9 @@ func (s *PaneShell) statusBar(c *ui.Context, f PaneFrame) {
 // is a button, 380 DIPs wide unless the caller sets another width.
 func PaletteField(c *ui.Context, p *Palette) ui.Element {
 	t := c.Theme()
-	field := ui.ButtonBase(c).Row().Width(380).Height(32).Padding(0, 10).Gap(SpaceS).Radius(16).AlignItems(ui.Center).
+	field := ui.ButtonBase(c).Row().Width(paletteFieldWidth).Height(32).Padding(0, 10).Gap(SpaceS).Radius(16).AlignItems(ui.Center).
 		Background(t.Background).Border(1, t.Border).Cursor(ui.CursorPointer).
-		Label("Search or run a command").Tooltip("Command palette (Ctrl K)").KeyShortcuts(ui.Cmd, ui.KeyK)
+		Label(paletteLabel).Tooltip(paletteTooltip).KeyShortcuts(ui.Cmd, ui.KeyK)
 	if field.Hovered() {
 		field.Border(1, t.Accent.Alpha(0.6))
 	}
@@ -375,7 +463,69 @@ func PaletteField(c *ui.Context, p *Palette) ui.Element {
 	}
 	return field.Children(func() {
 		Icon(c, "system-search").TextColor(t.TextMuted)
-		Muted(c, "Search or run a command").Grow(1).Shrink(1).SingleLine()
+		Muted(c, paletteLabel).Grow(1).Shrink(1).SingleLine()
 		Shortcut(c, "Ctrl", "K")
 	})
+}
+
+// The palette field's name and tooltip, which its compact button shares.
+const (
+	paletteLabel   = "Search or run a command"
+	paletteTooltip = "Command palette (Ctrl K)"
+)
+
+// The palette field's widths in DIPs: what it takes when the bar has room,
+// and the least it gives way to before it is drawn compact. The field over
+// a bar of segments is narrower than the one in the middle of a bar.
+const (
+	paletteFieldWidth = 380
+	paletteFieldLeast = 180
+	segmentFieldWidth = 300
+	segmentFieldLeast = 160
+)
+
+// fieldWidth is the palette field's width in a bar with room DIPs for it:
+// want, or less down to least; 0, for less room than least, draws the
+// field compact.
+func fieldWidth(room, want, least float32) float32 {
+	if room < least {
+		return 0
+	}
+	return min(room, want)
+}
+
+// paletteControl draws the palette field width DIPs wide, or its compact
+// button for a width of 0.
+func paletteControl(c *ui.Context, p *Palette, width float32) ui.Element {
+	if width <= 0 {
+		return paletteButton(c, p)
+	}
+	return PaletteField(c, p).Width(width)
+}
+
+// paletteButton is the palette field drawn compact, for a bar without
+// room for it: its icon on a button with its name, its tooltip and its
+// key, which opens the palette.
+func paletteButton(c *ui.Context, p *Palette) ui.Element {
+	b := ui.Button(c, "").Label(paletteLabel).Tooltip(paletteTooltip).KeyShortcuts(ui.Cmd, ui.KeyK).Shrink(0)
+	if b.Clicked() {
+		p.Show()
+	}
+	return b.Children(func() { Icon(c, "system-search") })
+}
+
+// measured is the width an element had in the last frame, which a bar
+// reads before it builds the element. of asks for one more frame when the
+// width changed, and after the element's first build, so the frame after
+// settles.
+type measured struct {
+	w     float32
+	built bool
+}
+
+func (m *measured) of(c *ui.Context, e ui.Element) {
+	if w := e.LayoutBounds().W; w != m.w || !m.built {
+		m.w, m.built = w, true
+		c.AnimationFrame()
+	}
 }
