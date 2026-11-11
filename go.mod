@@ -4,7 +4,7 @@ go 1.27.4
 
 require (
 	github.com/ebitengine/purego v0.11.3
-	github.com/egoist/mygo v0.8.3
+	github.com/egoist/mygo v0.9.0
 )
 
 require (
