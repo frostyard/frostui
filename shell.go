@@ -28,6 +28,8 @@ type StatusItem struct {
 	Tooltip string
 	// OnClick makes the item a button.
 	OnClick func()
+	// Menu opens a menu when the item is activated. It takes precedence over OnClick.
+	Menu func(*ui.Menu)
 	// Progress, 0..1, draws a small bar after the text; a negative value
 	// draws none.
 	Progress float64
@@ -256,7 +258,7 @@ func statusItem(c *ui.Context, it StatusItem) {
 	if it.Tooltip != "" {
 		row.Tooltip(it.Tooltip)
 	}
-	if it.OnClick != nil {
+	if it.OnClick != nil || it.Menu != nil {
 		label := it.Text
 		if it.Tooltip != "" {
 			label = it.Tooltip
@@ -265,7 +267,9 @@ func statusItem(c *ui.Context, it StatusItem) {
 		if row.Hovered() {
 			row.Background(t.SurfaceHover)
 		}
-		if row.Clicked() {
+		if it.Menu != nil {
+			row.Menu(it.Menu)
+		} else if row.Clicked() {
 			it.OnClick()
 		}
 	}

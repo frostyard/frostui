@@ -93,6 +93,14 @@ type SourceList[K comparable] struct {
 	Menu func(m *ui.Menu, item K, section string)
 	// OnSelect runs as the user chooses an item, by a click or the keys.
 	OnSelect func(item K)
+	// OnClick handles an item's primary click or accessible activation,
+	// independently of arrow-key selection. When OnActivate is nil, Enter,
+	// Cmd+Enter, Cmd+Alt+Enter and the second click of a double click also
+	// call OnClick for the chosen item.
+	OnClick func(item K, mods ui.Modifiers)
+	// OnMiddleClick handles a middle-button release inside the row, unless
+	// canceled, without changing selection.
+	OnMiddleClick func(item K, mods ui.Modifiers)
 	// OnActivate runs on Enter or a double click on an item, with the
 	// modifier keys held: Ctrl+Enter opens a note in a new tab.
 	OnActivate func(item K, mods ui.Modifiers)
@@ -110,17 +118,20 @@ type SourceList[K comparable] struct {
 	// drag, as ui.Drop takes it, nil for items that do not drag.
 	DragItems func(items []K) any
 
-	state    ui.OutlineState[sourceKey[K]]
-	started  bool
-	row      int
-	sel      sourceKey[K]
-	hasSel   bool
-	want     *sourceKey[K]
-	wantAny  bool
-	seen     map[string]bool
-	sections []SourceSection[K]
-	cur      ui.OutlineRow
-	drops    []func(c *ui.Context, row ui.Element, item K) bool
+	openSnapshot   map[sourceKey[K]]struct{}
+	openGeneration uint64
+	state          ui.OutlineState[sourceKey[K]]
+	clicked        bool
+	started        bool
+	row            int
+	sel            sourceKey[K]
+	hasSel         bool
+	want           *sourceKey[K]
+	wantAny        bool
+	seen           map[string]bool
+	sections       []SourceSection[K]
+	cur            ui.OutlineRow
+	drops          []func(c *ui.Context, row ui.Element, item K) bool
 
 	renaming   bool
 	renameKey  sourceKey[K]
@@ -201,6 +212,31 @@ func (s *SourceList[K]) OpenItems(section string) []K {
 		}
 	}
 	return out
+}
+
+// OpenGeneration changes when the set of open items changes, including
+// changes made by the arrows, assistive technology, Select and SetOpen.
+func (s *SourceList[K]) OpenGeneration() uint64 {
+	changed := len(s.openSnapshot) != s.state.Open.Len()
+	if !changed {
+		for k := range s.state.Open.All() {
+			if _, ok := s.openSnapshot[k]; !ok {
+				changed = true
+				break
+			}
+		}
+	}
+	if changed {
+		if s.openSnapshot == nil {
+			s.openSnapshot = make(map[sourceKey[K]]struct{})
+		}
+		clear(s.openSnapshot)
+		for k := range s.state.Open.All() {
+			s.openSnapshot[k] = struct{}{}
+		}
+		s.openGeneration++
+	}
+	return s.openGeneration
 }
 
 // SetSectionOpen shows or hides the items of the section with the ID, as
@@ -436,6 +472,7 @@ func (s *SourceList[K]) restore(roots []sourceKey[K]) {
 // parent gives it (Grow it in a column), and returns the outline.
 func (s *SourceList[K]) View(c *ui.Context, sections []SourceSection[K]) ui.Element {
 	t := c.Theme()
+	s.clicked = false
 	s.sections = sections
 	if s.seen == nil {
 		s.seen = map[string]bool{}
@@ -517,6 +554,18 @@ func (s *SourceList[K]) View(c *ui.Context, sections []SourceSection[K]) ui.Elem
 			}
 		})
 	}
+	if s.OnClick != nil && s.OnActivate == nil {
+		if out.Submitted() && !s.clicked && s.hasSel && !s.renaming {
+			s.OnClick(s.sel.item, c.Modifiers())
+		}
+		for _, mods := range []ui.Modifiers{ui.Cmd, ui.Cmd | ui.Alt} {
+			out.OnShortcut(mods, ui.KeyEnter, func() {
+				if s.hasSel && !s.renaming {
+					s.OnClick(s.sel.item, mods)
+				}
+			})
+		}
+	}
 	if s.OnActivate != nil {
 		if out.Submitted() && s.hasSel && !s.renaming {
 			s.OnActivate(s.sel.item, c.Modifiers())
@@ -566,6 +615,33 @@ func (s *SourceList[K]) item(c *ui.Context, t *ui.Theme, k sourceKey[K]) {
 		depth--
 	}
 	content := ui.Row(c).Grow(1).Height(28).Gap(6).Padding(0, SpaceS, 0, SpaceXS).AlignItems(ui.Center)
+	if s.OnClick != nil && !s.renaming && content.RowClicked() {
+		s.clicked = true
+		s.OnClick(k.item, c.Modifiers())
+	}
+	if s.OnMiddleClick != nil {
+		handle := ui.Local(content, "middle-click", func() ui.Handle { return ui.Handle{} })
+		content.Bind(handle)
+		content.HandleInput(func(ev ui.InputEvent) bool {
+			if ev.Button != 2 {
+				return false
+			}
+			switch ev.Kind {
+			case ui.InputPointerDown:
+				return true // capture the matching release without selecting
+			case ui.InputPointerUp:
+				bounds := handle.Bounds(c)
+				// Input coordinates are local to the row, while Bounds is in
+				// window coordinates. Only its size participates in this check.
+				if !ev.Canceled && (ui.Rect{W: bounds.W, H: bounds.H}).Contains(ev.X, ev.Y) {
+					s.OnMiddleClick(k.item, ev.Mods)
+				}
+				return true
+			}
+			return false
+		})
+	}
+
 	if s.Menu != nil {
 		content.ContextMenu(func(m *ui.Menu) { s.Menu(m, k.item, k.section) })
 	}

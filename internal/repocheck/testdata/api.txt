@@ -291,6 +291,8 @@ field frostui.SourceList.DragItems func(items []K) any
 field frostui.SourceList.Label string
 field frostui.SourceList.Menu func(m *ui.Menu, item K, section string)
 field frostui.SourceList.OnActivate func(item K, mods ui.Modifiers)
+field frostui.SourceList.OnClick func(item K, mods ui.Modifiers)
+field frostui.SourceList.OnMiddleClick func(item K, mods ui.Modifiers)
 field frostui.SourceList.OnSelect func(item K)
 field frostui.SourceList.Rename func(item K, name string)
 field frostui.SourceList.Row func(item K) SourceRow
@@ -312,6 +314,7 @@ field frostui.Stage.Note string
 field frostui.Stage.Steps []Step
 field frostui.Stage.Title string
 field frostui.StatusItem.Icon string
+field frostui.StatusItem.Menu func(*ui.Menu)
 field frostui.StatusItem.OnClick func()
 field frostui.StatusItem.Progress float64
 field frostui.StatusItem.Text string
@@ -494,6 +497,7 @@ method (*SourceList[K]) frostui.ClearSelection()
 method (*SourceList[K]) frostui.CollapseAll()
 method (*SourceList[K]) frostui.ExpandAll()
 method (*SourceList[K]) frostui.IsOpen(string, K) bool
+method (*SourceList[K]) frostui.OpenGeneration() uint64
 method (*SourceList[K]) frostui.OpenItems(string) []K
 method (*SourceList[K]) frostui.Renaming() bool
 method (*SourceList[K]) frostui.SectionOpen(string) bool

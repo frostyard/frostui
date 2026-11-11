@@ -641,3 +641,173 @@ func TestSourceListBuildsOnlyTheRowsInView(t *testing.T) {
 		t.Errorf("Select did not scroll to a far row: %q", tt.Texts())
 	}
 }
+
+func TestSourceListClickIsIndependentOfKeyboardSelection(t *testing.T) {
+	l := mailList()
+	var clicked []string
+	l.OnClick = func(item string, _ ui.Modifiers) { clicked = append(clicked, item) }
+	tt := listTester(l, mailSections())
+	if err := tt.Click("Inbox"); err != nil {
+		t.Fatal(err)
+	}
+	tt.Move(1000, 1000)
+	tt.Key(0, ui.KeyDown)
+	if !slices.Equal(clicked, []string{"Inbox"}) {
+		t.Fatalf("clicks %v", clicked)
+	}
+}
+
+func TestSourceListClickIncludesEnter(t *testing.T) {
+	l := mailList()
+	var clicked []string
+	l.OnActivate = nil
+	l.OnClick = func(item string, _ ui.Modifiers) { clicked = append(clicked, item) }
+	tt := listTester(l, mailSections())
+	if err := tt.Click("Inbox"); err != nil {
+		t.Fatal(err)
+	}
+	for _, mods := range []ui.Modifiers{0, ui.Cmd, ui.Cmd | ui.Alt} {
+		tt.Key(mods, ui.KeyEnter)
+	}
+	if !slices.Equal(clicked, []string{"Inbox", "Inbox", "Inbox", "Inbox"}) {
+		t.Fatalf("click and Enter: %v", clicked)
+	}
+}
+
+func TestSourceListMiddleClick(t *testing.T) {
+	for _, ending := range []string{"inside", "outside", "canceled"} {
+		t.Run(ending, func(t *testing.T) {
+			l := mailList()
+			var clicked string
+			selected := 0
+			l.OnSelect = func(string) { selected++ }
+			l.OnMiddleClick = func(item string, _ ui.Modifiers) { clicked = item }
+			tt := listTester(l, mailSections())
+			if err := tt.Click("Projects"); err != nil {
+				t.Fatal(err)
+			}
+			item, section, chosen := l.Selected()
+			before := selected
+			r, ok := tt.Find("Inbox")
+			if !ok {
+				t.Fatal("no Inbox")
+			}
+			x, y := r.X+r.W/2, r.Y+r.H/2
+			tt.PressButton(2, x, y)
+			if clicked != "" {
+				t.Fatal("middle press activated before release")
+			}
+			switch ending {
+			case "inside":
+				tt.ReleaseButton(2, x, y)
+			case "outside":
+				tt.Move(600, 620)
+				tt.ReleaseButton(2, 600, 620)
+			case "canceled":
+				tt.CancelPress()
+			}
+			want := ""
+			if ending == "inside" {
+				want = "Inbox"
+			}
+			if clicked != want {
+				t.Fatalf("middle click %q, want %q", clicked, want)
+			}
+			afterItem, afterSection, afterChosen := l.Selected()
+			if item != afterItem || section != afterSection || chosen != afterChosen || before != selected {
+				t.Fatalf("middle click changed selection: %q/%q/%v (%d callbacks) -> %q/%q/%v (%d callbacks)", item, section, chosen, before, afterItem, afterSection, afterChosen, selected)
+			}
+		})
+	}
+}
+
+func TestSourceListOpenGeneration(t *testing.T) {
+	l := mailList()
+	tt := listTester(l, mailSections())
+	before := l.OpenGeneration()
+	tt.Frame()
+	if l.OpenGeneration() != before {
+		t.Fatal("idle frame changed open state")
+	}
+	l.SetOpen("work", "Projects", true)
+	opened := l.OpenGeneration()
+	if opened == before {
+		t.Fatal("opening did not change generation")
+	}
+	l.SetOpen("work", "Projects", true)
+	if l.OpenGeneration() != opened {
+		t.Fatal("idempotent open changed generation")
+	}
+	l.SetOpen("work", "Projects", false)
+	closed := l.OpenGeneration()
+	if closed == opened {
+		t.Fatal("closing did not change generation")
+	}
+	l.SetOpen("work", "Projects", false)
+	if l.OpenGeneration() != closed {
+		t.Fatal("idempotent close changed generation")
+	}
+	// Replacing one member with another changes the set without changing its size.
+	l.SetOpen("work", "Projects", true)
+	before = l.OpenGeneration()
+	l.SetOpen("work", "Projects", false)
+	l.SetOpen("work", "Alpha", true)
+	if l.OpenGeneration() == before {
+		t.Fatal("same-sized membership change was missed")
+	}
+}
+
+func TestSourceListKeyboardChangesOpenGeneration(t *testing.T) {
+	l := mailList()
+	tt := listTester(l, mailSections())
+	if err := tt.Click("Projects"); err != nil {
+		t.Fatal(err)
+	}
+	before := l.OpenGeneration()
+	tt.Key(0, ui.KeyRight)
+	opened := l.OpenGeneration()
+	if opened == before || !l.IsOpen("work", "Projects") {
+		t.Fatal("Right did not advance the open generation")
+	}
+	tt.Key(0, ui.KeyLeft)
+	if l.OpenGeneration() == opened || l.IsOpen("work", "Projects") {
+		t.Fatal("Left did not advance the open generation")
+	}
+}
+
+func TestSourceListEnterPrefersOnActivate(t *testing.T) {
+	for _, mods := range []ui.Modifiers{0, ui.Cmd, ui.Cmd | ui.Alt} {
+		l := mailList()
+		clicks, activates := 0, 0
+		l.OnClick = func(string, ui.Modifiers) { clicks++ }
+		l.OnActivate = func(_ string, got ui.Modifiers) {
+			activates++
+			if got != mods {
+				t.Errorf("mods %v, want %v", got, mods)
+			}
+		}
+		tt := listTester(l, mailSections())
+		if err := tt.Click("Inbox"); err != nil {
+			t.Fatal(err)
+		}
+		tt.Key(mods, ui.KeyEnter)
+		if clicks != 1 || activates != 1 {
+			t.Fatalf("mods %v: %d clicks, %d activations", mods, clicks, activates)
+		}
+	}
+}
+
+func TestSourceListDoubleClickCallsOnClickTwice(t *testing.T) {
+	l := mailList()
+	clicks := 0
+	l.OnClick = func(string, ui.Modifiers) { clicks++ }
+	tt := listTester(l, mailSections())
+	for range 2 {
+		if err := tt.Click("Inbox"); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if clicks != 2 {
+		t.Fatalf("double click called OnClick %d times", clicks)
+	}
+}
