@@ -657,6 +657,21 @@ func TestSourceListClickIsIndependentOfKeyboardSelection(t *testing.T) {
 	}
 }
 
+func TestSourceListClickIncludesEnter(t *testing.T) {
+	l := mailList()
+	var clicked []string
+	l.OnActivate = nil
+	l.OnClick = func(item string, _ ui.Modifiers) { clicked = append(clicked, item) }
+	tt := listTester(l, mailSections())
+	if err := tt.Click("Inbox"); err != nil {
+		t.Fatal(err)
+	}
+	tt.Key(0, ui.KeyEnter)
+	if !slices.Equal(clicked, []string{"Inbox", "Inbox"}) {
+		t.Fatalf("click and Enter: %v", clicked)
+	}
+}
+
 func TestSourceListMiddleClick(t *testing.T) {
 	l := mailList()
 	var clicked string

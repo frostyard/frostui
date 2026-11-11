@@ -118,6 +118,7 @@ type SourceList[K comparable] struct {
 	openSnapshot   map[sourceKey[K]]struct{}
 	openGeneration uint64
 	state          ui.OutlineState[sourceKey[K]]
+	clicked        bool
 	started        bool
 	row            int
 	sel            sourceKey[K]
@@ -472,6 +473,7 @@ func (s *SourceList[K]) restore(roots []sourceKey[K]) {
 // parent gives it (Grow it in a column), and returns the outline.
 func (s *SourceList[K]) View(c *ui.Context, sections []SourceSection[K]) ui.Element {
 	t := c.Theme()
+	s.clicked = false
 	s.sections = sections
 	if s.seen == nil {
 		s.seen = map[string]bool{}
@@ -553,6 +555,18 @@ func (s *SourceList[K]) View(c *ui.Context, sections []SourceSection[K]) ui.Elem
 			}
 		})
 	}
+	if s.OnClick != nil && s.OnActivate == nil {
+		if out.Submitted() && !s.clicked && s.hasSel && !s.renaming {
+			s.OnClick(s.sel.item, c.Modifiers())
+		}
+		for _, mods := range []ui.Modifiers{ui.Cmd, ui.Cmd | ui.Alt} {
+			out.OnShortcut(mods, ui.KeyEnter, func() {
+				if s.hasSel && !s.renaming {
+					s.OnClick(s.sel.item, mods)
+				}
+			})
+		}
+	}
 	if s.OnActivate != nil {
 		if out.Submitted() && s.hasSel && !s.renaming {
 			s.OnActivate(s.sel.item, c.Modifiers())
@@ -603,6 +617,7 @@ func (s *SourceList[K]) item(c *ui.Context, t *ui.Theme, k sourceKey[K]) {
 	}
 	content := ui.Row(c).Grow(1).Height(28).Gap(6).Padding(0, SpaceS, 0, SpaceXS).AlignItems(ui.Center)
 	if s.OnClick != nil && !s.renaming && content.RowClicked() {
+		s.clicked = true
 		s.OnClick(k.item, c.Modifiers())
 	}
 	if s.OnMiddleClick != nil {
