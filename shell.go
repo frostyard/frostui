@@ -58,6 +58,7 @@ type Shell struct {
 	Info    Info
 
 	splitPercent float32
+	trailW       measured // the top bar's trailing controls in the last frame
 }
 
 // Frame is what the app gives the shell to draw each frame.
@@ -149,12 +150,18 @@ func (s *Shell) View(c *ui.Context, f Frame) {
 	s.Palette.View(c, cmds)
 }
 
+// topBar draws the brand, the palette field and the trailing controls. The
+// brand and the trailing controls keep their size: the field gives way,
+// down to its least width and then to its compact button.
 func (s *Shell) topBar(c *ui.Context, f Frame) {
 	t := c.Theme()
 	tb := c.TitleBar()
+	w, _ := c.Size()
+	room := w - 2*SpaceL - tb.Left - tb.Right - (RailWidth - SpaceL) - 4*SpaceM - s.trailW.w
+	width := fieldWidth(room, paletteFieldWidth, paletteFieldLeast)
 	ui.Row(c).Height(TopBarHeight).Padding(0, SpaceL+tb.Right, 0, SpaceL+tb.Left).Gap(SpaceM).AlignItems(ui.Center).
 		Background(Chrome(t)).DragWindow().Children(func() {
-		ui.Row(c).Width(RailWidth - SpaceL).Gap(10).AlignItems(ui.Center).Children(func() {
+		ui.Row(c).Width(RailWidth - SpaceL).Shrink(0).Gap(10).AlignItems(ui.Center).Children(func() {
 			ui.Box(c).Size(30, 30).Radius(8).Background(t.Accent).Center().Children(func() {
 				if s.Brand.Logo != nil {
 					ui.Icon(c, s.Brand.Logo).FontSize(19).TextColor(t.AccentText)
@@ -168,23 +175,29 @@ func (s *Shell) topBar(c *ui.Context, f Frame) {
 			})
 		})
 		ui.Spacer(c)
-		// Looks like a search field and opens the palette.
-		field := ui.Row(c).Width(380).Height(32).Padding(0, 10).Gap(SpaceS).Radius(16).AlignItems(ui.Center).
-			Background(t.Background).Border(1, t.Border).Role(ui.RoleButton).Focusable().Cursor(ui.CursorPointer).
-			Label("Search or run a command").Tooltip("Command palette (Ctrl K)")
-		if field.Hovered() {
-			field.Border(1, t.Accent.Alpha(0.6))
+		if width > 0 {
+			// Looks like a search field and opens the palette.
+			field := ui.Row(c).Width(width).Height(32).Padding(0, 10).Gap(SpaceS).Radius(16).AlignItems(ui.Center).
+				Background(t.Background).Border(1, t.Border).Role(ui.RoleButton).Focusable().Cursor(ui.CursorPointer).
+				Label(paletteLabel).Tooltip(paletteTooltip)
+			if field.Hovered() {
+				field.Border(1, t.Accent.Alpha(0.6))
+			}
+			if field.Clicked() {
+				s.Palette.Show()
+			}
+			field.Children(func() {
+				Icon(c, "system-search").TextColor(t.TextMuted)
+				Muted(c, paletteLabel).Grow(1).SingleLine()
+				Shortcut(c, "Ctrl", "K")
+			})
+		} else {
+			paletteButton(c, &s.Palette)
 		}
-		if field.Clicked() {
-			s.Palette.Show()
-		}
-		field.Children(func() {
-			Icon(c, "system-search").TextColor(t.TextMuted)
-			Muted(c, "Search or run a command").Grow(1).SingleLine()
-			Shortcut(c, "Ctrl", "K")
-		})
 		ui.Spacer(c)
-		ui.Row(c).Gap(SpaceXS).AlignItems(ui.Center).Children(func() {
+		trail := ui.Row(c).Shrink(0).Gap(SpaceXS).AlignItems(ui.Center)
+		s.trailW.of(c, trail)
+		trail.Children(func() {
 			if f.Actions != nil {
 				f.Actions()
 			}
