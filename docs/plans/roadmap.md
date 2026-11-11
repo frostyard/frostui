@@ -2,8 +2,8 @@
 
 This plan takes the kit from ChairLift's `internal/frostui` to a released
 module that ChairLift, Frostmail and Frostnotes import
-([ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md)). It is
-the only plan of this repository.
+([ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md)).
+[The Frostyard look](frostyard-look.md) is the plan that follows it.
 
 ## Phase 1 — Extract the kit (done)
 

@@ -480,6 +480,10 @@ the focus, as GNOME and KDE do (MyGo fades it to gray, as macOS does), on
 every platform. MyGo resets the theme at each build pass, so `Adapt` runs
 first in every frame; `Shell.View` calls it.
 
+[ADR-0011](../adr/0011-draw-the-frostyard-brand-in-a-dark-and-a-light-theme.md)
+(proposed) replaces this with the kit's own Frostyard and Frostyard light
+themes; [the Frostyard look](../plans/frostyard-look.md) plans the change.
+
 ### Icons
 
 `icons.go`: `Icons` finds icons by freedesktop name, lazily, and caches them
