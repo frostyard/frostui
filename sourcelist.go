@@ -94,9 +94,12 @@ type SourceList[K comparable] struct {
 	// OnSelect runs as the user chooses an item, by a click or the keys.
 	OnSelect func(item K)
 	// OnClick handles an item's primary click or accessible activation,
-	// independently of arrow-key selection. Enter also activates the item.
+	// independently of arrow-key selection. When OnActivate is nil, Enter,
+	// Cmd+Enter, Cmd+Alt+Enter and the second click of a double click also
+	// call OnClick for the chosen item.
 	OnClick func(item K, mods ui.Modifiers)
-	// OnMiddleClick handles the middle pointer button without changing selection.
+	// OnMiddleClick handles a middle-button release inside the row, unless
+	// canceled, without changing selection.
 	OnMiddleClick func(item K, mods ui.Modifiers)
 	// OnActivate runs on Enter or a double click on an item, with the
 	// modifier keys held: Ctrl+Enter opens a note in a new tab.
@@ -214,10 +217,6 @@ func (s *SourceList[K]) OpenItems(section string) []K {
 // OpenGeneration changes when the set of open items changes, including
 // changes made by the arrows, assistive technology, Select and SetOpen.
 func (s *SourceList[K]) OpenGeneration() uint64 {
-	// Newer MyGo versions track membership in constant time.
-	if tracked, ok := any(&s.state.Open).(interface{ Generation() uint64 }); ok {
-		return tracked.Generation()
-	}
 	changed := len(s.openSnapshot) != s.state.Open.Len()
 	if !changed {
 		for k := range s.state.Open.All() {
@@ -621,9 +620,22 @@ func (s *SourceList[K]) item(c *ui.Context, t *ui.Theme, k sourceKey[K]) {
 		s.OnClick(k.item, c.Modifiers())
 	}
 	if s.OnMiddleClick != nil {
+		handle := ui.Local(content, "middle-click", func() ui.Handle { return ui.Handle{} })
+		content.Bind(handle)
 		content.HandleInput(func(ev ui.InputEvent) bool {
-			if ev.Kind == ui.InputPointerDown && ev.Button == 2 {
-				s.OnMiddleClick(k.item, ev.Mods)
+			if ev.Button != 2 {
+				return false
+			}
+			switch ev.Kind {
+			case ui.InputPointerDown:
+				return true // capture the matching release without selecting
+			case ui.InputPointerUp:
+				bounds := handle.Bounds(c)
+				// Input coordinates are local to the row, while Bounds is in
+				// window coordinates. Only its size participates in this check.
+				if !ev.Canceled && (ui.Rect{W: bounds.W, H: bounds.H}).Contains(ev.X, ev.Y) {
+					s.OnMiddleClick(k.item, ev.Mods)
+				}
 				return true
 			}
 			return false

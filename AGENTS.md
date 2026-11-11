@@ -93,6 +93,10 @@ its skills there (core ADR-0026); start a repo-local one from
   an `init` function or a package-level variable. After a MyGo bump, read
   its source in `GOMODCACHE` (the theme reset, `Window.Update`, the Tester)
   before merging.
+- **Dependency API adoption.** Use the pinned MyGo API explicitly. Do not
+  probe for future dependency methods with type assertions: a later bump must
+  not silently change the kit's behavior. Adopt new methods in the bump PR,
+  with tests for the kit's existing semantics (including idempotent changes).
 - **Tests run headless.** Views are tested with `ui.NewTester`; a test that
   stands in for the UI thread posts to a `frostuitest.Loop`. No test
   needs a display, a network or a real desktop app; `LaunchDesktopApp` is
