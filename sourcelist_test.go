@@ -721,6 +721,135 @@ func TestSourceListMiddleClick(t *testing.T) {
 	}
 }
 
+// TestSourceListMiddleClickSurvivesRowsBuiltAgain middle-clicks rows after
+// the list built them anew many times, as they scrolled far away and back
+// and as their sections closed and opened: a row keeps nothing of its own
+// for the click (no ui.Handle, which would stay registered with the window
+// each time), and each click still fires exactly once, released over its
+// own row. A release over the next row, outside the list or over the
+// section header pinned above the row (in the row's box, but not over the
+// row), or a canceled press, fires none.
+func TestSourceListMiddleClickSurvivesRowsBuiltAgain(t *testing.T) {
+	notes := make([]string, 2000)
+	for i := range notes {
+		notes[i] = fmt.Sprintf("Note %d", i)
+	}
+	sections := []SourceSection[string]{
+		{ID: "pinned", Title: "Pinned", Items: []string{"Today", "Ideas"}},
+		{ID: "vault", Title: "Vault", Items: notes},
+	}
+	l := &SourceList[string]{
+		Label:    "Notes",
+		Children: func(string) []string { return nil },
+		Row:      func(item string) SourceRow { return SourceRow{Title: item, Icon: "text-x-generic"} },
+	}
+	var clicked []string
+	selected := 0
+	l.OnSelect = func(string) { selected++ }
+	l.OnMiddleClick = func(item string, _ ui.Modifiers) { clicked = append(clicked, item) }
+	tt := ui.NewTester(func(c *ui.Context) {
+		Adapt(c)
+		ui.Column(c).Width(280).Height(400).AlignItems(ui.Stretch).Children(func() { l.View(c, sections).Grow(1) })
+	}, 700, 420)
+	if err := tt.Click("Ideas"); err != nil {
+		t.Fatal(err)
+	}
+	item, section, chosen := l.Selected()
+	before := selected
+
+	center := func(name string) (float32, float32) {
+		t.Helper()
+		r, ok := tt.Find(name)
+		if !ok {
+			t.Fatalf("no %q in %q", name, tt.Texts())
+		}
+		return r.X + r.W/2, r.Y + r.H/2
+	}
+	for cycle := range 5 {
+		tt.Scroll(140, 200, 0, 40000)
+		if tt.HasText("Note 3") || tt.HasText("Today") {
+			t.Fatalf("cycle %d: the list did not scroll far down: %q", cycle, tt.Texts())
+		}
+		tt.Scroll(140, 200, 0, -60000)
+		if !tt.HasText("Note 3") || !tt.HasText("Today") {
+			t.Fatalf("cycle %d: the list did not scroll back: %q", cycle, tt.Texts())
+		}
+		for _, header := range []string{"Vault", "Pinned"} {
+			for range 2 {
+				if err := tt.Click(header); err != nil {
+					t.Fatal(err)
+				}
+			}
+		}
+		if !l.SectionOpen("vault") || !l.SectionOpen("pinned") || !tt.HasText("Note 3") || !tt.HasText("Today") {
+			t.Fatalf("cycle %d: the sections did not close and open again: %q", cycle, tt.Texts())
+		}
+	}
+	tt.Move(600, 400)
+
+	var want []string
+	for _, name := range []string{"Note 3", "Today", "Note 3"} {
+		x, y := center(name)
+		tt.PressButton(2, x, y)
+		if !slices.Equal(clicked, want) {
+			t.Fatalf("a middle press on %s clicked %q before its release", name, clicked)
+		}
+		tt.ReleaseButton(2, x, y)
+		want = append(want, name)
+		if !slices.Equal(clicked, want) {
+			t.Fatalf("middle click on %s: clicked %q, want %q", name, clicked, want)
+		}
+	}
+
+	x, y := center("Note 3")
+	nx, ny := center("Note 4")
+	for _, ending := range []string{"over the next row", "outside the list", "canceled"} {
+		tt.PressButton(2, x, y)
+		switch ending {
+		case "over the next row":
+			tt.Move(nx, ny)
+			tt.ReleaseButton(2, nx, ny)
+		case "outside the list":
+			tt.Move(600, 400)
+			tt.ReleaseButton(2, 600, 400)
+		case "canceled":
+			tt.CancelPress()
+		}
+		if !slices.Equal(clicked, want) {
+			t.Fatalf("a middle press on Note 3 released %s clicked %q, want %q", ending, clicked, want)
+		}
+	}
+
+	// Scrolled by less than a row, the section's header stays pinned over
+	// the top of Today's row: a release there is over the header, not the
+	// row, though it lies in the row's box.
+	tt.Scroll(140, 200, 0, 10)
+	today, _ := tt.Find("Today")
+	header, _ := tt.Find("Pinned")
+	ry := today.Y + 2
+	if !(header.Y < ry && ry < header.Y+header.H) {
+		t.Fatalf("the Pinned header %+v does not cover the top of Today's row %+v", header, today)
+	}
+	tt.PressButton(2, x, today.Y+today.H-6)
+	tt.Move(x, ry)
+	tt.ReleaseButton(2, x, ry)
+	if !slices.Equal(clicked, want) {
+		t.Fatalf("a middle press on Today released over the header pinned above it clicked %q, want %q", clicked, want)
+	}
+	tt.Scroll(140, 200, 0, -10)
+
+	tt.PressButton(2, x, y)
+	tt.ReleaseButton(2, x, y)
+	if want = append(want, "Note 3"); !slices.Equal(clicked, want) {
+		t.Fatalf("a middle click after the missed ones: clicked %q, want %q", clicked, want)
+	}
+
+	afterItem, afterSection, afterChosen := l.Selected()
+	if item != afterItem || section != afterSection || chosen != afterChosen || before != selected {
+		t.Fatalf("middle clicks changed the selection: %q/%q/%v (%d callbacks) -> %q/%q/%v (%d callbacks)", item, section, chosen, before, afterItem, afterSection, afterChosen, selected)
+	}
+}
+
 func TestSourceListOpenGeneration(t *testing.T) {
 	l := mailList()
 	tt := listTester(l, mailSections())

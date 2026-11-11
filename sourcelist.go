@@ -98,8 +98,8 @@ type SourceList[K comparable] struct {
 	// Cmd+Enter, Cmd+Alt+Enter and the second click of a double click also
 	// call OnClick for the chosen item.
 	OnClick func(item K, mods ui.Modifiers)
-	// OnMiddleClick handles a middle-button release inside the row, unless
-	// canceled, without changing selection.
+	// OnMiddleClick handles a middle-button press on a row released over
+	// the same row, unless canceled, without changing selection.
 	OnMiddleClick func(item K, mods ui.Modifiers)
 	// OnActivate runs on Enter or a double click on an item, with the
 	// modifier keys held: Ctrl+Enter opens a note in a new tab.
@@ -137,6 +137,12 @@ type SourceList[K comparable] struct {
 	renameKey  sourceKey[K]
 	renameFrom string
 	draft      string
+
+	// The row a middle-button press holds until its release, and whether
+	// that release came over the row (middleClick).
+	middle     sourceKey[K]
+	middleSet  bool
+	middleOver bool
 }
 
 // sourceKey is a row of a SourceList: a section's header, or an item in a
@@ -620,26 +626,7 @@ func (s *SourceList[K]) item(c *ui.Context, t *ui.Theme, k sourceKey[K]) {
 		s.OnClick(k.item, c.Modifiers())
 	}
 	if s.OnMiddleClick != nil {
-		handle := ui.Local(content, "middle-click", func() ui.Handle { return ui.Handle{} })
-		content.Bind(handle)
-		content.HandleInput(func(ev ui.InputEvent) bool {
-			if ev.Button != 2 {
-				return false
-			}
-			switch ev.Kind {
-			case ui.InputPointerDown:
-				return true // capture the matching release without selecting
-			case ui.InputPointerUp:
-				bounds := handle.Bounds(c)
-				// Input coordinates are local to the row, while Bounds is in
-				// window coordinates. Only its size participates in this check.
-				if !ev.Canceled && (ui.Rect{W: bounds.W, H: bounds.H}).Contains(ev.X, ev.Y) {
-					s.OnMiddleClick(k.item, ev.Mods)
-				}
-				return true
-			}
-			return false
-		})
+		s.middleClick(content, k)
 	}
 
 	if s.Menu != nil {
@@ -707,6 +694,40 @@ func (s *SourceList[K]) item(c *ui.Context, t *ui.Theme, k sourceKey[K]) {
 				Pill(c, row.Count, row.CountTone)
 			}
 		}
+	})
+}
+
+// middleClick has the row of k take a middle-button press, so that it
+// chooses nothing, and call OnMiddleClick as the press ends over the same
+// row. The list keeps the press in its own fields: no ui.Handle, which
+// stays registered with the window until the window closes, so that one
+// made each time a row is built again, as it scrolls back into view or
+// its section opens, would pile up for good. MyGo's hit test tells where
+// the release is: the row's observer sees a release over the row before
+// the row's handler, which holds the press, gets it, wherever it is.
+func (s *SourceList[K]) middleClick(content ui.Element, k sourceKey[K]) {
+	content.ObserveInput(func(ev ui.InputEvent) {
+		if ev.Kind == ui.InputPointerUp && ev.Button == 2 && !ev.Canceled && s.middleSet && s.middle == k {
+			s.middleOver = true
+		}
+	})
+	content.HandleInput(func(ev ui.InputEvent) bool {
+		if ev.Button != 2 {
+			return false
+		}
+		switch ev.Kind {
+		case ui.InputPointerDown:
+			s.middle, s.middleSet, s.middleOver = k, true, false
+			return true // capture the matching release without selecting
+		case ui.InputPointerUp:
+			click := s.middleSet && s.middle == k && s.middleOver && !ev.Canceled
+			s.middle, s.middleSet, s.middleOver = sourceKey[K]{}, false, false
+			if click {
+				s.OnMiddleClick(k.item, ev.Mods)
+			}
+			return true
+		}
+		return false
 	})
 }
 

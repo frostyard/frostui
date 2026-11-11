@@ -346,8 +346,12 @@ its account.
   row clicks. When `OnActivate` is nil, Enter, Cmd+Enter, Cmd+Alt+Enter
   and the second click of a double click also call `OnClick`. With
   `OnActivate` set, those activation events call only `OnActivate`.
-  `OnMiddleClick` runs on a non-canceled middle-button release inside the row,
-  without changing selection. `OpenGeneration` identifies changes to the expanded items.
+  `OnMiddleClick` runs when a middle-button press on a row ends, not
+  canceled, with the pointer over the same row, without changing
+  selection. The list keeps the press in its own fields, and the row's
+  `ObserveInput` tells, by MyGo's hit test, that the release is over it,
+  so a header pinned over the row takes it; no row makes a `ui.Handle`.
+  `OpenGeneration` identifies changes to the expanded items.
 - **Menus and drops:** `Menu` builds a row's context menu; `DropOn[K, T]`
   makes rows take values of type `T`, highlights a row that accepts, and
   passes the modifiers held (Ctrl or Alt to copy); `DragItems` makes rows
