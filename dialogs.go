@@ -74,7 +74,7 @@ func (d *Dialogs) View(c *ui.Context) {
 				}
 				action := ui.PrimaryButton(c, req.Action).AutoFocus()
 				if req.Destructive {
-					action.Background(t.Danger).TextColor(ui.RGB(255, 255, 255))
+					action.Background(ToneFill(t, Danger)).TextColor(t.Danger).Border(1, ToneLine(t, Danger))
 				}
 				if action.Clicked() {
 					decided, confirmed = true, true
@@ -195,8 +195,8 @@ func AboutBody(a About) func(c *ui.Context) {
 		t := c.Theme()
 		ui.Column(c).Gap(SpaceS).AlignItems(ui.Center).Padding(SpaceS, 0).Children(func() {
 			if a.Logo != "" {
-				ui.Box(c).Size(64, 64).Radius(16).Background(t.Accent).Center().Children(func() {
-					Icon(c, a.Logo).FontSize(40).TextColor(t.AccentText)
+				primaryFace(ui.Box(c).Size(64, 64).Radius(4).Center(), t).Children(func() {
+					Icon(c, a.Logo).FontSize(40).TextColor(ColorsOf(t).OnGradient)
 				})
 			}
 			ui.Text(c, a.Name).FontSize(22).Bold()

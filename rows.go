@@ -158,7 +158,7 @@ func StepTile(c *ui.Context, s Tile) ui.Element {
 	if s.Current {
 		bg, border, iconColor = t.Accent.Alpha(0.14), t.Accent, t.Accent
 	}
-	row := ui.Row(c).Gap(SpaceM).Padding(9, 14).Radius(10).Background(bg).Border(1, border).AlignItems(ui.Center)
+	row := ui.Row(c).Gap(SpaceM).Padding(9, 14).Radius(RadiusChip).Background(bg).Border(1, border).AlignItems(ui.Center)
 	if s.Dim {
 		row.Opacity(0.6)
 	}
@@ -220,7 +220,7 @@ func DisclosureCard(c *ui.Context, open *bool, d Disclosure) (toggled bool) {
 	if *open {
 		border = t.Border.Mix(t.TextMuted, 0.35)
 	}
-	ui.Column(c).Radius(RadiusCard).Background(Panel(t)).Border(1, border).AlignItems(ui.Stretch).Clip().Children(func() {
+	panelFace(ui.Column(c).Radius(RadiusCard).Border(1, border).AlignItems(ui.Stretch).Clip(), t).Children(func() {
 		head := ui.ButtonBase(c).Padding(12, 16).Gap(SpaceM).AlignItems(ui.Center).
 			Label(d.Title).Description(d.Subtitle).Expanded(*open).Cursor(ui.CursorPointer)
 		if head.Hovered() {

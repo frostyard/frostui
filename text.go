@@ -21,9 +21,10 @@ func TextSize(c *ui.Context, size float32) float32 {
 	return size * t.FontSize / base
 }
 
-// Title is a page title.
+// Title is a page title, tightly spaced as the brand's.
 func Title(c *ui.Context, s string) ui.Element {
-	return ui.Text(c, s).FontSize(TextSize(c, 26)).Bold()
+	size := TextSize(c, 24)
+	return ui.Text(c, s).FontSize(size).Bold().LetterSpacing(-0.05 * size)
 }
 
 // Heading heads a card or section.

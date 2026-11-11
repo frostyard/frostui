@@ -24,16 +24,16 @@ func TopToasts(c *ui.Context, closeLabel string) { toastsAt(c, closeLabel, Space
 // window.
 func toastsAt(c *ui.Context, closeLabel string, top float32) {
 	t := c.Theme()
-	fill, text := t.Inverse, t.InverseText
-	if fill.A == 0 {
-		fill, text = t.Text, t.Background
-	}
+	// The brand's toasts float on the panel inside a strong hairline,
+	// with no shadow (ADR-0011).
+	k := ColorsOf(t)
+	fill, text := k.Panel, t.Text
 	ui.ToastViewportBase(c, func(viewport ui.Element, toasts []ui.Toast) {
 		viewport.Justify(ui.Start).AlignItems(ui.Center).Padding(top, SpaceXL, SpaceM, SpaceXL).Gap(SpaceS)
 		for _, toast := range toasts {
 			p := ui.ToastBase(c, toast)
-			p.Root.Row().Gap(SpaceM).Padding(8, 8, 8, 16).Radius(10).MaxWidth(ToastWidth).AlignItems(ui.Center).
-				Background(fill).TextColor(text).Shadow(0, 6, 20, 0, ui.RGBA(0, 0, 0, 0.25))
+			p.Root.Row().Gap(SpaceM).Padding(8, 8, 8, 16).Radius(RadiusCard).MaxWidth(ToastWidth).AlignItems(ui.Center).
+				Background(fill).TextColor(text).Border(1, k.LineStrong)
 			p.Root.Children(func() {
 				if toast.Type == "error" {
 					Icon(c, "dialog-warning").TextColor(t.Warning)
@@ -44,12 +44,12 @@ func toastsAt(c *ui.Context, closeLabel string, top float32) {
 						countdown(c, p.Left(), text)
 					}
 					if toast.Action != "" {
-						p.ActionButton().Padding(6, 10).Radius(6).TextColor(t.Accent.Mix(text, 0.35)).Children(func() {
+						p.ActionButton().Padding(6, 10).Radius(RadiusChip).TextColor(k.HoverText).Children(func() {
 							ui.Text(c, toast.Action).FontSize(13).Bold().SingleLine()
 						})
 					}
 				}
-				p.CloseButton().Label(closeLabel).Tooltip(closeLabel).Padding(6).Radius(6).Children(func() {
+				p.CloseButton().Label(closeLabel).Tooltip(closeLabel).Padding(6).Radius(RadiusChip).Children(func() {
 					Icon(c, "window-close").TextColor(text)
 				})
 			})

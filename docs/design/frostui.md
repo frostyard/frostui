@@ -502,12 +502,45 @@ fills at 16%. `Chrome(t)`, `Panel(t)`, `ToneFill` and `ToneLine` read it;
 Text styles (`Title`, `Heading`, `Strong`, `Body`, `Muted`, `Caption`,
 `Mono`, `Toned`) give their sizes at the platform's usual text size and
 scale them with the theme's `FontSize` through `TextSize`, so the desktop's
-text size reaches them. `Label` is the brand's uppercase monospace label.
-The metrics (`SpaceXS`…`SpaceXL`, `RadiusCard`, `RadiusChip`, `RailWidth`,
-`TopBarHeight`, `ToastWidth`, `HeroSize`) are unchanged until phase 2 of
-[the Frostyard look](../plans/frostyard-look.md) restyles the components.
-`frostyard_test.go` holds every text pair of both themes, with and without
-high contrast, to 4.5:1 and the focus ring to 3:1.
+text size reaches them. `Title` is tightly spaced, as the brand's; `Label`
+is the brand's uppercase monospace label. `frostyard_test.go` holds every
+text pair of both themes, with and without high contrast, to 4.5:1 and the
+focus ring to 3:1.
+
+The components are drawn in the brand
+([the Frostyard look, phase 2](../plans/frostyard-look.md#phase-2--components-in-the-brand-medium)),
+from `brand.go`'s helpers:
+
+- **Corners.** `RadiusCard` is 0 (cards, figures, disclosure cards,
+  toasts), `RadiusChip` 2 (pills, fields, banners, keycaps, palette and
+  pipeline rows), and the theme's `Radius` 4 (buttons, the brand tile,
+  avatars and icon tiles). MyGo's own dialogs keep their own corners.
+- **Faces.** Cards, `Figures` and `DisclosureCard` fill with the panel
+  gradient over a hairline. The primary face (`LabeledButton` with
+  `primary`, the brand tile, the About and hero logos) is the brand
+  gradient with `OnGradient`. `IconButton`, `LabeledButton` and the
+  compact palette button are ghosts: a hairline, no face, and the hover
+  text while the pointer is over them; `Selected` still gives a toggle
+  the accent's face. A destructive confirmation is the danger fill and
+  line with danger text.
+- **Pills.** `Pill`, `IconPill`, `DotPill` and `ColorPill` are a 1px
+  outline in the tone's line around their text in capitals, monospace and
+  letter-spaced, named as written; a neutral pill's text is the tag text.
+- **Selection.** The selected rail item (`Shell`, `Settings`) and the
+  chosen source-list row are the selected fill with a 1px accent rule on
+  their leading edge and the selected text; a badge on them is drawn in
+  the selected text, whatever its tone, so it reads on the fill. The rail
+  builds inside `railTheme` and the source list's outline inside
+  `choiceTheme`, scopes whose accent text (and, for the outline, accent)
+  are the selected colors, since MyGo paints those rows itself. The
+  palette's chosen row is drawn the same way; hovered rows and status
+  items take the hover text and keep their face.
+- **Labels.** Rail sections, source-list headers and palette headings are
+  `Label`s.
+- **Surfaces.** The palette field sits on the code color at radius 2 and
+  takes the accent's outline on hover; the console sits on the code
+  color; toasts float on the panel inside the line-strong hairline, with
+  no shadow and the action in the hover text.
 
 ### Icons
 
@@ -655,6 +688,17 @@ ChairLift's examples (Homebrew taps, firmware, bootc deployments); and
 `Pipeline`'s list is named "Pipeline" instead of "Update run".
 
 ## API changes
+
+2026-11-11: the components are drawn in the brand (ADR-0011, phase 2).
+`RadiusCard` is now 0 and `RadiusChip` 2: callers that rounded their own
+elements with them get the brand's nearly square corners. No signature
+changes, but `Pill`, `IconPill`, `DotPill` and `ColorPill` are outlines
+whose text shows in capitals (each keeps the text as written as its
+accessible name, so a test finding a pill by its text still does);
+`IconButton` and `LabeledButton` are ghosts unless `primary`; `Card`,
+`Figures`, toasts, the rail, the source list, the palette and the console
+take the brand's faces as the design doc's theming section lists. A rail
+badge on the selected item now reads (frostyard/frostui#15).
 
 2026-11-11: the kit's look is its own (ADR-0011). Additive:
 `FrostyardTheme(dark bool) *ui.Theme`, `ThemeColors` with `ColorsOf`,

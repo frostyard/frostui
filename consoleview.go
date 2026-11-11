@@ -60,7 +60,7 @@ func (v *ConsoleView) View(c *ui.Context, con *Console) {
 	if v.Title != "" {
 		copied, clearLabel, closeLabel = v.Title+" copied", "Clear "+v.Title, "Close "+v.Title
 	}
-	ui.Column(c).Fill().Background(Chrome(t)).AlignItems(ui.Stretch).Role(ui.RoleRegion).Label(title).Children(func() {
+	ui.Column(c).Fill().Background(ColorsOf(t).Code).AlignItems(ui.Stretch).Role(ui.RoleRegion).Label(title).Children(func() {
 		ui.Row(c).Gap(SpaceS).Padding(SpaceS, SpaceL).AlignItems(ui.Center).Children(func() {
 			Icon(c, "utilities-terminal").TextColor(t.TextMuted)
 			ui.Text(c, title).Bold().FontSize(13)

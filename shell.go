@@ -162,13 +162,13 @@ func (s *Shell) topBar(c *ui.Context, f Frame) {
 	ui.Row(c).Height(TopBarHeight).Padding(0, SpaceL+tb.Right, 0, SpaceL+tb.Left).Gap(SpaceM).AlignItems(ui.Center).
 		Background(Chrome(t)).DragWindow().Children(func() {
 		ui.Row(c).Width(RailWidth - SpaceL).Shrink(0).Gap(10).AlignItems(ui.Center).Children(func() {
-			ui.Box(c).Size(30, 30).Radius(8).Background(t.Accent).Center().Children(func() {
+			primaryFace(ui.Box(c).Size(30, 30).Radius(4).Center(), t).Children(func() {
 				if s.Brand.Logo != nil {
-					ui.Icon(c, s.Brand.Logo).FontSize(19).TextColor(t.AccentText)
+					ui.Icon(c, s.Brand.Logo).FontSize(19).TextColor(ColorsOf(t).OnGradient)
 				}
 			})
 			ui.Column(c).Children(func() {
-				ui.Text(c, s.Brand.Name).Bold().SingleLine()
+				ui.Text(c, s.Brand.Name).FontWeight(720).LetterSpacing(-0.04 * t.FontSize).SingleLine()
 				if s.Brand.Tagline != "" {
 					Caption(c, s.Brand.Tagline).SingleLine()
 				}
@@ -177,11 +177,11 @@ func (s *Shell) topBar(c *ui.Context, f Frame) {
 		ui.Spacer(c)
 		if width > 0 {
 			// Looks like a search field and opens the palette.
-			field := ui.Row(c).Width(width).Height(32).Padding(0, 10).Gap(SpaceS).Radius(16).AlignItems(ui.Center).
-				Background(t.Background).Border(1, t.Border).Role(ui.RoleButton).Focusable().Cursor(ui.CursorPointer).
+			field := ui.Row(c).Width(width).Height(32).Padding(0, 10).Gap(SpaceS).Radius(RadiusChip).AlignItems(ui.Center).
+				Background(ColorsOf(t).Code).Border(1, t.Border).Role(ui.RoleButton).Focusable().Cursor(ui.CursorPointer).
 				Label(paletteLabel).Tooltip(paletteTooltip)
 			if field.Hovered() {
-				field.Border(1, t.Accent.Alpha(0.6))
+				field.Border(1, t.Accent)
 			}
 			if field.Clicked() {
 				s.Palette.Show()
@@ -220,23 +220,30 @@ func (s *Shell) rail(c *ui.Context, f Frame) {
 	t := c.Theme()
 	ui.Column(c).Width(RailWidth).AlignItems(ui.Stretch).Background(Chrome(t)).Children(func() {
 		selected := s.Selected
-		ui.Sidebar(c, &selected, func() {
-			for si, sec := range f.Nav {
-				ui.SidebarSection(c.Key(si), sec.Title, nil, func() {
+		ui.Themed(c, railTheme(t)).Grow(1).AlignItems(ui.Stretch).Background(ui.Transparent).Children(func() {
+			ui.Sidebar(c, &selected, func() {
+				for si, sec := range f.Nav {
+					if sec.Title != "" {
+						railLabel(c.Key([2]any{"label", si}), sec.Title, si == 0)
+					}
 					for _, item := range sec.Items {
-						it := ui.SidebarItem(c.Key(item.ID), item.ID, IconSVG(item.Icon), item.Title)
+						it := railItem(c, t, item.ID, s.Selected, item.Icon, item.Title)
 						if item.Shortcut != "" {
 							it.Tooltip(item.Title + " (" + item.Shortcut + ")")
 						}
 						if item.Badge != "" {
 							it.Children(func() {
-								Pill(c, item.Badge, item.BadgeTone)
+								if item.ID == s.Selected {
+									selectedPill(c, item.Badge, t)
+								} else {
+									Pill(c, item.Badge, item.BadgeTone)
+								}
 							})
 						}
 					}
-				})
-			}
-		}).Grow(1).Padding(SpaceS, SpaceS).Background(Chrome(t))
+				}
+			}).Grow(1).Padding(SpaceS, SpaceS).Background(Chrome(t))
+		})
 		s.Selected = selected
 		if f.RailFooter != nil {
 			ui.Column(c).Gap(SpaceM).Padding(SpaceM, SpaceL, SpaceL, SpaceL).AlignItems(ui.Stretch).Children(f.RailFooter)
@@ -267,7 +274,7 @@ func statusItem(c *ui.Context, it StatusItem) {
 	if it.Tone != Neutral {
 		color = ToneColor(t, it.Tone)
 	}
-	row := ui.Row(c).Gap(6).Padding(2, 4).Radius(4).AlignItems(ui.Center)
+	row := ui.Row(c).Gap(6).Padding(2, 4).Radius(RadiusChip).AlignItems(ui.Center)
 	if it.Tooltip != "" {
 		row.Tooltip(it.Tooltip)
 	}
@@ -278,7 +285,7 @@ func statusItem(c *ui.Context, it StatusItem) {
 		}
 		row.Role(ui.RoleButton).Focusable().Cursor(ui.CursorPointer).Label(label)
 		if row.Hovered() {
-			row.Background(t.SurfaceHover)
+			color = ColorsOf(t).HoverText
 		}
 		if it.Menu != nil {
 			row.Menu(it.Menu)
@@ -288,9 +295,9 @@ func statusItem(c *ui.Context, it StatusItem) {
 	}
 	row.Children(func() {
 		if it.Icon != "" {
-			Icon(c, it.Icon).FontSize(12).TextColor(color)
+			Icon(c, it.Icon).FontSize(TextSize(c, 12)).TextColor(color)
 		}
-		ui.Text(c, it.Text).FontSize(12).TextColor(color).SingleLine()
+		ui.Text(c, it.Text).FontSize(TextSize(c, 12)).TextColor(color).SingleLine()
 		if it.Progress >= 0 && it.Progress <= 1 && it.Progress != 0 {
 			ui.Progress(c, it.Progress).Width(90).Label(it.Text)
 		}

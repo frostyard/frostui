@@ -555,14 +555,14 @@ func (p *Palette) View(c *ui.Context, cmds []Command) {
 				header := i == 0 || shown[i-1].heading != r.heading || shown[i-1].source != r.source
 				ui.Column(c).AlignItems(ui.Stretch).Children(func() {
 					if header && r.heading != "" {
-						Caption(c, r.heading).Padding(8, 10, 4, 10)
+						Label(c, r.heading).Padding(8, 10, 4, 10)
 					}
-					row := ui.ButtonBase(c).Row().Gap(SpaceM).Padding(8, 10).Radius(RadiusChip).AlignItems(ui.Center).
+					row := ui.ButtonBase(c).Row().Gap(SpaceM).Padding(8, 10).AlignItems(ui.Center).
 						Cursor(ui.CursorPointer)
 					if i == p.Selected {
-						row.Background(t.Accent.Alpha(0.16))
+						selectedRow(row, t)
 					} else if row.Hovered() {
-						row.Background(t.SurfaceHover)
+						row.TextColor(ColorsOf(t).HoverText)
 					}
 					if r.disabled {
 						row.Opacity(0.5)
@@ -574,9 +574,9 @@ func (p *Palette) View(c *ui.Context, cmds []Command) {
 					row.Children(func() {
 						Icon(c, r.icon).TextColor(t.TextMuted)
 						if r.detail == "" {
-							ui.Text(c, r.title).FontSize(13.5).Grow(1).SingleLine()
+							ui.Text(c, r.title).FontSize(TextSize(c, 13.5)).Grow(1).SingleLine()
 						} else {
-							ui.Text(c, r.title).FontSize(13.5).SingleLine()
+							ui.Text(c, r.title).FontSize(TextSize(c, 13.5)).SingleLine()
 							Muted(c, r.detail).Grow(1).MinWidth(0).SingleLine()
 						}
 						if r.disabled && r.reason != "" {

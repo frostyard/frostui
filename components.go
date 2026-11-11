@@ -9,12 +9,12 @@ import (
 	"github.com/egoist/mygo/ui"
 )
 
-// Card is a panel: a column with padding, a hairline border and rounded
-// corners, on the panel color. Chain Children to fill it.
+// Card is a panel: a column with padding and a hairline border, on the
+// panel gradient. Chain Children to fill it.
 func Card(c *ui.Context) ui.Element {
 	t := c.Theme()
-	return ui.Column(c).Padding(18).Gap(SpaceM).Radius(RadiusCard).
-		Background(Panel(t)).Border(1, t.Border).AlignItems(ui.Stretch)
+	return panelFace(ui.Column(c).Padding(18).Gap(SpaceM).Radius(RadiusCard).
+		Border(1, t.Border).AlignItems(ui.Stretch), t)
 }
 
 // CardHeader is a card's title row: a heading, an optional subtitle under
@@ -49,21 +49,19 @@ func PageHeader(c *ui.Context, title, subtitle string, actions func()) {
 	})
 }
 
-// Pill is a small rounded tag in a tone.
+// Pill is a small tag in a tone: a 1px outline in the tone's line around
+// its text in capitals, in the tone's color (the tag text for Neutral).
 func Pill(c *ui.Context, text string, tone Tone) ui.Element {
 	t := c.Theme()
-	return ui.Row(c).Padding(2, 8).Radius(RadiusChip).Background(ToneFill(t, tone)).Children(func() {
-		ui.Text(c, text).FontSize(11.5).TextColor(ToneColor(t, tone)).SingleLine()
-	})
+	return outlinedPill(c, text, pillColor(t, tone), ToneLine(t, tone), nil)
 }
 
 // IconPill is a pill that starts with an icon.
 func IconPill(c *ui.Context, icon, text string, tone Tone) ui.Element {
 	t := c.Theme()
-	color := ToneColor(t, tone)
-	return ui.Row(c).Gap(5).Padding(2, 8).Radius(RadiusChip).Background(ToneFill(t, tone)).AlignItems(ui.Center).Children(func() {
-		Icon(c, icon).TextColor(color).FontSize(12)
-		ui.Text(c, text).FontSize(11.5).TextColor(color).SingleLine()
+	color := pillColor(t, tone)
+	return outlinedPill(c, text, color, ToneLine(t, tone), func() {
+		Icon(c, icon).TextColor(color).FontSize(TextSize(c, 11))
 	})
 }
 
@@ -71,21 +69,18 @@ func IconPill(c *ui.Context, icon, text string, tone Tone) ui.Element {
 // one color per kind of thing. Pass the color from the page's theme: under
 // SoftSelection the accent of c's theme is a tint.
 func ColorPill(c *ui.Context, text string, color ui.Color) ui.Element {
-	return ui.Row(c).Padding(2, 8).Radius(RadiusChip).Background(color.Alpha(0.16)).Children(func() {
-		ui.Text(c, text).FontSize(11.5).TextColor(color).SingleLine()
-	})
+	return outlinedPill(c, text, color, color.Alpha(0.4), nil)
 }
 
 // DotPill is a pill that starts with a dot in its color, as a state that
 // waits for the user: "Update".
 func DotPill(c *ui.Context, text string, color ui.Color) ui.Element {
-	return ui.Row(c).Gap(5).Padding(2, 8).Radius(RadiusChip).Background(color.Alpha(0.16)).AlignItems(ui.Center).Children(func() {
+	return outlinedPill(c, text, color, color.Alpha(0.4), func() {
 		ui.Box(c).Size(6, 6).Radius(3).Background(color)
-		ui.Text(c, text).FontSize(11.5).TextColor(color).SingleLine()
 	})
 }
 
-// SquareAvatar is a rounded square with the initials of name on a color
+// SquareAvatar is a square with the initials of name on a color
 // the name picks, the same color for the same name in every frame: an app
 // or a package without an icon of its own. size is the square's side.
 func SquareAvatar(c *ui.Context, name string, size float32) ui.Element {
@@ -96,7 +91,7 @@ func SquareAvatar(c *ui.Context, name string, size float32) ui.Element {
 	if c.Theme().Dark {
 		bg, fg = ui.Oklch(0.36, 0.07, hue), ui.Oklch(0.88, 0.09, hue)
 	}
-	return ui.Box(c).Size(size, size).Radius(size / 4).Background(bg).Center().Shrink(0).Children(func() {
+	return ui.Box(c).Size(size, size).Radius(min(4, size/4)).Background(bg).Center().Shrink(0).Children(func() {
 		ui.Text(c, Initials(name)).FontSize(size * 0.36).Bold().TextColor(fg).SingleLine()
 	})
 }
@@ -158,35 +153,41 @@ func SoftSelection(t *ui.Theme) *ui.Theme {
 	if !t.Dark {
 		tint = Panel(t).Mix(t.Accent, 0.14)
 	}
+	if k, ok := frostyardColors(t); ok {
+		tint = k.SelectedFill.Over(k.Panel)
+	}
 	tt.Accent, tt.InactiveAccent, tt.AccentText = tint, tint, t.Text
 	return &tt
 }
 
-// IconTile is an icon on a rounded square, as rows and cards lead with.
-// size is the square's side.
+// IconTile is an icon on a square, as rows and cards lead with. size is
+// the square's side.
 func IconTile(c *ui.Context, icon string, tone Tone, size float32) ui.Element {
 	t := c.Theme()
-	return ui.Box(c).Size(size, size).Radius(size / 4).Background(ToneFill(t, tone)).Center().Children(func() {
+	return ui.Box(c).Size(size, size).Radius(min(4, size/4)).Background(ToneFill(t, tone)).Center().Children(func() {
 		Icon(c, icon).TextColor(ToneColor(t, tone)).FontSize(size * 0.5)
 	})
 }
 
 // IconButton is a flat button showing only an icon. label names it for
-// screen readers and its tooltip; it must not be empty.
+// screen readers and its tooltip; it must not be empty. It is a ghost: a
+// hairline and no face, its icon in the hover text while the pointer is
+// over it, and the accent face while it is Selected.
 func IconButton(c *ui.Context, icon, label string) ui.Element {
-	return ui.Button(c, "").Label(label).Tooltip(label).Children(func() {
+	return ghost(c, ui.Button(c, "")).Label(label).Tooltip(label).Children(func() {
 		Icon(c, icon)
 	})
 }
 
 // LabeledButton is a button with an icon before its label. primary makes
-// it the accent button.
+// it the primary button, on the brand gradient; otherwise it is a ghost,
+// as IconButton.
 func LabeledButton(c *ui.Context, icon, label string, primary bool) ui.Element {
 	var b ui.Element
 	if primary {
-		b = ui.PrimaryButton(c, "")
+		b = primaryFace(ui.PrimaryButton(c, ""), c.Theme())
 	} else {
-		b = ui.Button(c, "")
+		b = ghost(c, ui.Button(c, ""))
 	}
 	return b.Label(label).Children(func() {
 		ui.Row(c).Gap(6).AlignItems(ui.Center).Children(func() {
@@ -211,12 +212,12 @@ func Banner(c *ui.Context, tone Tone, icon, text, action string, closable bool) 
 func BannerClose(c *ui.Context, tone Tone, icon, text, action, closeLabel string) (acted, closed bool) {
 	t := c.Theme()
 	color := ToneColor(t, tone)
-	ui.Row(c).Gap(SpaceM).Padding(SpaceM, SpaceL).Radius(RadiusCard).
-		Background(ToneFill(t, tone)).Border(1, color.Alpha(0.35)).AlignItems(ui.Center).Role(ui.RoleAlert).
+	ui.Row(c).Gap(SpaceM).Padding(SpaceM, SpaceL).Radius(RadiusChip).
+		Background(ToneFill(t, tone)).Border(1, ToneLine(t, tone)).AlignItems(ui.Center).Role(ui.RoleAlert).
 		Children(func() {
 			Icon(c, icon).TextColor(color)
-			ui.Text(c, text).FontSize(13).Grow(1).Wrap()
-			if action != "" && ui.Button(c, action).Clicked() {
+			ui.Text(c, text).FontSize(TextSize(c, 13)).Grow(1).Wrap()
+			if action != "" && ghost(c, ui.Button(c, action)).Clicked() {
 				acted = true
 			}
 			if closeLabel != "" && IconButton(c, "window-close", closeLabel).Clicked() {
@@ -316,7 +317,7 @@ type Figure struct {
 // Figures is one strip of figures side by side, divided by hairlines.
 func Figures(c *ui.Context, figs []Figure) ui.Element {
 	t := c.Theme()
-	return ui.Row(c).Padding(14, 0).Radius(RadiusCard).Background(Panel(t)).Border(1, t.Border).AlignItems(ui.Stretch).Children(func() {
+	return panelFace(ui.Row(c).Padding(14, 0).Radius(RadiusCard).Border(1, t.Border).AlignItems(ui.Stretch), t).Children(func() {
 		for i, f := range figs {
 			if i > 0 {
 				ui.Box(c.Key(i * 2)).Width(1).Background(t.Border)
@@ -330,7 +331,8 @@ func Figures(c *ui.Context, figs []Figure) ui.Element {
 			}
 			box.Children(func() {
 				Muted(c, f.Label)
-				ui.Text(c, f.Value).FontSize(26).Bold().SingleLine()
+				size := TextSize(c, 23)
+				ui.Text(c, f.Value).FontSize(size).Bold().LetterSpacing(-0.05 * size).SingleLine()
 				if f.Note != "" {
 					ui.Text(c, f.Note).FontSize(12).TextColor(ToneColor(t, f.Tone)).SingleLine()
 				}
@@ -393,8 +395,8 @@ func RowDivider(c *ui.Context) ui.Element {
 // Kbd draws a keyboard key, as in "Ctrl K".
 func Kbd(c *ui.Context, key string) ui.Element {
 	t := c.Theme()
-	return ui.Box(c).Padding(1, 6).Radius(4).Border(1, t.Border).Background(t.Background).Children(func() {
-		ui.Text(c, key).FontSize(11).TextColor(t.TextMuted).SingleLine()
+	return ui.Box(c).Padding(1, 6).Radius(RadiusChip).Border(1, t.Border).Background(t.Background).Children(func() {
+		ui.Text(c, key).FontSize(TextSize(c, 11)).TextColor(t.TextMuted).SingleLine()
 	})
 }
 

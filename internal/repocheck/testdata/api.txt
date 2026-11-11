@@ -25,8 +25,8 @@ const frostui.OutsideEditors KeyScope
 const frostui.OutsideText KeyScope
 const frostui.PaletteCommandID = "frostui.palette"
 const frostui.PaletteCommands = "commands"
-const frostui.RadiusCard = 12
-const frostui.RadiusChip = 8
+const frostui.RadiusCard = 0
+const frostui.RadiusChip = 2
 const frostui.RailWidth = 232
 const frostui.Reconnecting ConnectionState
 const frostui.SpaceL = 16
