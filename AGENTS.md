@@ -89,10 +89,17 @@ its skills there (core ADR-0026); start a repo-local one from
 - **MyGo's rules.** MyGo resets the theme every build pass, so `Adapt` runs
   first in every frame (`Shell.View` does it). State (`ListState`, dialog
   and palette state, parsed SVGs) lives in structs, never in a view
-  function; a `ListState` belongs to one window. Never load a UI library in
-  an `init` function or a package-level variable. After a MyGo bump, read
-  its source in `GOMODCACHE` (the theme reset, `Window.Update`, the Tester)
-  before merging.
+  function; a `ListState` belongs to one window. Never create a `ui.Handle`
+  in a view or with `ui.Local`: its first `Bind` registers it with the
+  window, nothing takes it out until the window closes, and every build
+  pass walks them all, so a handle made per build, or per mount (a row
+  scrolling back into view, a section opening), leaks. Keep handles in
+  structs, one per control, or one per item in a map pruned as items go
+  (`internal/repocheck.TestKitMakesNoHandleInAView`, with fixtures). Never
+  load a UI library in an `init` function or a package-level variable.
+  After a MyGo bump, read its source in `GOMODCACHE` (the theme reset,
+  `Window.Update`, the Tester, `Handle` and its registration) before
+  merging.
 - **Dependency API adoption.** Use the pinned MyGo API explicitly. Do not
   probe for future dependency methods with type assertions: a later bump must
   not silently change the kit's behavior. Adopt new methods in the bump PR,
