@@ -1,6 +1,6 @@
 # frostui: frostyard's desktop UI kit
 
-Living document. Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md), [ADR-0006](../adr/0006-a-frame-without-the-rail.md), [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md), [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md), [ADR-0009](../adr/0009-the-top-bars-end-belongs-to-the-window.md).
+Living document. Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md), [ADR-0006](../adr/0006-a-frame-without-the-rail.md), [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md), [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md), [ADR-0009](../adr/0009-the-top-bars-end-belongs-to-the-window.md), [ADR-0010](../adr/0010-keep-only-a-mailto-links-addressees-subject-and-body.md).
 Contracts: [spec: API stability](../specs/api-stability.md).
 Built in: [roadmap](../plans/roadmap.md).
 
@@ -441,7 +441,18 @@ from a worker. Anything not allowed returns an error wrapping
 
 - `OpenURL`: the scheme must be in `Schemes` (http, https and mailto by
   default); http and https need a host; spaces and control characters are
-  refused; `file:` is refused even when listed.
+  refused; `file:` is refused even when listed. A mailto link opens as
+  `SanitizeMailto` returns it, whatever `Schemes` lists, and one left with
+  no address and no field names nothing and is refused.
+- `SanitizeMailto`: a mailto link keeps its address and the fields `to`,
+  `cc`, `bcc`, `subject` and `body`, in any ASCII case, as written. Every
+  other field (`attach=`, `attachment=`, `file=`, `reply-to=`, any header)
+  is removed rather than refused, as is a field whose name is encoded
+  (`%61ttach`, and `%74o` too) or has no `=`, the fragment, and a `?` with
+  nothing after it. It decodes nothing: a kept value passes byte for byte
+  (`+`, `%20` and malformed escapes as written), and a repeated field stays
+  every time, in order. An app that is the system's mailto handler calls it
+  on the links it receives, and keeps no copy of the rule.
 - `OpenFile`: an absolute path that, symbolic links followed, is under one
   of `Roots` (none opens nothing); a regular file, or a folder with
   `Folders`; not executable; not on a deny list of types that run, install
@@ -452,7 +463,9 @@ The deny list is a backstop and cannot be complete, so an app sets
 `Extensions` for files from outside it, as attachments. The check and the
 open are two steps, so a file swapped between them is opened as swapped: the
 roots are the app's own directories. The policy is
-[ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md).
+[ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md),
+and the mailto rule
+[ADR-0010](../adr/0010-keep-only-a-mailto-links-addressees-subject-and-body.md).
 
 ### Theming
 
@@ -621,8 +634,17 @@ its own snapshot without sorting or allocating during idle frames.
 `StatusItem.Menu` opens a popup menu from a status item. MyGo v0.9.0 supplies
 `RowClicked`; this change uses the released dependency already on main.
 
+2026-11-11: additive `SanitizeMailto(string) (string, error)` returns a
+mailto link with only its address, `to`, `cc`, `bcc`, `subject` and `body`
+([ADR-0010](../adr/0010-keep-only-a-mailto-links-addressees-subject-and-body.md)).
+No signature changes, but `Opener.CheckURL` and `OpenURL` now apply it to
+every mailto link: a link's other fields, its fragment and a bare `?` no
+longer reach the mail client, and `mailto:?attach=…` is refused as
+`mailto:` is, since it names nothing once `attach` is gone. Callers change
+nothing; an app that filtered mailto links itself can drop its copy.
+
 ## References
 
-- Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md), [ADR-0006](../adr/0006-a-frame-without-the-rail.md), [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md), [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md), [ADR-0009](../adr/0009-the-top-bars-end-belongs-to-the-window.md)
+- Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md), [ADR-0006](../adr/0006-a-frame-without-the-rail.md), [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md), [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md), [ADR-0009](../adr/0009-the-top-bars-end-belongs-to-the-window.md), [ADR-0010](../adr/0010-keep-only-a-mailto-links-addressees-subject-and-body.md)
 - Contracts: [spec: API stability](../specs/api-stability.md)
 - Built in: [roadmap — Phase 1](../plans/roadmap.md#phase-1--extract-the-kit-done), [Phase 5](../plans/roadmap.md#phase-5--the-frame-and-the-layout), [Phase 6](../plans/roadmap.md#phase-6--commands-navigation-and-settings-for-v020-medium)

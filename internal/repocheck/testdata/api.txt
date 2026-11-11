@@ -395,6 +395,7 @@ func frostui.Problem(*ui.Context, string) ui.Element
 func frostui.Rank[T any]([]T, string, int, func(T) string) []T
 func frostui.RowDivider(*ui.Context) ui.Element
 func frostui.RunSummary([]*Job) string
+func frostui.SanitizeMailto(string) (string, error)
 func frostui.Section(*ui.Context, string, string, string, func())
 func frostui.SectionHeader(*ui.Context, SectionHead) ui.Element
 func frostui.SegmentBar(*ui.Context, string, float64, []Segment, func(Segment) string) ui.Element

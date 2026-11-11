@@ -22,6 +22,7 @@ Docs are split by the question they answer:
 - [0007 — Embed a Lucide icon set as the last fallback](adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md)
 - [0008 — Open behind allow-lists, and let editors keep their keys](adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md)
 - [0009 — The top bar's end belongs to the window, and the palette field turns compact](adr/0009-the-top-bars-end-belongs-to-the-window.md)
+- [0010 — Keep only a mailto link's addressees, subject and body](adr/0010-keep-only-a-mailto-links-addressees-subject-and-body.md)
 
 ### Org-wide decisions
 
