@@ -26,7 +26,7 @@ Agents succeed when the repository answers their questions before they ask:
 | `*.go` | Package `frostui`, the kit; `*_linux.go` and `*_other.go` hold the platform parts |
 | `frostuitest/` | Package `frostuitest`: the UI-thread loop for tests |
 | `examples/commandcenter/` | The command-center example and its snapshot test |
-| `internal/repocheck/` | The guards: imports, exported API (`testdata/api.txt`), cross-build, Makefile, workflow pins |
+| `internal/repocheck/` | The guards: imports, exported API (`testdata/api.txt`), cross-build, Makefile, workflow pins, no `ui.Handle` made in a view |
 | `docs/images/` | The example's picture for the README and the design doc |
 | `go.mod`, `go.sum` | The module: MyGo and purego |
 | `.golangci.yml` | The lint configuration |
