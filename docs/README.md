@@ -41,6 +41,7 @@ Docs are split by the question they answer:
 ### Specs
 
 - [API stability and versions](specs/api-stability.md)
+- [The Frostyard themes](specs/frostyard-theme.md)
 
 ### Plans
 

@@ -1,6 +1,6 @@
 # 0011 — Draw the frostyard brand, in a dark and a light theme
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-11-11
 
 ## Context
@@ -107,6 +107,7 @@ text size, and its accent only when `Preferences.Accent` is set.
 ## References
 
 - Shapes: [design: theming](../design/frostui.md#theming),
+  [spec: the Frostyard themes](../specs/frostyard-theme.md),
   [plan: the Frostyard look](../plans/frostyard-look.md)
 - Builds on: [ADR-0007](0007-embed-a-lucide-icon-set-as-the-last-fallback.md)
   (embedded assets and their licenses)

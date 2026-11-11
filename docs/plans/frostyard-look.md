@@ -36,17 +36,18 @@ with the code; until then this table is the source.
 | code | `#061826` | `#ffffff` | fields, the console |
 | line strong | `#2c6380` | `#2c6380` | the toast's outline |
 
-## Phase 1 — Themes, palette and text (medium)
+## Phase 1 — Themes, palette and text (done)
 
 - `FrostyardTheme(dark bool) *ui.Theme` returns the two themes: the colors
   above in MyGo's fields, `InactiveAccent` equal to `Accent`, `Radius` 4,
-  `Font` "Inter". Values the design system lacks (`Selection`,
-  `Scrollbar`, `Inverse` for tooltips) are chosen here, measured, and added
-  to the design system.
-- The kit palette holds the roles `ui.Theme` has no field for. `Chrome(t)`
-  and `Panel(t)` keep their signatures and return the palette's values; new
-  accessors return the rest (see the open question on how they find it).
-  `ToneColor`, `ToneFill` and a new `ToneLine` read the palette.
+  `Font` "Inter". Values the design system lacks (the hover and pressed
+  faces MyGo's widgets need, `Selection`, `Scrollbar`, the neutral fill,
+  and white `AccentText` on the light accent) are chosen here, measured,
+  and added to the design system; `Inverse` stays MyGo's default.
+- `ThemeColors` holds the roles `ui.Theme` has no field for, and
+  `ColorsOf(t)` finds them by the theme's `Dark` and `Background`.
+  `Chrome(t)` and `Panel(t)` keep their signatures and return its values;
+  `ToneFill` and a new `ToneLine` read it.
 - `Adapt` takes Frostyard or Frostyard light from the theme MyGo picked
   (`Dark`), applies `WithPreferences` with the accent cleared, so high
   contrast and text size still apply, and sets it. Apps with their own
@@ -59,11 +60,11 @@ with the code; until then this table is the source.
   `--send-pending-reports`) must not load a text engine.
 - `Title`, `Heading`, `Strong`, `Body`, `Muted`, `Caption`, `Mono` and
   `Toned` size their text as multiples of the theme's `FontSize`
-  (`Theme.Rem`), so the desktop's text size reaches them. A new `Label`
+  (`TextSize`), so the desktop's text size reaches them. A new `Label`
   draws an uppercase monospace label with letter spacing, in the label
   color.
-- `docs/specs/frostyard-theme.md` lists every value per theme, high
-  contrast included, and links ADR-0011 and the design doc. A test computes
+- [The Frostyard themes](../specs/frostyard-theme.md) lists every value per
+  theme, and links ADR-0011 and the design doc. A test computes
   each pair it lists: text on background, chrome, panel, surface and
   selected fill; muted text on the same; tone text on its fill; the focus
   ring on background and chrome. It fails below 4.5:1 for text and 3:1 for
@@ -149,17 +150,11 @@ with the code; until then this table is the source.
 
 ## Open questions
 
-- **How the palette is found from a `*ui.Theme`:** kit functions take only
-  the theme. Either the kit keeps the palette of each theme it built and
-  looks it up by the theme's background color, or a kit theme type wraps
-  `ui.Theme` (an API change). Decide in phase 1; record it in the design
-  doc.
-- **Inter's files:** whether `ui.RegisterFont` takes Inter's variable font
-  on every platform engine (Pango on Linux, DirectWrite, Core Text, wasm),
-  or the kit ships static weights (400, 570, 650, 700, 720 and 750 are
-  used), and
-  whether italics ship. Decide in phase 1 by drawing each weight on each
-  platform.
+- **Inter on Windows, macOS and wasm:** the kit embeds Inter's variable
+  files, and on Linux (Pango) `TestAdaptRegistersInter` shows the family
+  registered and its weights drawn. DirectWrite, Core Text and the wasm
+  canvas are only cross-compiled. Check each by hand before the apps ship
+  there; ship static weights if one ignores the weight axis.
 - **Badge size for counts:** the brand's 9 DIP label text is small for
   unread counts in a sidebar; counts may take the `pill` size in the same
   outline. Decide at phase 2's review.

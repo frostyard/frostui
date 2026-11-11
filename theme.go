@@ -54,35 +54,31 @@ func ToneColor(t *ui.Theme, tone Tone) ui.Color {
 }
 
 // ToneFill is the soft background behind tone's foreground, as a pill's.
-func ToneFill(t *ui.Theme, tone Tone) ui.Color {
-	if tone == Neutral {
-		return t.Border.Alpha(0.6)
-	}
-	return ToneColor(t, tone).Alpha(0.16)
-}
+func ToneFill(t *ui.Theme, tone Tone) ui.Color { return ColorsOf(t).Fill(tone) }
 
-// Adapt makes MyGo's theme behave as GNOME's and KDE's do and returns it:
-// the accent stays in windows without the focus (MyGo fades it to gray, as
-// macOS does). The rest still follows the desktop: light or dark, accent,
-// contrast and text size. Call it first in the root view.
+// Adapt sets the kit's theme for this frame and returns it: Frostyard when
+// MyGo picked a dark theme for the desktop, Frostyard light otherwise
+// (ADR-0011). The desktop's high contrast and text size still apply, but
+// not its accent: the accent is the brand's, and it stays in windows
+// without the focus. A theme that is already Frostyard (an app chose one
+// itself, or Adapt ran earlier in the frame) is kept. MyGo resets the theme
+// at each build pass, so call it first in the root view; Shell.View and
+// PaneShell.View do. The first call registers the kit's font.
 func Adapt(c *ui.Context) *ui.Theme {
+	registerInter()
 	t := c.Theme()
-	if t.InactiveAccent != t.Accent {
-		linux := *t
-		linux.InactiveAccent = linux.Accent
-		c.SetTheme(&linux)
-		return &linux
+	if _, ok := frostyardColors(t); ok {
+		return t
 	}
-	return t
+	p := c.Preferences()
+	p.Accent = ui.Color{}
+	ft := FrostyardTheme(t.Dark).WithPreferences(p)
+	c.SetTheme(ft)
+	return ft
 }
 
-// Chrome is the color of the top bar, rail and status bar: a shade between
-// the window's background and the surface of controls.
-func Chrome(t *ui.Theme) ui.Color {
-	return t.Background.Mix(t.Surface, 0.55)
-}
+// Chrome is the color of the top bar, rail, pane bars and status bar.
+func Chrome(t *ui.Theme) ui.Color { return ColorsOf(t).Chrome }
 
 // Panel is the face of cards.
-func Panel(t *ui.Theme) ui.Color {
-	return t.Background.Mix(t.Surface, 0.7)
-}
+func Panel(t *ui.Theme) ui.Color { return ColorsOf(t).Panel }

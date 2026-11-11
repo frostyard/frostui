@@ -469,20 +469,45 @@ and the mailto rule
 
 ### Theming
 
-The look follows the desktop, not a palette of its own: MyGo reads the
-accent, light or dark mode, contrast and text size from the system, and the
-kit adds metrics (`SpaceXS`…`SpaceXL`, `RadiusCard`, `RadiusChip`,
-`RailWidth`, `TopBarHeight`, `ToastWidth`, `HeroSize`), tones (`Neutral`,
-`Accent`, `Success`, `Warning`, `Danger`) mapped onto the theme by
-`ToneColor` and `ToneFill`, and two derived surfaces (`Chrome` for the bars
-and rail, `Panel` for cards). `Adapt` keeps the accent in windows without
-the focus, as GNOME and KDE do (MyGo fades it to gray, as macOS does), on
-every platform. MyGo resets the theme at each build pass, so `Adapt` runs
-first in every frame; `Shell.View` calls it.
+The kit draws frostyard's brand, in two themes of its own
+([ADR-0011](../adr/0011-draw-the-frostyard-brand-in-a-dark-and-a-light-theme.md),
+[spec](../specs/frostyard-theme.md)): **Frostyard**, near-black blue inks
+with a sky accent, and **Frostyard light**, an ice ground with the brand's
+ink as text and a deep sky accent. `Adapt` runs first in every frame
+(`Shell.View` and `PaneShell.View` call it; MyGo resets the theme at each
+build pass): it takes Frostyard when MyGo picked a dark theme for the
+desktop and Frostyard light otherwise, applies the desktop's preferences
+without the accent (high contrast and text size apply, the accent stays
+the brand's, also in windows without the focus), and sets it. A theme that
+is already Frostyard is kept, so an app with its own light or dark setting
+sets `FrostyardTheme(dark).WithPreferences(p)` itself before the shell
+draws. The first `Adapt` registers the embedded Inter (`fonts/`, OFL-1.1)
+under `FontFamily`; a text system that cannot add fonts draws in its
+default family.
 
-[ADR-0011](../adr/0011-draw-the-frostyard-brand-in-a-dark-and-a-light-theme.md)
-(proposed) replaces this with the kit's own Frostyard and Frostyard light
-themes; [the Frostyard look](../plans/frostyard-look.md) plans the change.
+`ui.Theme` has no field for several of the kit's roles, so `ThemeColors`
+holds them: `Chrome` for the bars, rail, console and source lists, `Panel`
+and its gradient (`PanelFrom`, `PanelTo`) for cards, `SelectedFill` and
+`SelectedText` for the selected row, `HoverText`, the primary button's
+gradient and `OnGradient`, `Label`, `TagText`, `Code`, `LineStrong`, and a
+fill and a line per tone. `ColorsOf(t)` finds them by the theme's `Dark`
+and `Background`, which neither the desktop's preferences nor
+`SoftSelection` change, so the kit's functions keep taking only the theme.
+For any other theme (MyGo's own, or an app's) it derives what the kit drew
+before: `Chrome` and `Panel` mixed from `Background` toward `Surface`, tone
+fills at 16%. `Chrome(t)`, `Panel(t)`, `ToneFill` and `ToneLine` read it;
+`ToneColor` maps the tones (`Neutral`, `Accent`, `Success`, `Warning`,
+`Danger`) onto the theme.
+
+Text styles (`Title`, `Heading`, `Strong`, `Body`, `Muted`, `Caption`,
+`Mono`, `Toned`) give their sizes at the platform's usual text size and
+scale them with the theme's `FontSize` through `TextSize`, so the desktop's
+text size reaches them. `Label` is the brand's uppercase monospace label.
+The metrics (`SpaceXS`…`SpaceXL`, `RadiusCard`, `RadiusChip`, `RailWidth`,
+`TopBarHeight`, `ToastWidth`, `HeroSize`) are unchanged until phase 2 of
+[the Frostyard look](../plans/frostyard-look.md) restyles the components.
+`frostyard_test.go` holds every text pair of both themes, with and without
+high contrast, to 4.5:1 and the focus ring to 3:1.
 
 ### Icons
 
@@ -630,6 +655,17 @@ ChairLift's examples (Homebrew taps, firmware, bootc deployments); and
 `Pipeline`'s list is named "Pipeline" instead of "Update run".
 
 ## API changes
+
+2026-11-11: the kit's look is its own (ADR-0011). Additive:
+`FrostyardTheme(dark bool) *ui.Theme`, `ThemeColors` with `ColorsOf`,
+`Fill` and `Line`, `ToneLine`, `TextSize`, `Label` and `FontFamily`. No
+signature changes, but `Adapt` now sets Frostyard or Frostyard light in
+place of MyGo's theme: the desktop's accent no longer applies, `Chrome`,
+`Panel` and `ToneFill` return the Frostyard values for those themes, and
+the text styles scale with the desktop's text size. An app that set
+`ui.LightTheme()` or `ui.DarkTheme()` for its own appearance setting gets
+the Frostyard theme of the same darkness from `Adapt`; one that sets a
+theme inside a scope after `Adapt` keeps it there.
 
 2026-11-11: additive `SourceList.OnClick` and `OnMiddleClick` distinguish
 explicit activation from arrow-key selection. `OpenGeneration` lets apps
