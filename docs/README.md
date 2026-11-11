@@ -23,6 +23,7 @@ Docs are split by the question they answer:
 - [0008 — Open behind allow-lists, and let editors keep their keys](adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md)
 - [0009 — The top bar's end belongs to the window, and the palette field turns compact](adr/0009-the-top-bars-end-belongs-to-the-window.md)
 - [0010 — Keep only a mailto link's addressees, subject and body](adr/0010-keep-only-a-mailto-links-addressees-subject-and-body.md)
+- [0011 — Draw the frostyard brand, in a dark and a light theme](adr/0011-draw-the-frostyard-brand-in-a-dark-and-a-light-theme.md)
 
 ### Org-wide decisions
 
@@ -44,6 +45,7 @@ Docs are split by the question they answer:
 ### Plans
 
 - [Roadmap](plans/roadmap.md)
+- [The Frostyard look](plans/frostyard-look.md)
 
 ## Conventions
 
