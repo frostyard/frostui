@@ -641,3 +641,48 @@ func TestSourceListBuildsOnlyTheRowsInView(t *testing.T) {
 		t.Errorf("Select did not scroll to a far row: %q", tt.Texts())
 	}
 }
+
+func TestSourceListClickIsIndependentOfKeyboardSelection(t *testing.T) {
+	l := mailList()
+	var clicked []string
+	l.OnClick = func(item string, _ ui.Modifiers) { clicked = append(clicked, item) }
+	tt := listTester(l, mailSections())
+	if err := tt.Click("Inbox"); err != nil {
+		t.Fatal(err)
+	}
+	tt.Move(1000, 1000)
+	tt.Key(0, ui.KeyDown)
+	if !slices.Equal(clicked, []string{"Inbox"}) {
+		t.Fatalf("clicks %v", clicked)
+	}
+}
+
+func TestSourceListMiddleClick(t *testing.T) {
+	l := mailList()
+	var clicked string
+	l.OnMiddleClick = func(item string, _ ui.Modifiers) { clicked = item }
+	tt := listTester(l, mailSections())
+	r, ok := tt.Find("Inbox")
+	if !ok {
+		t.Fatal("no Inbox")
+	}
+	tt.PressButton(2, r.X+r.W/2, r.Y+r.H/2)
+	tt.ReleaseButton(2, r.X+r.W/2, r.Y+r.H/2)
+	if clicked != "Inbox" {
+		t.Fatalf("middle click %q", clicked)
+	}
+}
+
+func TestSourceListOpenGeneration(t *testing.T) {
+	l := mailList()
+	tt := listTester(l, mailSections())
+	before := l.OpenGeneration()
+	tt.Frame()
+	if l.OpenGeneration() != before {
+		t.Fatal("idle frame changed open state")
+	}
+	l.SetOpen("account", "inbox", true)
+	if l.OpenGeneration() == before {
+		t.Fatal("opening did not change generation")
+	}
+}

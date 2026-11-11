@@ -342,7 +342,9 @@ its account.
   Left and Right close, open and move as in any tree. `Selected`, `Select`
   (opens the way to the item and scrolls to it), `OnSelect`, and
   `OnActivate` for Enter and a double click. A choice survives its section
-  closing and is forgotten when its item goes.
+  closing and is forgotten when its item goes. `OnClick` reports explicit
+  row clicks, and `OnMiddleClick` handles the middle button independently.
+  `OpenGeneration` identifies changes to the expanded items.
 - **Menus and drops:** `Menu` builds a row's context menu; `DropOn[K, T]`
   makes rows take values of type `T`, highlights a row that accepts, and
   passes the modifiers held (Ctrl or Alt to copy); `DragItems` makes rows
@@ -556,7 +558,13 @@ ChairLift's examples (Homebrew taps, firmware, bootc deployments); and
 
 ## API changes
 
-None since the module began.
+2026-11-11: additive `SourceList.OnClick` and `OnMiddleClick` distinguish
+explicit activation from arrow-key selection. `OpenGeneration` lets apps
+persist expanded folders only after a change; it uses MyGo's membership
+generation when available and compares membership without sorting otherwise.
+`StatusItem.Menu` opens a popup menu from a status item. The MyGo dependency
+is pinned to upstream commit `f5c3a6e111a3`, which supplies `RowClicked`;
+its next release can replace the pseudo-version.
 
 ## References
 

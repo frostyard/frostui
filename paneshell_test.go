@@ -1,6 +1,7 @@
 package frostui
 
 import (
+	"slices"
 	"testing"
 	"time"
 
@@ -476,5 +477,17 @@ func TestConsoleViewDefaultsAreUnchanged(t *testing.T) {
 	}
 	if _, ok := tt.Find("Close the console"); !ok {
 		t.Error("no Close the console button")
+	}
+}
+
+func TestStatusItemOpensAMenu(t *testing.T) {
+	tt := ui.NewTester(func(c *ui.Context) {
+		statusItem(c, StatusItem{Text: "Mode", Progress: -1, Menu: func(m *ui.Menu) { m.Item("Reading") }})
+	}, 300, 200)
+	if err := tt.Click("Mode"); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Contains(tt.Menu(), "Reading") {
+		t.Fatalf("menu %v", tt.Menu())
 	}
 }
