@@ -6,3 +6,8 @@ the icon data of the lucide-react package, version 1.52.0, and written as
 plain SVG files with their upstream names. Lucide is under the ISC license,
 and the icons Lucide derived from Feather are also under the MIT license;
 icons/LICENSE holds both, as Lucide publishes them.
+
+The fonts in fonts/ are Inter (https://rsms.me/inter/), version 4.001,
+copyright 2016 The Inter Project Authors, taken unchanged from Debian's
+fonts-inter-variable 4.1+ds-1. Inter is under the SIL Open Font License,
+Version 1.1, which fonts/OFL.txt holds.

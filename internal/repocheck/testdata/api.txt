@@ -6,6 +6,7 @@ const frostui.ConsoleCommandID = "frostui.console"
 const frostui.Danger Tone
 const frostui.DefaultLevels = AllLevels &^ (1 << LevelDebug)
 const frostui.Everywhere KeyScope
+const frostui.FontFamily = "Inter"
 const frostui.HeroSize = 64
 const frostui.JobCanceled JobState
 const frostui.JobDone JobState
@@ -325,6 +326,20 @@ field frostui.Step.State StepState
 field frostui.Step.Title string
 field frostui.Tab.Icon string
 field frostui.Tab.Title string
+field frostui.ThemeColors.Chrome ui.Color
+field frostui.ThemeColors.Code ui.Color
+field frostui.ThemeColors.GradientFrom ui.Color
+field frostui.ThemeColors.GradientTo ui.Color
+field frostui.ThemeColors.HoverText ui.Color
+field frostui.ThemeColors.Label ui.Color
+field frostui.ThemeColors.LineStrong ui.Color
+field frostui.ThemeColors.OnGradient ui.Color
+field frostui.ThemeColors.Panel ui.Color
+field frostui.ThemeColors.PanelFrom ui.Color
+field frostui.ThemeColors.PanelTo ui.Color
+field frostui.ThemeColors.SelectedFill ui.Color
+field frostui.ThemeColors.SelectedText ui.Color
+field frostui.ThemeColors.TagText ui.Color
 field frostui.Tile.Caption string
 field frostui.Tile.Current bool
 field frostui.Tile.Detail string
@@ -345,6 +360,7 @@ func frostui.CardHeader(*ui.Context, string, string, func())
 func frostui.Chrome(*ui.Theme) ui.Color
 func frostui.CodeDialog(*ui.Context, string, string, string, string) (bool, bool)
 func frostui.ColorPill(*ui.Context, string, ui.Color) ui.Element
+func frostui.ColorsOf(*ui.Theme) ThemeColors
 func frostui.CommandRow(*ui.Context, CommandItem) ui.Element
 func frostui.ConnectingScreen(*ui.Context, Connection) ui.Element
 func frostui.ConnectionStatus(*ui.Context, Connection) ui.Element
@@ -357,6 +373,7 @@ func frostui.Duration(time.Duration) string
 func frostui.Empty(*ui.Context, string, string, string) ui.Element
 func frostui.Figures(*ui.Context, []Figure) ui.Element
 func frostui.Filter([]Command, string) []Command
+func frostui.FrostyardTheme(bool) *ui.Theme
 func frostui.Gauge(*ui.Context, float64, float64, string, string, Tone, float32) ui.Element
 func frostui.Heading(*ui.Context, string) ui.Element
 func frostui.Hero(*ui.Context, HeroIcon, string, string) ui.Element
@@ -370,6 +387,7 @@ func frostui.JobCard(*ui.Context, *Jobs)
 func frostui.JobStatus(*ui.Context, RowStatus)
 func frostui.Kbd(*ui.Context, string) ui.Element
 func frostui.KeyValues(*ui.Context, []KeyValue, ...KeyValuesStyle) ui.Element
+func frostui.Label(*ui.Context, string) ui.Element
 func frostui.LabeledButton(*ui.Context, string, string, bool) ui.Element
 func frostui.LaunchDesktopApp(string) error
 func frostui.Legend(*ui.Context, Tone, string) ui.Element
@@ -414,11 +432,13 @@ func frostui.Strong(*ui.Context, string) ui.Element
 func frostui.SwitchRow(*ui.Context, string, string, *bool) ui.Element
 func frostui.Text([]Line) string
 func frostui.TextRow(*ui.Context, string, string, *string) ui.Element
+func frostui.TextSize(*ui.Context, float32) float32
 func frostui.TileGrid(*ui.Context) ui.Element
 func frostui.Title(*ui.Context, string) ui.Element
 func frostui.ToggleTile(*ui.Context, string, string, string, bool, bool) bool
 func frostui.ToneColor(*ui.Theme, Tone) ui.Color
 func frostui.ToneFill(*ui.Theme, Tone) ui.Color
+func frostui.ToneLine(*ui.Theme, Tone) ui.Color
 func frostui.Toned(*ui.Context, string, Tone) ui.Element
 func frostui.TopToasts(*ui.Context, string)
 func frostui.VersionChange(*ui.Context, string, string) ui.Element
@@ -517,6 +537,8 @@ method (Opener) frostui.CheckFile(string) (string, error)
 method (Opener) frostui.CheckURL(string) (string, error)
 method (Opener) frostui.OpenFile(string) error
 method (Opener) frostui.OpenURL(string) error
+method (ThemeColors) frostui.Fill(Tone) ui.Color
+method (ThemeColors) frostui.Line(Tone) ui.Color
 type frostui.About struct
 type frostui.ActionToast struct
 type frostui.Brand struct
@@ -577,6 +599,7 @@ type frostui.StatusItem struct
 type frostui.Step struct
 type frostui.StepState int
 type frostui.Tab struct
+type frostui.ThemeColors struct
 type frostui.Tile struct
 type frostui.Tone int
 type frostui.Waker struct
