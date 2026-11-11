@@ -26,11 +26,11 @@ func Hero(c *ui.Context, icon HeroIcon, title, description string) ui.Element {
 	return ui.Column(c).Gap(10).AlignItems(ui.Center).Children(func() {
 		switch {
 		case icon.Logo != nil:
-			ui.Box(c).Size(HeroSize, HeroSize).Radius(18).Background(t.Accent).Center().Children(func() {
-				ui.Icon(c, icon.Logo).FontSize(38).TextColor(t.AccentText)
+			primaryFace(ui.Box(c).Size(HeroSize, HeroSize).Radius(4).Center(), t).Children(func() {
+				ui.Icon(c, icon.Logo).FontSize(38).TextColor(ColorsOf(t).OnGradient)
 			})
 		case icon.Busy:
-			ui.Box(c).Size(HeroSize, HeroSize).Radius(18).Background(ToneFill(t, Accent)).Center().Children(func() {
+			ui.Box(c).Size(HeroSize, HeroSize).Radius(4).Background(ToneFill(t, Accent)).Center().Children(func() {
 				ui.Spinner(c).Size(30, 30).Label(title)
 			})
 		default:

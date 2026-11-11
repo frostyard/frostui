@@ -76,7 +76,7 @@ with the code; until then this table is the source.
   `examples/threepane` in both themes in Inter, the contrast test passes in
   both themes with and without high contrast, and `make ci` passes.
 
-## Phase 2 — Components in the brand (medium)
+## Phase 2 — Components in the brand (done)
 
 - Metrics: `RadiusCard` 0, `RadiusChip` 2, toasts and the palette 0,
   banners and fields 2, `Kbd` 2. Remove the toast's shadow; give it a
@@ -100,9 +100,10 @@ with the code; until then this table is the source.
 - [Command palette](../design/frostui.md#command-palette): headings as
   `Label`; the chosen row on the selected fill with the accent rule.
 - [Console](../design/frostui.md#console) on the code color.
-  `SoftSelection` uses the selected fill. Dialogs, rows, the wizard's step
-  dots, `Gauge`, `SegmentBar`, `ConnectionStatus` and `Settings` take the
-  new radii and colors.
+  `SoftSelection` uses the selected fill. Dialogs, rows, the wizard's hero,
+  `SegmentBar`, `ToggleTile`, `ConnectionStatus` and `Settings` take the
+  new radii and colors. MyGo's own dialogs (the palette's modal among
+  them) keep their own corners and face.
 - Copy the new snapshots to `docs/images/`; update the design doc's
   sections above, `README.md` and `AGENTS.md` where they describe the look.
 - **Done when:** the three examples' snapshots match the design system's
@@ -155,9 +156,10 @@ with the code; until then this table is the source.
   registered and its weights drawn. DirectWrite, Core Text and the wasm
   canvas are only cross-compiled. Check each by hand before the apps ship
   there; ship static weights if one ignores the weight axis.
-- **Badge size for counts:** the brand's 9 DIP label text is small for
-  unread counts in a sidebar; counts may take the `pill` size in the same
-  outline. Decide at phase 2's review.
+- **Badge size for counts:** phase 2 draws pills, counts included, in the
+  brand's 9 DIP label text, which is small for unread counts in a sidebar.
+  Counts could take 11.5 in the same outline. Decide from phase 2's
+  pictures, or after an app has used them.
 - **HTML mail in Frostyard:** Frostmail draws a message's HTML on a forced
   white page. In Frostyard it sits inside the dark reader: a framed page, or
   a dark rendering of simple messages. Frostmail decides by phase 4.

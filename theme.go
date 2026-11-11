@@ -11,10 +11,11 @@ const (
 	SpaceL  = 16
 	SpaceXL = 24
 
-	// RadiusCard rounds cards and panels; RadiusChip rounds chips, pills
-	// and small tiles.
-	RadiusCard = 12
-	RadiusChip = 8
+	// RadiusCard rounds cards and panels; RadiusChip rounds chips, pills,
+	// fields, banners and small tiles. The brand is nearly square
+	// (ADR-0011): buttons take the theme's Radius, 4.
+	RadiusCard = 0
+	RadiusChip = 2
 
 	// RailWidth is the width of the left rail.
 	RailWidth = 232

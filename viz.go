@@ -101,7 +101,7 @@ func SegmentBar(c *ui.Context, label string, total float64, parts []Segment, leg
 				if w <= 0 {
 					continue
 				}
-				p.Fill(ui.Rect{X: x, Y: r.Y, W: w, H: r.H}, ToneColor(t, s.Tone), 6)
+				p.Fill(ui.Rect{X: x, Y: r.Y, W: w, H: r.H}, ToneColor(t, s.Tone), RadiusChip)
 				x += w + 2
 			}
 		})
@@ -135,7 +135,7 @@ func ToggleTile(c *ui.Context, icon, title, sub string, on, busy bool) bool {
 	}
 	clicked := tile.Clicked() && !busy
 	tile.Children(func() {
-		ui.Box(c).Size(34, 34).Radius(17).Background(fg.Alpha(0.12)).Center().Children(func() {
+		ui.Box(c).Size(34, 34).Radius(4).Background(fg.Alpha(0.12)).Center().Children(func() {
 			if busy {
 				ui.Spinner(c).Label("Working")
 			} else {

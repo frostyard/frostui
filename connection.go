@@ -81,7 +81,7 @@ func ConnectionStatus(c *ui.Context, conn Connection) ui.Element {
 	if conn.OnClick != nil {
 		row = ui.ButtonBase(c).Row().Cursor(ui.CursorPointer)
 		if row.Hovered() {
-			row.Background(t.SurfaceHover)
+			color = ColorsOf(t).HoverText
 		}
 		if row.Clicked() {
 			conn.OnClick()
@@ -89,10 +89,10 @@ func ConnectionStatus(c *ui.Context, conn Connection) ui.Element {
 	} else {
 		row = ui.Row(c)
 	}
-	row.Gap(6).Padding(2, 4).Radius(4).AlignItems(ui.Center).Label("Connection: " + conn.place()).Tooltip(tooltip)
+	row.Gap(6).Padding(2, 4).Radius(RadiusChip).AlignItems(ui.Center).Label("Connection: " + conn.place()).Tooltip(tooltip)
 	return row.Children(func() {
 		ui.Box(c).Size(8, 8).Radius(4).Background(dot)
-		ui.Text(c, conn.place()).FontSize(12).TextColor(color).SingleLine()
+		ui.Text(c, conn.place()).FontSize(TextSize(c, 12)).TextColor(color).SingleLine()
 	})
 }
 

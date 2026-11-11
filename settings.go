@@ -243,13 +243,15 @@ func (s *Settings) View(c *ui.Context, pages []SettingsPage) ui.Element {
 				})
 			}
 			selected := s.Selected
-			ui.Sidebar(c, &selected, func() {
-				for _, p := range pages {
-					if ui.SidebarItem(c.Key(p.ID), p.ID, IconSVG(p.Icon), p.Title).Clicked() {
-						s.Query = ""
+			ui.Themed(c, railTheme(t)).Grow(1).AlignItems(ui.Stretch).Background(ui.Transparent).Children(func() {
+				ui.Sidebar(c, &selected, func() {
+					for _, p := range pages {
+						if railItem(c, t, p.ID, s.Selected, p.Icon, p.Title).Clicked() {
+							s.Query = ""
+						}
 					}
-				}
-			}).Grow(1).Padding(SpaceS, SpaceS).Background(Chrome(t)).Label("Settings sections")
+				}).Grow(1).Padding(SpaceS, SpaceS).Background(Chrome(t)).Label("Settings sections")
+			})
 			s.Selected = selected
 		})
 		ui.Box(c).Width(1).Background(t.Border)

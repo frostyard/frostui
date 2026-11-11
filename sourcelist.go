@@ -537,13 +537,19 @@ func (s *SourceList[K]) View(c *ui.Context, sections []SourceSection[K]) ui.Elem
 		}
 	}
 	st.Prefix = func(r ui.OutlineRow) { s.cur = r }
-	out := ui.Outline(c, st, roots, s.children, func(k sourceKey[K]) {
-		if k.header {
-			s.header(c, t, k)
-		} else {
-			s.item(c, t, k)
-		}
-	}).Label(s.Label)
+	// The list paints its chosen row in the accent, with the accent's text:
+	// in this scope they are the selected fill and text. The rows draw
+	// their icons and the chosen row's rule with t, the window's theme.
+	var out ui.Element
+	ui.Themed(c, choiceTheme(t)).Grow(1).MinHeight(0).AlignItems(ui.Stretch).Background(ui.Transparent).Children(func() {
+		out = ui.Outline(c, st, roots, s.children, func(k sourceKey[K]) {
+			if k.header {
+				s.header(c, t, k)
+			} else {
+				s.item(c, t, k)
+			}
+		}).Label(s.Label)
+	})
 	// The choice, as the user moved it.
 	if s.row >= 0 && s.row < st.Rows() && !st.Item(s.row).header {
 		if k := st.Item(s.row); !s.hasSel || k != s.sel {
@@ -594,7 +600,7 @@ func (s *SourceList[K]) header(c *ui.Context, t *ui.Theme, k sourceKey[K]) {
 	head := r.Arrow().Grow(1).Height(28).Row().Gap(SpaceS).Padding(0, SpaceS).AlignItems(ui.Center).
 		Cursor(ui.CursorPointer).Background(Chrome(t))
 	head.Children(func() {
-		ui.Text(c, s.title(k)).FontSize(t.FontSize - 1).FontWeight(600).TextColor(t.TextMuted).Grow(1).SingleLine()
+		Label(c, s.title(k)).Grow(1).SingleLine()
 		chevron := "go-next"
 		if r.Open {
 			chevron = "pan-down"
@@ -644,9 +650,12 @@ func (s *SourceList[K]) item(c *ui.Context, t *ui.Theme, k sourceKey[K]) {
 	if row.Dim {
 		content.Opacity(0.55)
 	}
+	if chosen {
+		content.BorderWidth(0, 0, 0, 1).BorderColor(t.Accent)
+	}
 	muted := t.TextMuted
 	if chosen {
-		muted = t.AccentText
+		muted = ColorsOf(t).SelectedText
 	}
 	content.Children(func() {
 		if depth > 0 {
@@ -672,8 +681,8 @@ func (s *SourceList[K]) item(c *ui.Context, t *ui.Theme, k sourceKey[K]) {
 			ui.Text(c, row.Title).Grow(1).MinWidth(0).SingleLine()
 		}
 		if row.Tag != "" {
-			ui.Box(c).Padding(0, 4).Radius(4).Border(1, muted).Shrink(0).Children(func() {
-				ui.Text(c, row.Tag).FontSize(10).TextColor(muted).SingleLine()
+			ui.Box(c).Padding(0, 4).Radius(RadiusChip).Border(1, muted).Shrink(0).Children(func() {
+				ui.Text(c, row.Tag).FontSize(TextSize(c, 10)).TextColor(muted).SingleLine()
 			})
 		}
 		if row.Busy {
@@ -687,9 +696,7 @@ func (s *SourceList[K]) item(c *ui.Context, t *ui.Theme, k sourceKey[K]) {
 		}
 		if row.Count != "" {
 			if chosen {
-				ui.Box(c).Padding(1, 7).Radius(999).Background(t.AccentText.Alpha(0.25)).Shrink(0).Children(func() {
-					ui.Text(c, row.Count).FontSize(11.5).Bold().SingleLine()
-				})
+				selectedPill(c, row.Count, t).Shrink(0)
 			} else {
 				Pill(c, row.Count, row.CountTone)
 			}

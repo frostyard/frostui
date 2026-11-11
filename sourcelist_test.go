@@ -825,10 +825,12 @@ func TestSourceListMiddleClickSurvivesRowsBuiltAgain(t *testing.T) {
 	// row, though it lies in the row's box.
 	tt.Scroll(140, 200, 0, 10)
 	today, _ := tt.Find("Today")
-	header, _ := tt.Find("Pinned")
+	title, _ := tt.Find("Pinned")
+	// The header's row is 28 DIPs tall, its title centered in it.
+	header := ui.Rect{Y: title.Y + title.H/2 - 14, H: 28}
 	ry := today.Y + 2
 	if !(header.Y < ry && ry < header.Y+header.H) {
-		t.Fatalf("the Pinned header %+v does not cover the top of Today's row %+v", header, today)
+		t.Fatalf("the Pinned header %+v (its title %+v) does not cover the top of Today's row %+v", header, title, today)
 	}
 	tt.PressButton(2, x, today.Y+today.H-6)
 	tt.Move(x, ry)

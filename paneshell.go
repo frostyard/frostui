@@ -452,11 +452,11 @@ func (s *PaneShell) statusBar(c *ui.Context, f PaneFrame) {
 // is a button, 380 DIPs wide unless the caller sets another width.
 func PaletteField(c *ui.Context, p *Palette) ui.Element {
 	t := c.Theme()
-	field := ui.ButtonBase(c).Row().Width(paletteFieldWidth).Height(32).Padding(0, 10).Gap(SpaceS).Radius(16).AlignItems(ui.Center).
-		Background(t.Background).Border(1, t.Border).Cursor(ui.CursorPointer).
+	field := ui.ButtonBase(c).Row().Width(paletteFieldWidth).Height(32).Padding(0, 10).Gap(SpaceS).Radius(RadiusChip).AlignItems(ui.Center).
+		Background(ColorsOf(t).Code).Border(1, t.Border).Cursor(ui.CursorPointer).
 		Label(paletteLabel).Tooltip(paletteTooltip).KeyShortcuts(ui.Cmd, ui.KeyK)
 	if field.Hovered() {
-		field.Border(1, t.Accent.Alpha(0.6))
+		field.Border(1, t.Accent)
 	}
 	if field.Clicked() {
 		p.Show()
@@ -507,7 +507,7 @@ func paletteControl(c *ui.Context, p *Palette, width float32) ui.Element {
 // room for it: its icon on a button with its name, its tooltip and its
 // key, which opens the palette.
 func paletteButton(c *ui.Context, p *Palette) ui.Element {
-	b := ui.Button(c, "").Label(paletteLabel).Tooltip(paletteTooltip).KeyShortcuts(ui.Cmd, ui.KeyK).Shrink(0)
+	b := ghost(c, ui.Button(c, "")).Label(paletteLabel).Tooltip(paletteTooltip).KeyShortcuts(ui.Cmd, ui.KeyK).Shrink(0)
 	if b.Clicked() {
 		p.Show()
 	}
