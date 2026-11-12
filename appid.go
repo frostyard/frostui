@@ -9,12 +9,15 @@ var setAppIDOnce sync.Once
 // GLib allows, on every system.
 //
 // On Linux, GTK takes the Wayland app ID and the X11 WM_CLASS from GLib's
-// program name, which MyGo leaves to the executable's name. SetAppID sets
-// it (g_set_prgname) to id, the reverse-DNS ID of the app's .desktop file,
-// so the desktop shows the app's icon and name for its windows, and sets
-// GLib's application name (g_set_application_name) to displayName, the
-// human name, when it is not empty. It loads GLib with purego, so a host
-// without GLib gets an error and the program runs on unnamed.
+// program name, which MyGo sets to the executable's name when App.Run
+// starts. SetAppID sets it (g_set_prgname) to id, the reverse-DNS ID of
+// the app's .desktop file, so the desktop shows the app's icon and name
+// for its windows, and sets GLib's application name
+// (g_set_application_name) to displayName, the human name, when it is not
+// empty. It sets the program name again from mygo.App.WhenReady, after
+// MyGo has named it, so call it before the WhenReady that opens the app's
+// first window. It loads GLib with purego, so a host without GLib gets an
+// error and the program runs on unnamed.
 //
 // On other systems MyGo does not use GTK and the system names the app
 // from its bundle (macOS), its executable (Windows) or its page (a

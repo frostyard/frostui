@@ -4,10 +4,15 @@ import (
 	"errors"
 
 	"github.com/ebitengine/purego"
+	"github.com/egoist/mygo"
 )
 
+// whenReady runs fn once MyGo has opened the display. It is MyGo's
+// App.WhenReady; tests replace it.
+var whenReady = mygo.App.WhenReady
+
 // setAppID is SetAppID on Linux, where MyGo draws on GTK 3: it names the
-// program through GLib.
+// program through GLib, then names it again once MyGo is ready.
 func setAppID(id, displayName string) error {
 	var lib uintptr
 	var err error
@@ -29,6 +34,15 @@ func setAppID(id, displayName string) error {
 	if displayName != "" {
 		setApplicationName(cString(displayName))
 	}
+	// MyGo since v0.9.0 names the program after its executable in App.Run,
+	// before it opens the display (egoist/mygo#1640), and GLib keeps the
+	// last name it is given, so the name set above is lost and GTK names
+	// the windows after the executable. WhenReady runs after that, and
+	// before the callbacks an app registers after this call, which open its
+	// windows: GTK reads the name when it creates a window (the Wayland app
+	// ID, the instance part of X11's WM_CLASS), so naming the program again
+	// here gives the windows the app's ID.
+	whenReady(func() { setPrgname(cString(id)) })
 	return nil
 }
 

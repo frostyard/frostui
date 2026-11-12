@@ -588,12 +588,20 @@ function from `*_linux.go` or `*_other.go` (`//go:build !linux`):
 
 | Function | Linux | Elsewhere |
 | --- | --- | --- |
-| `SetAppID` (`appid*.go`) | `g_set_prgname` and `g_set_application_name` through purego, so the Wayland app ID and X11 `WM_CLASS` match the `.desktop` file | loads nothing; rejects an empty ID |
+| `SetAppID` (`appid*.go`) | `g_set_prgname` and `g_set_application_name` through purego, so the Wayland app ID and X11 `WM_CLASS` match the `.desktop` file; `g_set_prgname` again from `mygo.App.WhenReady`, because MyGo's `App.Run` names the program after its executable | loads nothing; rejects an empty ID |
 | `DesktopIconTheme` (`icons*.go`) | as above | "" |
 | `NewIcons` (`icons*.go`) | embedded icons, the theme directories, then the kit's set | embedded icons, then the kit's set |
 | `LaunchDesktopApp` (`launch*.go`) | GIO resolves and launches the desktop ID, without waiting for the application; stdout and stderr go to `/dev/null` | an error wrapping `errors.ErrUnsupported` |
 
-Only the first `SetAppID` call counts, on every system.
+Only the first `SetAppID` call counts, on every system. On Linux, call it
+before the `mygo.App.WhenReady` that opens the app's first window: MyGo
+since v0.9.0 names the program after its executable when `App.Run` starts
+(egoist/mygo#1640), and GLib keeps the last name it is given, so
+`SetAppID` names the program again from its own `WhenReady` callback, which
+runs before the callbacks registered after it. GTK reads the name when it
+creates a window. X11's `WM_CLASS` class part keeps the name GDK took from
+the executable when it opened the display; GNOME matches the instance
+part first.
 
 ### Rules
 
@@ -688,6 +696,13 @@ ChairLift's examples (Homebrew taps, firmware, bootc deployments); and
 `Pipeline`'s list is named "Pipeline" instead of "Update run".
 
 ## API changes
+
+2026-11-12: no signature change, but on Linux `SetAppID` now also names
+the program again from `mygo.App.WhenReady`. MyGo v0.9.0 renames the program
+after its executable in `App.Run`, after `SetAppID`, so windows had the
+executable's name as their Wayland app ID and the desktop showed a generic
+icon for them. Call `SetAppID` before the `WhenReady` that opens the first
+window.
 
 2026-11-12: no signature change, but `LaunchDesktopApp` now looks up and
 launches a desktop ID through GIO instead of starting `gtk-launch`. Missing
