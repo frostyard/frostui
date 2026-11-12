@@ -1,8 +1,9 @@
 package frostui
 
 import (
+	"bufio"
+	"context"
 	"errors"
-	"io"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -43,6 +44,13 @@ func TestLaunchDesktopApp(t *testing.T) {
 	if err := syscall.Mkfifo(fifo, 0o600); err != nil {
 		t.Fatal(err)
 	}
+	// Keep one reader open across both launches. Reopening between writes can
+	// swallow two writes in one read, then block forever waiting for a third.
+	f, err := os.OpenFile(fifo, os.O_RDWR, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = f.Close() }()
 	script := filepath.Join(dir, "fixture")
 	content := "#!/bin/sh\nprintf 'launched:%s\\n' \"$1\" > " + fifo + "\nprintf 'should-not-inherit-stdout\\n'\nprintf 'should-not-inherit-stderr\\n' >&2\n"
 	if err := os.WriteFile(script, []byte(content), 0o755); err != nil {
@@ -63,24 +71,21 @@ func TestLaunchDesktopApp(t *testing.T) {
 	}
 	read := make(chan string, 1)
 	go func() {
+		r := bufio.NewReader(f)
 		var observed string
 		for range 2 {
-			f, err := os.Open(fifo)
+			line, err := r.ReadString('\n')
 			if err != nil {
 				read <- err.Error()
 				return
 			}
-			data, err := io.ReadAll(io.LimitReader(f, 100))
-			_ = f.Close()
-			if err != nil {
-				read <- err.Error()
-				return
-			}
-			observed += string(data)
+			observed += line
 		}
 		read <- observed
 	}()
-	cmd := exec.Command(os.Args[0], "-test.run=^TestLaunchDesktopApp$")
+	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, os.Args[0], "-test.run=^TestLaunchDesktopApp$")
 	for _, pair := range os.Environ() {
 		if !strings.HasPrefix(pair, "DISPLAY=") && !strings.HasPrefix(pair, "WAYLAND_DISPLAY=") {
 			cmd.Env = append(cmd.Env, pair)
