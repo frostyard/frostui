@@ -110,7 +110,9 @@ with the code; until then this table is the source.
   component previews in both themes in a side-by-side review, and `make ci`
   passes. The maintainer then tags the next minor version.
 
-## Phase 3 — ChairLift (small)
+## Phase 3 — ChairLift (done)
+
+Landed in frostyard/chairlift#295.
 
 - Require the new frostui; the first-run appearance preview uses
   `FrostyardTheme`; its card's shadow goes.
@@ -119,7 +121,9 @@ with the code; until then this table is the source.
   (`CHAIRLIFT_SNAPSHOT_DIR`) show Overview, Updates and the first run in both
   themes.
 
-## Phase 4 — Frostmail (large)
+## Phase 4 — Frostmail (done)
+
+Landed in frostyard/frostmail#277, which also fixed #267, #270 and #271.
 
 - Require the new frostui. Move the 148 literal font sizes (most in
   `internal/desktop/pim`: calendar, tasks, people and the event window) and
@@ -127,12 +131,17 @@ with the code; until then this table is the source.
 - `uikit.SummaryRow` takes the selected fill and outlined counts, and the
   row fixes in frostyard/frostmail#267, #270 and #271 land with it, since
   they change the same rows and sidebar.
-- The reader frames the forced-white HTML page in both themes (see the open
-  question).
+- The reader frames the forced-white HTML page in both themes: Frostmail's
+  `uikit.PageFrame` sets it on the panel inside a hairline, and the page
+  itself stays white.
 - **Done when:** Frostmail's mail, calendar, people and tasks views render
   in both themes in its snapshot test and its `make ci` passes.
 
-## Phase 5 — Frostnotes (small)
+## Phase 5 — Frostnotes (done)
+
+Landed in frostyard/frostnotes#202. Its ADR-0042 records why live
+preview's headings keep their multiples of the editor's text size, in Inter,
+rather than the kit's sizes.
 
 - Require the new frostui. Its light, dark or system setting picks
   `FrostyardTheme`; the editor's code blocks and fences use the code color,
@@ -148,6 +157,11 @@ with the code; until then this table is the source.
   Homebrew) once phases 3 to 5 ship.
 - A high-contrast pass beyond MyGo's mix, if the measured high-contrast
   values in the spec fall short of 7:1 for text.
+- A tooltip on a `SourceSection` header: Frostmail's Follow Up header lost
+  the one that explained its rule when it became a source-list section.
+- A kit primary button for code that calls MyGo's `ui.PrimaryButton`
+  directly, which keeps the plain accent face rather than the brand's
+  gradient.
 
 ## Open questions
 
@@ -160,12 +174,9 @@ with the code; until then this table is the source.
   brand's 9 DIP label text, which is small for unread counts in a sidebar.
   Counts could take 11.5 in the same outline. Decide from phase 2's
   pictures, or after an app has used them.
-- **HTML mail in Frostyard:** Frostmail draws a message's HTML on a forced
-  white page. In Frostyard it sits inside the dark reader: a framed page, or
-  a dark rendering of simple messages. Frostmail decides by phase 4.
 - **An org-wide record:** the brand lives in frostyard/core. Whether core
   records that frostyard's desktop apps draw it, as an org ADR the apps
-  list, is core's call before phase 3.
+  list, is core's call.
 - **Where the values live after phase 1:** the kit's spec, core's
   `frostyard-design` skill, or both with a check that they agree.
 
