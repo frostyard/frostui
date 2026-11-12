@@ -107,7 +107,7 @@ its skills there (core ADR-0026); start a repo-local one from
 - **Tests run headless.** Views are tested with `ui.NewTester`; a test that
   stands in for the UI thread posts to a `frostuitest.Loop`. No test
   needs a display, a network or a real desktop app; `LaunchDesktopApp` is
-  tested against a fake `gtk-launch` on `PATH`, and `Opener` through its
+  tested against a temporary desktop entry, and `Opener` through its
   `Launch` and `LaunchFile` fields.
 - Run `make verify` before you call any change done, and `make ci` before
   you push. CI job `verify` runs `make ci`, which also checks that
