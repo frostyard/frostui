@@ -591,7 +591,7 @@ function from `*_linux.go` or `*_other.go` (`//go:build !linux`):
 | `SetAppID` (`appid*.go`) | `g_set_prgname` and `g_set_application_name` through purego, so the Wayland app ID and X11 `WM_CLASS` match the `.desktop` file | loads nothing; rejects an empty ID |
 | `DesktopIconTheme` (`icons*.go`) | as above | "" |
 | `NewIcons` (`icons*.go`) | embedded icons, the theme directories, then the kit's set | embedded icons, then the kit's set |
-| `LaunchDesktopApp` (`launch*.go`) | GIO resolves and launches the desktop ID, without waiting for the application | an error wrapping `errors.ErrUnsupported` |
+| `LaunchDesktopApp` (`launch*.go`) | GIO resolves and launches the desktop ID, without waiting for the application; stdout and stderr go to `/dev/null` | an error wrapping `errors.ErrUnsupported` |
 
 Only the first `SetAppID` call counts, on every system.
 
@@ -688,6 +688,14 @@ ChairLift's examples (Homebrew taps, firmware, bootc deployments); and
 `Pipeline`'s list is named "Pipeline" instead of "Update run".
 
 ## API changes
+
+2026-11-12: no signature change, but `LaunchDesktopApp` now looks up and
+launches a desktop ID through GIO instead of starting `gtk-launch`. Missing
+or unlaunchable IDs fail synchronously, including deleted (`Hidden=true`) entries;
+`NoDisplay` entries remain launchable by ID. The call may block during lookup
+and activation, so callers must run it on a worker. Spawned apps cannot keep
+the caller's stdout or stderr open. No GTK launch utility is needed. There is
+no display launch context, so focus activation on Wayland is not guaranteed.
 
 2026-11-11: the components are drawn in the brand (ADR-0011, phase 2).
 `RadiusCard` is now 0 and `RadiusChip` 2: callers that rounded their own
