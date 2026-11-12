@@ -94,9 +94,12 @@ its skills there (core ADR-0026); start a repo-local one from
   window, nothing takes it out until the window closes, and every build
   pass walks them all, so a handle made per build, or per mount (a row
   scrolling back into view, a section opening), leaks. Keep handles in
-  structs, one per control, or one per item in a map pruned as items go
-  (`internal/repocheck.TestKitMakesNoHandleInAView`, with fixtures). Never
-  load a UI library in an `init` function or a package-level variable.
+  structs, one per control: a handle stays registered until the window
+  closes even when the kit drops it, so use a bounded set of stable handle
+  identities, never one handle per item of a set that can grow or churn
+  without limit (`internal/repocheck.TestKitMakesNoHandleInAView`, with
+  fixtures). Never load a UI library in an `init` function or a
+  package-level variable.
   After a MyGo bump, read its source in `GOMODCACHE` (the theme reset,
   `Window.Update`, the Tester, `Handle` and its registration) before
   merging.
