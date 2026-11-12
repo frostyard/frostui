@@ -39,12 +39,13 @@ const myGoUI = "github.com/egoist/mygo/ui"
 // with its own file's name for MyGo's ui package (ui.Handle, mui.Handle, or
 // Handle after a dot import), a name counts when any of its declarations
 // holds a Handle (the build tags that pick one of a linux and a windows file
-// are not read here), and a type the enclosing function declares hides the
-// package's name of that name for the whole function. A type parameter is
-// never a Handle. It does not resolve a type from another package, so a
-// Handle in an imported struct, or under a type parameter, is not seen. It
-// reads the types of the file it is given; with the package's other files,
-// use handleProblemsWith (and packageTypes), as TestKitMakesNoHandleInAView
+// are not read here), and a type a function declares is in scope as Go's
+// block scope says: from its name to the end of the block that holds it, its
+// type parameters over the whole function. A type parameter is never a
+// Handle. It does not resolve a type from another package, so a Handle in an
+// imported struct, or under a type parameter, is not seen. It reads the types
+// of the file it is given; with the package's other files, use
+// handleProblemsWith (and packageTypes), as TestKitMakesNoHandleInAView
 // does.
 func handleProblems(rel string, src []byte) (views int, problems []string, err error) {
 	return handleProblemsWith(rel, src, nil)
@@ -57,24 +58,95 @@ type typeDecl struct {
 	expr   ast.Expr        // the declared type
 	ui     string          // its file's name for MyGo's ui package: "ui", a rename, "." for a dot import, "" without one
 	params map[string]bool // its type parameters, by name
-	scope  *scope          // where its type is read: the declaring function's, nil at package level
+	local  bool            // declared in a function's body: its type is read with the file's locals in view
 }
 
-// scope is the named types the code at one point of a file can name: the
-// package's, and those its enclosing function declares.
+// localType is one name a function declares and the range of its Go scope: a
+// type from its name to the end of the innermost block that holds it, a type
+// parameter over the whole function.
+type localType struct {
+	name     string
+	from, to token.Pos
+	decl     *typeDecl // nil for a type parameter
+}
+
+// scope is the named types one file's code can name: the package's, and the
+// names its functions declare, which only the file's own code and a local
+// type's body can see.
 type scope struct {
 	pkg   map[string][]*typeDecl
-	local map[string][]*typeDecl // nil outside a function
+	local []localType
 }
 
-// within returns the scope a declaration's type is read in: the function that
-// declares it, or the package for a type declared at package level, which
-// cannot see a function's types.
-func (d *typeDecl) within(sc *scope) *scope {
-	if d.scope != nil {
-		return d.scope
+// localAt returns the local type or type parameter of this name whose scope
+// holds pos: the innermost one, the one declared last before pos in the block
+// that holds pos, as Go's block scope says.
+func (sc *scope) localAt(name string, pos token.Pos) *localType {
+	var found *localType
+	for i := range sc.local {
+		lt := &sc.local[i]
+		if lt.name == name && lt.from <= pos && pos <= lt.to && (found == nil || lt.from > found.from) {
+			found = lt
+		}
 	}
-	return &scope{pkg: sc.pkg}
+	return found
+}
+
+// localTypes returns the names the file's functions declare, each with the
+// range of its Go scope: a type a function's body declares goes from its name
+// to the end of the innermost block, case clause or select clause that holds
+// it, and a type parameter over its whole function.
+func localTypes(file *ast.File, ui string) []localType {
+	var local []localType
+	var blocks []ast.Node // the blocks and clauses being walked, outermost first
+	var nodes []ast.Node  // every node being walked, to know which one ends
+	ast.Inspect(file, func(n ast.Node) bool {
+		if n == nil {
+			last := nodes[len(nodes)-1]
+			nodes = nodes[:len(nodes)-1]
+			if len(blocks) > 0 && blocks[len(blocks)-1] == last {
+				blocks = blocks[:len(blocks)-1]
+			}
+			return false
+		}
+		nodes = append(nodes, n)
+		switch x := n.(type) {
+		case *ast.BlockStmt, *ast.CaseClause, *ast.CommClause:
+			blocks = append(blocks, x)
+		case *ast.DeclStmt:
+			gen, ok := x.Decl.(*ast.GenDecl)
+			if !ok || gen.Tok != token.TYPE || len(blocks) == 0 {
+				return true
+			}
+			to := blocks[len(blocks)-1].End()
+			for _, spec := range gen.Specs {
+				ts, ok := spec.(*ast.TypeSpec)
+				if !ok {
+					continue
+				}
+				local = append(local, localType{name: ts.Name.Name, from: ts.Name.Pos(), to: to, decl: &typeDecl{
+					expr:   ts.Type,
+					ui:     ui,
+					params: typeParamNames(ts.TypeParams),
+					local:  true,
+				}})
+			}
+		case *ast.FuncDecl:
+			to := x.End()
+			for name := range typeParamNames(x.Type.TypeParams) {
+				local = append(local, localType{name: name, from: x.Pos(), to: to})
+			}
+			if x.Recv != nil {
+				for _, f := range x.Recv.List {
+					for name := range receiverTypeParams(f.Type) {
+						local = append(local, localType{name: name, from: x.Pos(), to: to})
+					}
+				}
+			}
+		}
+		return true
+	})
+	return local
 }
 
 // handleProblemsWith is handleProblems with the type declarations of the
@@ -101,7 +173,7 @@ func handleProblemsWith(rel string, src []byte, types map[string][]*typeDecl) (v
 	if fileUI == "" || fileUI == "_" {
 		return 0, nil, nil
 	}
-	pkgScope := &scope{pkg: pkg}
+	sc := &scope{pkg: pkg, local: localTypes(file, fileUI)}
 	// uiNamed reports whether e, of a file that calls the ui package ui, names
 	// one of its idents.
 	uiNamed := func(e ast.Expr, ui string, idents ...string) bool {
@@ -117,71 +189,78 @@ func handleProblemsWith(rel string, src []byte, types map[string][]*typeDecl) (v
 	// holdsHandles reports whether a value of type e holds Handles: a Handle,
 	// an array, slice or map of them (not of pointers), an inline struct with
 	// a field of one, or a named type that is one. e is read inside
-	// declaration d (nil for the file's own code), in scope sc, and with the
-	// ui name of d's file. A name of d's type parameters is no Handle, and a
-	// name resolves in the enclosing function's scope before the package's.
-	// seen holds the declarations resolved so far in one query, so a
-	// recursive type stops; every alternative of a name is tried, since the
-	// build tags that choose between them are not read here.
-	var holdsHandles func(e ast.Expr, d *typeDecl, sc *scope, seen map[*typeDecl]bool) bool
-	holdsHandles = func(e ast.Expr, d *typeDecl, sc *scope, seen map[*typeDecl]bool) bool {
+	// declaration d (nil for the file's own code) and with the ui name of d's
+	// file. A name of d's type parameters is no Handle. A name a function of
+	// the file declares resolves by source position, as Go's block scope does,
+	// in the file's own code and inside a local type, where it hides the
+	// package's name; a package name is read with no locals, since a position
+	// of another file means nothing among this file's ranges. seen holds the
+	// declarations resolved so far in one query, so a recursive type stops;
+	// every alternative of a name is tried, since the build tags that choose
+	// between them are not read here.
+	var holdsHandles func(e ast.Expr, d *typeDecl, seen map[*typeDecl]bool) bool
+	holdsHandles = func(e ast.Expr, d *typeDecl, seen map[*typeDecl]bool) bool {
 		ui := fileUI
 		if d != nil {
 			ui = d.ui
 		}
 		switch x := e.(type) {
 		case *ast.ParenExpr:
-			return holdsHandles(x.X, d, sc, seen)
+			return holdsHandles(x.X, d, seen)
 		case *ast.ArrayType:
-			return holdsHandles(x.Elt, d, sc, seen)
+			return holdsHandles(x.Elt, d, seen)
 		case *ast.MapType:
-			return holdsHandles(x.Value, d, sc, seen)
+			return holdsHandles(x.Value, d, seen)
 		case *ast.IndexExpr: // an instance of a generic type: pair[int]
-			return holdsHandles(x.X, d, sc, seen)
+			return holdsHandles(x.X, d, seen)
 		case *ast.IndexListExpr:
-			return holdsHandles(x.X, d, sc, seen)
+			return holdsHandles(x.X, d, seen)
 		case *ast.StructType:
 			for _, f := range x.Fields.List {
-				if holdsHandles(f.Type, d, sc, seen) {
+				if holdsHandles(f.Type, d, seen) {
 					return true
 				}
 			}
 			return false
 		case *ast.Ident:
 			if d != nil && d.params[x.Name] {
-				return false
+				return false // a type parameter of the declaration being read
 			}
-			alts, local := sc.local[x.Name]
-			if local && len(alts) == 0 {
-				return false // a type parameter of the function: no Handle
+			if d == nil || d.local {
+				if lt := sc.localAt(x.Name, x.Pos()); lt != nil {
+					if lt.decl == nil {
+						return false // a type parameter of an enclosing function
+					}
+					if seen[lt.decl] {
+						return false
+					}
+					seen[lt.decl] = true
+					return holdsHandles(lt.decl.expr, lt.decl, seen)
+				}
 			}
-			if !local {
-				alts = sc.pkg[x.Name]
-			}
-			for _, alt := range alts {
+			for _, alt := range sc.pkg[x.Name] {
 				if !seen[alt] {
 					seen[alt] = true
-					if holdsHandles(alt.expr, alt, alt.within(sc), seen) {
+					if holdsHandles(alt.expr, alt, seen) {
 						return true
 					}
 				}
 			}
-			// A dot import names the ui package's idents without a qualifier.
-			return uiNamed(e, ui, "Handle", "Ref")
 		}
+		// A dot import names the ui package's idents without a qualifier.
 		return uiNamed(e, ui, "Handle", "Ref")
 	}
-	holds := func(e ast.Expr, sc *scope) bool { return holdsHandles(e, nil, sc, map[*typeDecl]bool{}) }
+	holds := func(e ast.Expr) bool { return holdsHandles(e, nil, map[*typeDecl]bool{}) }
 	// keepsHandle reports whether ui.Local keeping a value of type e keeps a
 	// Handle: the value, or what it points to, holds one.
-	keepsHandle := func(e ast.Expr, sc *scope) bool {
+	keepsHandle := func(e ast.Expr) bool {
 		if star, ok := e.(*ast.StarExpr); ok {
 			e = star.X
 		}
-		return holds(e, sc)
+		return holds(e)
 	}
-	returnsHandle := func(ft *ast.FuncType, sc *scope) bool {
-		return ft != nil && ft.Results != nil && len(ft.Results.List) == 1 && keepsHandle(ft.Results.List[0].Type, sc)
+	returnsHandle := func(ft *ast.FuncType) bool {
+		return ft != nil && ft.Results != nil && len(ft.Results.List) == 1 && keepsHandle(ft.Results.List[0].Type)
 	}
 	takesView := func(ft *ast.FuncType) bool {
 		for _, p := range ft.Params.List {
@@ -201,8 +280,8 @@ func handleProblemsWith(rel string, src []byte, types map[string][]*typeDecl) (v
 	report := func(n ast.Node, what string) {
 		problems = append(problems, fmt.Sprintf("%s: %s; a ui.Handle stays registered with the window until it closes, so keep it in a struct", fset.Position(n.Pos()), what))
 	}
-	var visit func(n ast.Node, view bool, sc *scope)
-	visit = func(n ast.Node, view bool, sc *scope) {
+	var visit func(n ast.Node, view bool)
+	visit = func(n ast.Node, view bool) {
 		ast.Inspect(n, func(m ast.Node) bool {
 			switch x := m.(type) {
 			case *ast.FuncDecl:
@@ -211,7 +290,7 @@ func handleProblemsWith(rel string, src []byte, types map[string][]*typeDecl) (v
 					if v {
 						views++
 					}
-					visit(x.Body, v, funcScope(x.Type, x.Recv, x.Body, fileUI, sc))
+					visit(x.Body, v)
 				}
 				return false
 			case *ast.FuncLit:
@@ -219,7 +298,7 @@ func handleProblemsWith(rel string, src []byte, types map[string][]*typeDecl) (v
 				if v {
 					views++
 				}
-				visit(x.Body, view || v, funcScope(x.Type, nil, x.Body, fileUI, sc))
+				visit(x.Body, view || v)
 				return false
 			case *ast.CallExpr:
 				fun, typeArgs := x.Fun, []ast.Expr(nil)
@@ -230,39 +309,39 @@ func handleProblemsWith(rel string, src []byte, types map[string][]*typeDecl) (v
 					fun, typeArgs = f.X, f.Indices
 				}
 				if uiNamed(fun, fileUI, "Local") {
-					keeps := len(typeArgs) == 1 && keepsHandle(typeArgs[0], sc)
+					keeps := len(typeArgs) == 1 && keepsHandle(typeArgs[0])
 					if len(x.Args) == 3 {
 						switch init := x.Args[2].(type) {
 						case *ast.FuncLit:
-							keeps = keeps || returnsHandle(init.Type, sc)
-						case *ast.Ident: // a named function: its own scope, the package's
-							keeps = keeps || returnsHandle(funcs[init.Name], pkgScope)
+							keeps = keeps || returnsHandle(init.Type)
+						case *ast.Ident: // a named function, read where it stands
+							keeps = keeps || returnsHandle(funcs[init.Name])
 						}
 					}
 					if keeps {
 						report(x, "ui.Local keeps a ui.Handle, made again each time its element is built anew")
 					}
 					for _, arg := range x.Args {
-						visit(arg, true, sc)
+						visit(arg, true)
 					}
 					return false
 				}
-				if id, ok := x.Fun.(*ast.Ident); ok && view && (id.Name == "new" || id.Name == "make") && len(x.Args) > 0 && holds(x.Args[0], sc) {
+				if id, ok := x.Fun.(*ast.Ident); ok && view && (id.Name == "new" || id.Name == "make") && len(x.Args) > 0 && holds(x.Args[0]) {
 					report(x, id.Name+" makes a ui.Handle in a view")
 				}
 			case *ast.CompositeLit:
-				if view && x.Type != nil && holds(x.Type, sc) {
+				if view && x.Type != nil && holds(x.Type) {
 					report(x, "a ui.Handle literal in a view")
 				}
 			case *ast.ValueSpec:
-				if view && x.Type != nil && holds(x.Type, sc) {
+				if view && x.Type != nil && holds(x.Type) {
 					report(x, "a ui.Handle variable in a view")
 				}
 			}
 			return true
 		})
 	}
-	visit(file, false, pkgScope)
+	visit(file, false)
 	return views, problems, nil
 }
 
@@ -364,40 +443,6 @@ func typeParamNames(fl *ast.FieldList) map[string]bool {
 		}
 	}
 	return names
-}
-
-// funcScope returns the scope inside one function: its parent's, plus the
-// function's type parameters, those of a generic method's receiver (recv,
-// nil for a function), and every type the body declares. A type parameter is
-// no Handle, and a local type counts for the whole function, wherever it is
-// declared: an over-approximation that makes the guard report more.
-func funcScope(ft *ast.FuncType, recv *ast.FieldList, body *ast.BlockStmt, ui string, parent *scope) *scope {
-	sc := &scope{pkg: parent.pkg, local: make(map[string][]*typeDecl, len(parent.local)+1)}
-	for name, alts := range parent.local {
-		sc.local[name] = slices.Clone(alts) // its own array: a sibling's types stay out
-	}
-	for name := range typeParamNames(ft.TypeParams) {
-		sc.local[name] = nil
-	}
-	if recv != nil {
-		for _, f := range recv.List {
-			for name := range receiverTypeParams(f.Type) {
-				sc.local[name] = nil
-			}
-		}
-	}
-	ast.Inspect(body, func(n ast.Node) bool {
-		if ts, ok := n.(*ast.TypeSpec); ok {
-			sc.local[ts.Name.Name] = append(sc.local[ts.Name.Name], &typeDecl{
-				expr:   ts.Type,
-				ui:     ui,
-				params: typeParamNames(ts.TypeParams),
-				scope:  sc,
-			})
-		}
-		return true
-	})
-	return sc
 }
 
 // receiverTypeParams returns the names of the type parameters a method's
@@ -761,7 +806,7 @@ func (b *box[T]) View(c *ui.Context) {
 	_ = x
 }
 `, false},
-		{"a local type hiding a package type of the same name", `package frostui
+		{"a local type hiding a package type of the same name, used after it", `package frostui
 import "github.com/egoist/mygo/ui"
 type T struct{ h ui.Handle }
 func View(c *ui.Context) {
@@ -769,6 +814,47 @@ func View(c *ui.Context) {
 	_ = T{}
 }
 `, false},
+		{"the package type of a name a nested block declares a local one for", `package frostui
+import "github.com/egoist/mygo/ui"
+type state struct{ h ui.Handle }
+func View(c *ui.Context) {
+	_ = state{}
+	{
+		type state struct{}
+		_ = state{}
+	}
+}
+`, true},
+		{"the package type after the block that declared a local one", `package frostui
+import "github.com/egoist/mygo/ui"
+type state struct{ h ui.Handle }
+func View(c *ui.Context) {
+	{
+		type state struct{}
+		_ = state{}
+	}
+	_ = state{}
+}
+`, true},
+		{"the package type outside a closure that declared a local type", `package frostui
+import "github.com/egoist/mygo/ui"
+type state struct{ h ui.Handle }
+func View(c *ui.Context) {
+	func() {
+		type state struct{}
+		_ = state{}
+	}()
+	_ = state{}
+}
+`, true},
+		{"a local type holding a Handle, used after it in its block", `package frostui
+import "github.com/egoist/mygo/ui"
+type state struct{}
+func View(c *ui.Context) {
+	type state struct{ h ui.Handle }
+	_ = state{}
+}
+`, true},
 	}
 	for _, fx := range fixtures {
 		t.Run(fx.name, func(t *testing.T) {
