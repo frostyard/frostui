@@ -306,6 +306,7 @@ field frostui.SourceRow.Icon string
 field frostui.SourceRow.Spoken string
 field frostui.SourceRow.Tag string
 field frostui.SourceRow.Title string
+field frostui.SourceRow.Tooltip string
 field frostui.SourceSection.ID string
 field frostui.SourceSection.Items []K
 field frostui.SourceSection.Title string

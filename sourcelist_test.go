@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/egoist/mygo/ui"
 )
@@ -64,6 +65,32 @@ func TestSourceListShowsSectionsAndRows(t *testing.T) {
 		if _, ok := tt.AccessByRole(ui.RoleTreeItem, name); !ok {
 			t.Errorf("no tree item named %q", name)
 		}
+	}
+}
+
+func TestSourceListRowShowsItsTooltipOnHover(t *testing.T) {
+	l := mailList()
+	row := l.Row
+	l.Row = func(item string) SourceRow {
+		r := row(item)
+		if item == "Projects" {
+			r.Tooltip = "Repositories: frostyard/snow"
+		}
+		return r
+	}
+	tt := listTester(l, mailSections())
+	if tt.HasText("Repositories: frostyard/snow") {
+		t.Fatal("the tooltip shows before the pointer rests on the row")
+	}
+	at, ok := tt.Find("Projects")
+	if !ok {
+		t.Fatalf("no Projects row in %q", tt.Texts())
+	}
+	tt.Move(at.X+at.W/2, at.Y+at.H/2)
+	tt.Advance(2 * time.Second)
+	tt.Frame()
+	if !tt.HasText("Repositories: frostyard/snow") {
+		t.Errorf("hovering the row shows no tooltip: %q", tt.Texts())
 	}
 }
 
