@@ -73,6 +73,11 @@
       "why": "native code: loads GLib with purego and calls it by symbol"
     },
     {
+      "glob": "launch_linux.go",
+      "level": "L2",
+      "why": "native code: loads GIO with purego and calls it by symbol"
+    },
+    {
       "glob": ".svu.yml",
       "level": "L1",
       "why": "publication: the version rule for release tags (make bump)"
