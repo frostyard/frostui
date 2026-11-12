@@ -591,7 +591,7 @@ function from `*_linux.go` or `*_other.go` (`//go:build !linux`):
 | `SetAppID` (`appid*.go`) | `g_set_prgname` and `g_set_application_name` through purego, so the Wayland app ID and X11 `WM_CLASS` match the `.desktop` file | loads nothing; rejects an empty ID |
 | `DesktopIconTheme` (`icons*.go`) | as above | "" |
 | `NewIcons` (`icons*.go`) | embedded icons, the theme directories, then the kit's set | embedded icons, then the kit's set |
-| `LaunchDesktopApp` (`launch*.go`) | `gtk-launch <id>`, not waited for | an error wrapping `errors.ErrUnsupported` |
+| `LaunchDesktopApp` (`launch*.go`) | GIO resolves and launches the desktop ID, without waiting for the application | an error wrapping `errors.ErrUnsupported` |
 
 Only the first `SetAppID` call counts, on every system.
 
@@ -639,7 +639,7 @@ Only the first `SetAppID` call counts, on every system.
   pieces; `commandtable_test.go`, `editors_test.go` (MyGo's real rich text
   and code editors), `palette_sources_test.go`, `sourcelist_test.go`,
   `settings_test.go` and `opener_test.go` the shared pieces; `*_linux_test.go` the freedesktop parts (`LaunchDesktopApp`
-  against a fake `gtk-launch` on `PATH`); `*_other_test.go` the fallbacks,
+  against a temporary desktop entry); `*_other_test.go` the fallbacks,
   which run under `make test-wasm`. `frostuitest.Loop` stands in for the UI
   thread: workers `Post` from any goroutine and the test runs what they
   posted with `Flush`, `RunUntil(t, cond)` or `Settle(quiet)`.
