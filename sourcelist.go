@@ -37,6 +37,9 @@ type SourceRow struct {
 	Alert string
 	// Dim draws the row muted, as an item not loaded or not supported.
 	Dim bool
+	// Tooltip, when set, is what hovering the row shows, as the places
+	// an item stands for. The alert's own tooltip shows over its sign.
+	Tooltip string
 	// Spoken, when set, is what assistive technology reads after the
 	// title, as "12 unread, syncing"; empty, it reads the tag, the count,
 	// "busy" and the alert.
@@ -637,6 +640,9 @@ func (s *SourceList[K]) item(c *ui.Context, t *ui.Theme, k sourceKey[K]) {
 
 	if s.Menu != nil {
 		content.ContextMenu(func(m *ui.Menu) { s.Menu(m, k.item, k.section) })
+	}
+	if row.Tooltip != "" {
+		content.Tooltip(row.Tooltip)
 	}
 	over := false
 	for _, drop := range s.drops {

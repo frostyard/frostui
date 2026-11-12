@@ -382,7 +382,8 @@ its account.
 - **Sections** are outline branches marked as list headers: never chosen,
   pinned while their rows scroll, and a click hides their items.
 - **Rows** (`SourceRow`): icon, title, `Tag`, `Busy` (spinner), `Alert`
-  (warning sign with a tooltip), `Count` and `Dim`.
+  (warning sign with a tooltip), `Count`, `Dim`, and `Tooltip`, what
+  hovering the row shows (the alert's own tooltip shows over its sign).
 - **Selection:** one item, by a click, Up, Down, Home, End and typing;
   Left and Right close, open and move as in any tree. `Selected`, `Select`
   (opens the way to the item and scrolls to it), `OnSelect`, and
