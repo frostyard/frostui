@@ -3,7 +3,7 @@
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/frostyard/frostui.svg)](https://pkg.go.dev/github.com/frostyard/frostui)
 
-frostui is a Go module that gives desktop apps on [MyGo](https://github.com/egoist/mygo) a command-center window and the pieces to fill it, for frostyard's apps: ChairLift, Frostmail and Frostnotes.
+frostui is a Go module that gives desktop apps on [MyGo](https://github.com/egoist/mygo) a command-center window and the pieces to fill it, for frostyard's apps: [ChairLift](https://github.com/frostyard/chairlift), [Frostmail](https://github.com/frostyard/frostmail), [Frostnotes](https://github.com/frostyard/frostnotes), the [Firn GUI installer](https://github.com/frostyard/firn/tree/main/gui) and the [Pocket client](https://github.com/frostyard/pocket).
 
 **Status:** pre-release. Until v1, a minor version may change the API, and each change is listed in the [design doc](docs/design/frostui.md#api-changes).
 

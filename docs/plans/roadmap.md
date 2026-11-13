@@ -4,6 +4,12 @@ This plan takes the kit from ChairLift's `internal/frostui` to a released
 module that ChairLift, Frostmail and Frostnotes import
 ([ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md)).
 [The Frostyard look](frostyard-look.md) is the plan that follows it.
+Since then, two more apps import the module: the Firn GUI installer
+(the `gui/` module of frostyard/firn) and the Pocket client
+(frostyard/pocket).
+
+Each phase's evidence was checked on 2026-11-12, against frostui's
+`main` at 14ef2d6 (tag v0.6.0) and the apps' `main` branches.
 
 ## Phase 1 — Extract the kit (done)
 
@@ -21,7 +27,11 @@ module that ChairLift, Frostmail and Frostnotes import
 **Done when:** `make ci` passes on branch `feat/extract`, and the API
 extractor gives the same list for this module and chairlift's copy.
 
-## Phase 2 — First release (small)
+**Evidence:** frostyard/frostui#2 (`feat/extract`) merged with the `verify`
+check (`make ci`) green; its description records that `api.txt` matches
+chairlift's `internal/frostui` line for line.
+
+## Phase 2 — First release (small, done)
 
 - Merge to `main` with the `verify` check green, then the maintainer runs
   `make bump` for the first tag.
@@ -29,14 +39,21 @@ extractor gives the same list for this module and chairlift's copy.
 **Done when:** a `v0.x.y` tag exists and `go get github.com/frostyard/frostui@latest`
 resolves it.
 
-## Phase 3 — ChairLift imports the module (small)
+**Evidence:** tag v0.1.0 is frostyard/frostui#2's merge (5b6f83d), and the
+Go module proxy resolves `@latest` (v0.6.0 at 14ef2d6).
+
+## Phase 3 — ChairLift imports the module (small, done)
 
 - Follow the steps in [design: moved from ChairLift](../design/frostui.md#moved-from-chairlift).
 
 **Done when:** chairlift's `main` requires `github.com/frostyard/frostui`,
 has no `internal/frostui`, and its `make ci` passes.
 
-## Phase 4 — Frostmail and Frostnotes start from the shell (medium)
+**Evidence:** frostyard/chairlift#282 (commit 0a2de1b) moved it onto the
+module. Chairlift's `main` (94e89df) requires v0.5.2, has no
+`internal/frostui`, and its `make ci` passes.
+
+## Phase 4 — Frostmail and Frostnotes start from the shell (medium, done)
 
 - Each app builds its window from `Shell`, `Jobs` and `Console`, as
   `examples/commandcenter` does, and embeds the icons it draws off Linux
@@ -44,7 +61,15 @@ has no `internal/frostui`, and its `make ci` passes.
 
 **Done when:** both apps open the shell on Linux and Frostmail on Windows.
 
-## Phase 5 — The frame and the layout
+**Evidence:** frostyard/frostmail#223 and frostyard/frostnotes#145 moved
+the apps onto the kit. Both build their windows from `PaneShell`, the frame
+without the rail ([ADR-0006](../adr/0006-a-frame-without-the-rail.md)),
+not from `Shell`; Frostmail keeps a `Console`, and neither app uses `Jobs`.
+On the apps' `main` branches, CI starts the built app in a real window:
+Frostnotes' `make desktop-smoke` under Xvfb (e090378), and Frostmail's
+end-to-end tests under Xvfb on Linux and on Windows (9f5d030).
+
+## Phase 5 — The frame and the layout (done)
 
 The first half of v0.2.0's shared pieces, for Frostmail and Frostnotes:
 `PaneShell` ([ADR-0006](../adr/0006-a-frame-without-the-rail.md),
@@ -59,7 +84,12 @@ The first half of v0.2.0's shared pieces, for Frostmail and Frostnotes:
 **Done when:** `examples/threepane` shows all of them, and `make ci` passes
 on branch `feat/frame-panes`.
 
-## Phase 6 — Commands, navigation and settings for v0.2.0 (medium)
+**Evidence:** frostyard/frostui#4 (`feat/frame-panes`) merged with the
+`verify` check (`make ci`) green. At its merge (b3143ce),
+`examples/threepane` uses `PaneShell` with its `Panes`, `Connection`,
+`ActionToast`, `NewWaker` and the embedded icons (`NewIcons`, `SetIcons`).
+
+## Phase 6 — Commands, navigation and settings for v0.2.0 (medium, done)
 
 - The second half: a command table, palette sources, a source list, a settings layout and
   an allow-listed opener, for Frostmail's and Frostnotes' desktop apps
@@ -74,7 +104,25 @@ on branch `feat/frame-panes`.
 **Done when:** `examples/sourcelist` draws them all, `make ci` passes, and
 `api.txt` only gains lines against v0.1.0.
 
+**Evidence:** frostyard/frostui#5 merged with the `verify` check (`make ci`)
+green, and tag v0.2.0 is its merge (a51e185). There, `examples/sourcelist`
+draws the `CommandTable`, the palette sources, the `SourceList` and the
+`Settings` pages. The `Opener` draws nothing, so the example does not use
+it; `opener_test.go` tests it. From v0.1.0 to v0.2.0, `api.txt` gains 230
+lines and loses none.
+
 ## Open questions
 
 - Should `Adapt` leave MyGo's inactive-window accent alone on macOS, where
   fading it is the native look?
+
+## References
+
+- Implements: [design: frostui](../design/frostui.md),
+  [spec: API stability](../specs/api-stability.md)
+- Builds on: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md),
+  [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md),
+  [ADR-0006](../adr/0006-a-frame-without-the-rail.md),
+  [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md),
+  [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md)
+- Followed by: [the Frostyard look](frostyard-look.md)
