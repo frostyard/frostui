@@ -81,7 +81,7 @@ its skills there (core ADR-0026); start a repo-local one from
   use belongs here; one that is about one app stays in it.
 - **UI thread.** Views and every model (`Shell`, `PaneShell`, `Panes`,
   `Jobs`, `Palette`, `Dialogs`, `ConsoleView`, `CommandTable`, `SourceList`,
-  `Settings`) belong to the UI thread; only `Console.Add`, `Addf`, `Writer`,
+  `Settings`, `DiffView`) belong to the UI thread; only `Console.Add`, `Addf`, `Writer`,
   `Progress.Set`, `Progress.Log`, `Waker.Wake`, `PaletteQuery.Context` and
   `Opener` are safe from any goroutine. Workers hand results back through
   the post function the app gives `NewJobs` (MyGo's `Window.Update`), which

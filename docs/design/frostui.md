@@ -294,6 +294,13 @@ monospaced box with Cancel and an action, and holds no state of its own.
   its run), `JobCard` (the rail's running job with a Stop button) and
   `StateOf` (a job's state as a step's).
 
+- `diff.go`: `DiffView` is a native read-only unified diff. Keep it in window
+  state and call `SetPatch` with the response text, then `View` with a height
+  or `Grow`. It parses only changed text, virtualizes rows, wraps long lines
+  and shows old/new line numbers with signed additions and removals. Metadata
+  and binary notices remain literal text. The caller owns loading, empty and
+  error states, file selection, and any file operations.
+
 ### Command table
 
 `commandtable.go`: one `CommandTable` holds an app's commands and drives the
@@ -701,6 +708,9 @@ ChairLift's examples (Homebrew taps, firmware, bootc deployments); and
 
 ## API changes
 
+2026-11-12: additive `DiffView`, `SetPatch` and `View` provide a native
+read-only unified diff with line numbers and selectable, wrapped text.
+
 2026-11-12: no signature change, but on Linux `SetAppID` now also names
 the program again from `mygo.App.WhenReady`. MyGo v0.9.0 renames the program
 after its executable in `App.Run`, after `SetAppID`, so windows had the
@@ -758,4 +768,4 @@ nothing; an app that filtered mailto links itself can drop its copy.
 
 - Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md), [ADR-0006](../adr/0006-a-frame-without-the-rail.md), [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md), [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md), [ADR-0009](../adr/0009-the-top-bars-end-belongs-to-the-window.md), [ADR-0010](../adr/0010-keep-only-a-mailto-links-addressees-subject-and-body.md)
 - Contracts: [spec: API stability](../specs/api-stability.md)
-- Built in: [roadmap — Phase 1](../plans/roadmap.md#phase-1--extract-the-kit-done), [Phase 5](../plans/roadmap.md#phase-5--the-frame-and-the-layout-done), [Phase 6](../plans/roadmap.md#phase-6--commands-navigation-and-settings-for-v020-medium)
+- Built in: [roadmap — Phase 1](../plans/roadmap.md#phase-1--extract-the-kit-done), [Phase 5](../plans/roadmap.md#phase-5--the-frame-and-the-layout-done), [Phase 6](../plans/roadmap.md#phase-6--commands-navigation-and-settings-for-v020-medium), [Phase 7](../plans/roadmap.md#phase-7--native-diff-viewer)

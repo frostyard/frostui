@@ -469,6 +469,8 @@ method (*ConsoleWriter) frostui.Write([]byte) (int, error)
 method (*Dialogs) frostui.Ask(Confirm)
 method (*Dialogs) frostui.Showing() bool
 method (*Dialogs) frostui.View(*ui.Context)
+method (*DiffView) frostui.SetPatch(string)
+method (*DiffView) frostui.View(*ui.Context) ui.Element
 method (*Icons) frostui.Get(string) *ui.SVG
 method (*Info) frostui.Show(string, func(c *ui.Context))
 method (*Info) frostui.View(*ui.Context)
@@ -553,6 +555,7 @@ type frostui.Console struct
 type frostui.ConsoleView struct
 type frostui.ConsoleWriter struct
 type frostui.Dialogs struct
+type frostui.DiffView struct
 type frostui.Disclosure struct
 type frostui.Figure struct
 type frostui.Frame struct
