@@ -178,7 +178,7 @@ not repeated here.
 - Who tags: the maintainer. Agents never tag, push a tag or release.
 - Version rule: `svu next` from the Conventional Commits since the last tag
   (`.svu.yml`).
-- Internal dependencies: none. go.mod requires only MyGo
+- Internal dependencies: none. go.mod directly requires only MyGo
   (`github.com/egoist/mygo`) and purego, which frostyard does not own; after
   a MyGo bump, follow **MyGo's rules** under Code conventions.
 - Who uses this repository: frostyard/chairlift, frostyard/frostmail,
@@ -226,3 +226,5 @@ anchors valid) and add the back-links on the targets. Use relative paths.
 - New significant decision ⇒ new ADR *first*, then update the affected design
   docs/specs in the same change.
 - Convert relative dates ("next weekend") to absolute dates in all docs.
+- A claim about go.mod's requirements says "directly" when it means the
+  direct ones: go.mod also lists indirect requirements (`// indirect`).
