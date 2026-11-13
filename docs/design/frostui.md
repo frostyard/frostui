@@ -2,15 +2,18 @@
 
 Living document. Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md), [ADR-0006](../adr/0006-a-frame-without-the-rail.md), [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md), [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md), [ADR-0009](../adr/0009-the-top-bars-end-belongs-to-the-window.md), [ADR-0010](../adr/0010-keep-only-a-mailto-links-addressees-subject-and-body.md).
 Contracts: [spec: API stability](../specs/api-stability.md).
-Built in: [roadmap](../plans/roadmap.md).
+Built in: [roadmap](../plans/roadmap.md), [the Frostyard look](../plans/frostyard-look.md).
 
 ## Overview
 
 `github.com/frostyard/frostui` is a thin layer over MyGo's native UI package
 (`github.com/egoist/mygo/ui`) that gives frostyard's desktop apps one look
 and one set of behaviors. It came out of ChairLift's `internal/frostui`
-([ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md)); ChairLift,
-Frostmail and Frostnotes build their windows from it. It builds without CGO
+([ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md)). Five
+apps build their windows from it: ChairLift (frostyard/chairlift), Frostmail
+(frostyard/frostmail), Frostnotes (frostyard/frostnotes), the Firn GUI
+installer (the `gui/` module of frostyard/firn) and the Pocket client
+(frostyard/pocket). It builds without CGO
 for Linux, Windows, macOS and js/wasm
 ([ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md)).
 
