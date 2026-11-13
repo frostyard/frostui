@@ -2,6 +2,7 @@ package frostui
 
 import (
 	"fmt"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -53,19 +54,15 @@ func parseDiff(patch string) []diffLine {
 	for _, text := range strings.Split(strings.TrimSuffix(patch, "\n"), "\n") {
 		text = strings.TrimSuffix(text, "\r")
 		line := diffLine{text: text}
-		if match := diffHunk.FindStringSubmatch(text); match != nil {
-			old, _ = strconv.Atoi(match[1])
-			next, _ = strconv.Atoi(match[3])
-			leftOld, leftNew = 1, 1
-			if match[2] != "" {
-				leftOld, _ = strconv.Atoi(match[2])
-			}
-			if match[4] != "" {
-				leftNew, _ = strconv.Atoi(match[4])
-			}
+		if o, n, lo, ln, ok := parseHunkHeader(text); ok {
+			old, next, leftOld, leftNew = o, n, lo, ln
 			line.kind = '@'
-		} else if len(text) > 0 && (leftOld > 0 || leftNew > 0) {
-			switch text[0] {
+		} else if leftOld > 0 || leftNew > 0 {
+			first := byte(' ') // An empty line in a hunk is a blank context line.
+			if text != "" {
+				first = text[0]
+			}
+			switch first {
 			case ' ':
 				if leftOld > 0 && leftNew > 0 {
 					line.old, line.next = old, next
@@ -94,6 +91,33 @@ func parseDiff(patch string) []diffLine {
 		lines = append(lines, line)
 	}
 	return lines
+}
+
+// parseHunkHeader reads a hunk header's start lines and counts. A header whose
+// numbers do not fit in an int, or whose range ends past the largest int, is
+// not a header: the caller keeps it as literal text.
+func parseHunkHeader(text string) (old, next, leftOld, leftNew int, ok bool) {
+	match := diffHunk.FindStringSubmatch(text)
+	if match == nil {
+		return 0, 0, 0, 0, false
+	}
+	number := func(s string) int {
+		if s == "" { // An omitted count is 1.
+			return 1
+		}
+		n, err := strconv.Atoi(s)
+		if err != nil {
+			ok = false
+		}
+		return n
+	}
+	ok = true
+	old, leftOld = number(match[1]), number(match[2])
+	next, leftNew = number(match[3]), number(match[4])
+	if !ok || old > math.MaxInt-leftOld || next > math.MaxInt-leftNew {
+		return 0, 0, 0, 0, false
+	}
+	return old, next, leftOld, leftNew, true
 }
 
 // View draws the diff. Give the returned element a height or a share of a sized

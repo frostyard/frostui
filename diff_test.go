@@ -32,6 +32,57 @@ func TestDiffLineNumbersAndMetadata(t *testing.T) {
 	}
 }
 
+func TestDiffBlankContextLines(t *testing.T) {
+	type row struct {
+		text      string
+		kind      byte
+		old, next int
+	}
+	for _, tc := range []struct {
+		name, patch string
+		want        []row
+	}{
+		{"empty context line", "@@ -1,3 +1,3 @@\n a\n\n-b\n+c\n", []row{
+			{"@@ -1,3 +1,3 @@", '@', 0, 0}, {" a", 0, 1, 1}, {"", 0, 2, 2}, {"-b", '-', 3, 0}, {"+c", '+', 0, 3},
+		}},
+		{"context line of only a space", "@@ -1,3 +1,3 @@\n a\n \n-b\n+c\n", []row{
+			{"@@ -1,3 +1,3 @@", '@', 0, 0}, {" a", 0, 1, 1}, {" ", 0, 2, 2}, {"-b", '-', 3, 0}, {"+c", '+', 0, 3},
+		}},
+		{"hunk ends with an empty context line", "@@ -1,2 +1,2 @@\n a\n\n", []row{
+			{"@@ -1,2 +1,2 @@", '@', 0, 0}, {" a", 0, 1, 1}, {"", 0, 2, 2},
+		}},
+		{"next file after an empty context line", "@@ -1,2 +1,2 @@\n-a\n+b\n\n--- a/next\n+++ b/next\n-- \n2.43.0\n", []row{
+			{"@@ -1,2 +1,2 @@", '@', 0, 0}, {"-a", '-', 1, 0}, {"+b", '+', 0, 1}, {"", 0, 2, 2},
+			{"--- a/next", 0, 0, 0}, {"+++ b/next", 0, 0, 0}, {"-- ", 0, 0, 0}, {"2.43.0", 0, 0, 0},
+		}},
+		{"empty lines outside a hunk", "diff --git a/x b/x\n\n@@ -1 +1 @@\n-a\n+b\n\n\n", []row{
+			{"diff --git a/x b/x", 0, 0, 0}, {"", 0, 0, 0}, {"@@ -1 +1 @@", '@', 0, 0}, {"-a", '-', 1, 0}, {"+b", '+', 0, 1}, {"", 0, 0, 0}, {"", 0, 0, 0},
+		}},
+		{"CRLF line ends", "@@ -1,3 +1,3 @@\r\n a\r\n\r\n-b\r\n+c\r\n", []row{
+			{"@@ -1,3 +1,3 @@", '@', 0, 0}, {" a", 0, 1, 1}, {"", 0, 2, 2}, {"-b", '-', 3, 0}, {"+c", '+', 0, 3},
+		}},
+		{"header number too large for int", "@@ -99999999999999999999 +1 @@\n-a\n+b\n", []row{
+			{"@@ -99999999999999999999 +1 @@", 0, 0, 0}, {"-a", 0, 0, 0}, {"+b", 0, 0, 0},
+		}},
+		{"header range past the largest int", "@@ -9223372036854775807,2 +1,2 @@\n a\n a\n", []row{
+			{"@@ -9223372036854775807,2 +1,2 @@", 0, 0, 0}, {" a", 0, 0, 0}, {" a", 0, 0, 0},
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			lines := parseDiff(tc.patch)
+			if len(lines) != len(tc.want) {
+				t.Fatalf("got %d lines, want %d: %+v", len(lines), len(tc.want), lines)
+			}
+			for i, want := range tc.want {
+				got := row{lines[i].text, lines[i].kind, lines[i].old, lines[i].next}
+				if got != want {
+					t.Errorf("line %d: got %+v, want %+v", i, got, want)
+				}
+			}
+		})
+	}
+}
+
 func TestDiffViewWrapsAndReplacesPatch(t *testing.T) {
 	for _, dark := range []bool{false, true} {
 		t.Run(map[bool]string{false: "light", true: "dark"}[dark], func(t *testing.T) {

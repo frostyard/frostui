@@ -298,8 +298,11 @@ monospaced box with Cancel and an action, and holds no state of its own.
   state and call `SetPatch` with the response text, then `View` with a height
   or `Grow`. It parses only changed text, virtualizes rows, wraps long lines
   and shows old/new line numbers with signed additions and removals. Metadata
-  and binary notices remain literal text. The caller owns loading, empty and
-  error states, file selection, and any file operations.
+  and binary notices remain literal text. Inside a hunk, an empty line is a
+  blank context line (`diff.suppressBlankEmpty`, `--suppress-blank-empty`);
+  a hunk header whose numbers or range do not fit in an `int` stays literal
+  text. The caller owns loading, empty and error states, file selection, and
+  any file operations.
 
 ### Command table
 
