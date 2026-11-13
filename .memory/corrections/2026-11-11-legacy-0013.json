@@ -1,0 +1,7 @@
+{
+  "date": "2026-11-11",
+  "scope": "opener",
+  "correction": "Opener passed mailto links to the mail client whole, so a link in a message or a note could carry attach= or other headers some clients act on: the parameter rule assigned to the kit in the review never shipped. A mailto filter keeps only to, cc, bcc, subject and body, compared by their names as written (never decoded, so %61ttach and %74o are dropped), and also drops the fragment: mailto has none, and a client that does not split one off reads ?subject=x#&attach=/etc/passwd as an attach field",
+  "evidence": "https://github.com/frostyard/frostui/issues/12; https://github.com/frostyard/frostmail/pull/223#pullrequestreview-5850338914, Major follow-up",
+  "promoted_to": "opener_test.go"
+}

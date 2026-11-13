@@ -1,0 +1,7 @@
+{
+  "date": "2026-11-11",
+  "scope": "launch_linux.go",
+  "correction": "The initial MyGo InstalledApps launcher assumed menu-visible entries were the same as launchable desktop IDs and that a running MyGo app was always available. InstalledApps filters NoDisplay entries and requires App.Run. The launcher now resolves IDs through GIO without either restriction.",
+  "evidence": "frostyard/frostui#21 review by bketelsen (2026-11-12); MyGo v0.9.0 internal/linux/apps.go Applications and app.go needsApp; TestLaunchDesktopApp launches a NoDisplay entry before App.Run",
+  "promoted_to": "launch_linux_test.go"
+}
