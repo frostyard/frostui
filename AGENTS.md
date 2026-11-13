@@ -164,6 +164,27 @@ by hand (`make verify` checks their hashes).
   ([ADR-0011](docs/adr/0011-draw-the-frostyard-brand-in-a-dark-and-a-light-theme.md)).
 - No secrets, credentials or personal data anywhere in the repository.
 
+## Releases and dependencies
+
+The facts that recurring repository checks read. The release rules are the
+**Releases** bullet of [Repository boundary](#repository-boundary); they are
+not repeated here.
+
+- Tag format: `vMAJOR.MINOR.PATCH` (for example `v0.6.0`), 1 series at the
+  repository root.
+- How a release starts: `make bump` tags the next version and pushes the
+  tag. No release workflow runs and no GitHub release is made: the module is
+  a library, and the Go module proxy serves the tag.
+- Who tags: the maintainer. Agents never tag, push a tag or release.
+- Version rule: `svu next` from the Conventional Commits since the last tag
+  (`.svu.yml`).
+- Internal dependencies: none. go.mod requires only MyGo
+  (`github.com/egoist/mygo`) and purego, which frostyard does not own; after
+  a MyGo bump, follow **MyGo's rules** under Code conventions.
+- Who uses this repository: frostyard/chairlift, frostyard/frostmail,
+  frostyard/frostnotes, frostyard/firn (`gui/`) and frostyard/pocket, each
+  through its `go.mod`.
+
 ## Documentation rules (enforced)
 
 Docs live in `docs/` in four categories. **Every new doc starts from its
