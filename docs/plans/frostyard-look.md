@@ -1,5 +1,19 @@
 # Plan: The Frostyard look
 
+**Status (2026-11-13): done.** Phases 1 to 5 landed: phase 1 in
+[#18](https://github.com/frostyard/frostui/pull/18) and phase 2 in
+[#19](https://github.com/frostyard/frostui/pull/19) (both in v0.5.0), phase 3
+in [frostyard/chairlift#295](https://github.com/frostyard/chairlift/pull/295),
+phase 4 in [frostyard/frostmail#277](https://github.com/frostyard/frostmail/pull/277)
+and phase 5 in [frostyard/frostnotes#202](https://github.com/frostyard/frostnotes/pull/202).
+Of the "Later" items, the README screenshots and store listings were
+refreshed in [frostyard/chairlift#296](https://github.com/frostyard/chairlift/pull/296),
+[frostyard/frostmail#281](https://github.com/frostyard/frostmail/pull/281) and
+[frostyard/frostnotes#204](https://github.com/frostyard/frostnotes/pull/204);
+the other three are [#32](https://github.com/frostyard/frostui/issues/32),
+[#33](https://github.com/frostyard/frostui/issues/33) and
+[#34](https://github.com/frostyard/frostui/issues/34).
+
 This plan builds [ADR-0011](../adr/0011-draw-the-frostyard-brand-in-a-dark-and-a-light-theme.md):
 the kit draws the frostyard brand in a dark and a light theme, and
 ChairLift, Frostmail and Frostnotes adopt it. Phases 1 and 2 change the
