@@ -115,6 +115,15 @@ draws the `CommandTable`, the palette sources, the `SourceList` and the
 nothing, but no example opens a link or a file through it. From v0.1.0 to
 v0.2.0, `api.txt` gains 230 lines and loses none.
 
+## Phase 7 — Native diff viewer
+
+- Add a reusable read-only unified diff to the [building blocks](../design/frostui.md#building-blocks-rows-and-visualizations),
+  additive to the [API](../specs/api-stability.md).
+
+**Done when:** callers can display unified diffs with old/new line numbers,
+wrapped and selectable text, virtualized rows, and accessible signed changes;
+parser and headless rendering tests pass in `make ci`.
+
 ## Open questions
 
 - Should `Adapt` leave MyGo's inactive-window accent alone on macOS, where
