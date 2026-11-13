@@ -9,7 +9,10 @@ Since then, two more apps import the module: the Firn GUI installer
 (frostyard/pocket).
 
 Each phase's evidence was checked on 2026-11-12, against frostui's
-`main` at 14ef2d6 (tag v0.6.0) and the apps' `main` branches.
+`main` at 14ef2d6 (tag v0.6.0) and the apps' `main` branches. A phase is
+marked done only when every part of its "Done when" holds by evidence that
+was checked; a part that does not hold, or that nobody checked, keeps the
+phase open, and its state paragraph says which part.
 
 ## Phase 1 — Extract the kit (done)
 
@@ -89,7 +92,7 @@ on branch `feat/frame-panes`.
 `examples/threepane` uses `PaneShell` with its `Panes`, `Connection`,
 `ActionToast`, `NewWaker` and the embedded icons (`NewIcons`, `SetIcons`).
 
-## Phase 6 — Commands, navigation and settings for v0.2.0 (medium, done)
+## Phase 6 — Commands, navigation and settings for v0.2.0 (medium)
 
 - The second half: a command table, palette sources, a source list, a settings layout and
   an allow-listed opener, for Frostmail's and Frostnotes' desktop apps
@@ -104,12 +107,13 @@ on branch `feat/frame-panes`.
 **Done when:** `examples/sourcelist` draws them all, `make ci` passes, and
 `api.txt` only gains lines against v0.1.0.
 
-**Evidence:** frostyard/frostui#5 merged with the `verify` check (`make ci`)
+**State:** open: `examples/sourcelist` does not use the `Opener`. The rest
+holds. frostyard/frostui#5 merged with the `verify` check (`make ci`)
 green, and tag v0.2.0 is its merge (a51e185). There, `examples/sourcelist`
 draws the `CommandTable`, the palette sources, the `SourceList` and the
-`Settings` pages. The `Opener` draws nothing, so the example does not use
-it; `opener_test.go` tests it. From v0.1.0 to v0.2.0, `api.txt` gains 230
-lines and loses none.
+`Settings` pages. `opener_test.go` tests the `Opener`, which draws
+nothing, but no example opens a link or a file through it. From v0.1.0 to
+v0.2.0, `api.txt` gains 230 lines and loses none.
 
 ## Open questions
 

@@ -113,4 +113,4 @@ under `FontFamily` on the first `Adapt`.
 
 - Motivated by: [ADR-0011](../adr/0011-draw-the-frostyard-brand-in-a-dark-and-a-light-theme.md)
 - Fits into: [design: theming](../design/frostui.md#theming)
-- Built by: [plan: the Frostyard look, phase 1](../plans/frostyard-look.md#phase-1--themes-palette-and-text-medium)
+- Built by: [plan: the Frostyard look, phase 1](../plans/frostyard-look.md#phase-1--themes-palette-and-text-done)
