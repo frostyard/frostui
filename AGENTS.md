@@ -113,8 +113,11 @@ its skills there (core ADR-0026); start a repo-local one from
   tested against a temporary desktop entry, and `Opener` through its
   `Launch` and `LaunchFile` fields.
 - Run `make verify` before you call any change done, and `make ci` before
-  you push. CI job `verify` runs `make ci`, which also checks that
-  `.memory/corrections.jsonl` is append-only against the PR base.
+  you push. CI job `verify` runs `make ci`, which also checks the
+  corrections records in `.memory/corrections/` against the PR base: no
+  record removed or renamed, only an empty `promoted_to` filled, and the old
+  single corrections file does not come back. Run `make ci BASE=origin/main`
+  for the same check locally.
 
 **Test reliability.** No sleeps for timing (wait on a condition or inject a
 clock). No network and no wall clock in unit tests (inject them). A flaky test
@@ -124,9 +127,9 @@ same PR. Never retry a job or a test until it is green.
 **Blocker to guard.** When a review (agent cross-review, owner review, or a
 human) finds a blocking point, the PR that fixes it also adds a guard: a
 targeted test that fails without the fix (preferred), or an `AGENTS.md` rule
-when no test can catch it. The same PR appends 1 line to
-`.memory/corrections.jsonl` (`evidence`: the PR and the review;
-`promoted_to`: the test or the rule). See `.memory/README.md`.
+when no test can catch it. The same PR adds 1 record file under
+`.memory/corrections/` (name `<date>-pr-<N>-<words>.json`; `evidence`: the PR
+and the review; `promoted_to`: the test or the rule). See `.memory/README.md`.
 
 **Risk paths.** `.github/risk-paths.json` is a level list (schema version 2):
 every glob carries a level, and a PR that touches one gets that level label from
