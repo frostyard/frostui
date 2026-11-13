@@ -1,0 +1,7 @@
+{
+  "date": "2026-11-11",
+  "scope": "sourcelist",
+  "correction": "A ui.Handle must never be made in a view or with ui.Local: its first Bind appends a registration to the window's refs that nothing removes until the window closes, and applyFocusRequests walks them all every build pass. SourceList made one per row mount with ui.Local for OnMiddleClick, so every row that scrolled back into view or reappeared as its section opened leaked one; the list now keeps the middle press in its own fields and the row's ObserveInput, by MyGo's hit test, tells that the release is over the row (which also stops a release over a pinned section header from clicking the row under it)",
+  "evidence": "https://github.com/frostyard/frostui/pull/7#pullrequestreview-5858104192, B2",
+  "promoted_to": "internal/repocheck/handles_test.go"
+}

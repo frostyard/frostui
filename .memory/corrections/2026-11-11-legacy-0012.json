@@ -1,0 +1,7 @@
+{
+  "date": "2026-11-11",
+  "scope": "paneshell",
+  "correction": "A top bar's trailing controls (End, the console's button, the main menu) must never shrink or sit in a clipped container narrower than they are: PaneShell drew them, with the palette field, in the last pane's clipped segment, so a right pane 200 DIPs wide under 110 DIPs of window controls put the field under the controls and the main menu out of the window. Shrink(0) inside the segment cannot fix it (the segment has 66 DIPs, the console's button and the menu take 108), so the bar's end is now the window's, drawn once over the segments, and the field turns compact below its least width; the plain bar and Shell's bar had the same overflow and now keep their trailing controls whole too",
+  "evidence": "https://github.com/frostyard/frostui/issues/11; https://github.com/frostyard/frostui/pull/4#issuecomment-6779862888, B1",
+  "promoted_to": "barend_test.go"
+}

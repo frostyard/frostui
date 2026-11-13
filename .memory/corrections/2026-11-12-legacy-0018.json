@@ -1,0 +1,7 @@
+{
+  "date": "2026-11-12",
+  "scope": "internal/repocheck/handles_test.go",
+  "correction": "The first resolution of named types matched names without the declaring file's import name, kept 1 of several build-tag declarations, and ignored type parameters and function-local types; the guard now reads each declaration in its own file and scope and checks every alternative; a function's local types now follow Go's block scope by source position, since a function-wide local scope hid package types",
+  "evidence": "frostyard/frostui#23 cross-review at bd6ea5a (openai/gpt-6.1-sol): 3 blocking findings; re-review 1 at 143097a: local types hid package types outside their block",
+  "promoted_to": "internal/repocheck/handles_test.go"
+}

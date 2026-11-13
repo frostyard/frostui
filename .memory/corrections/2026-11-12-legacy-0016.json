@@ -1,0 +1,7 @@
+{
+  "date": "2026-11-12",
+  "scope": "launch_linux_test.go",
+  "correction": "The launch test assumed one FIFO open/read/close cycle captured exactly one launched app. If two writers arrived before the reader reopened, one read consumed both signals and the second open waited forever. The reader now holds the FIFO open and reads two newline-delimited signals.",
+  "evidence": "frostyard/frostui#21 verify job 130930960968 failed TestLaunchDesktopApp after 5 seconds; TestLaunchDesktopApp -count=100 passes with a persistent FIFO reader",
+  "promoted_to": "launch_linux_test.go"
+}

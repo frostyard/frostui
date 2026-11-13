@@ -1,0 +1,7 @@
+{
+  "date": "2026-11-12",
+  "scope": "appid.go",
+  "correction": "SetAppID's comment said MyGo leaves GLib's program name to the executable's name, so naming it before mygo.App.Run was enough. MyGo v0.9.0 calls g_set_prgname with the executable's name in App.Run (egoist/mygo#1640), after SetAppID, and GLib keeps the last name: every window's Wayland app ID was the executable's name (ChairLift's was \"chairlift\", not org.frostyard.ChairLift), so GNOME showed a generic icon. SetAppID now names the program again from mygo.App.WhenReady",
+  "evidence": "WAYLAND_DEBUG=client of chairlift v0.17.0 (frostui v0.5.1, MyGo v0.9.0) --first-run --dry-run: xdg_toplevel.set_app_id(\"chairlift\"); with this change: set_app_id(\"org.frostyard.ChairLift.FirstRun\"); MyGo v0.9.0 internal/linux/app.go:124-125",
+  "promoted_to": "appid.go, appid_linux.go, docs/design/frostui.md"
+}

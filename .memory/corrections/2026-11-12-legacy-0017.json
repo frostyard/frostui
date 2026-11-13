@@ -1,0 +1,7 @@
+{
+  "date": "2026-11-12",
+  "scope": "AGENTS.md",
+  "correction": "A ui.Handle kept in a map holds its registration until the window closes: dropping the map entry does not release it, so AGENTS.md no longer offers one handle per item of a pruned map. The handle guard read syntax only and never resolved a named type, so a Handle inside a struct of the package was not seen: a ui.Local whose init returns rowState, var st rowState, new(rowState), make of a named slice of Handles, a struct embedding one, an alias of a Handle. It now resolves the package's named types, by value and recursively, with a visited set against cycles",
+  "evidence": "frostyard/frostui#10, from the cross-review of frostyard/frostui#9 (https://github.com/frostyard/frostui/pull/9#pullrequestreview-5858739862)",
+  "promoted_to": "AGENTS.md; internal/repocheck/handles_test.go"
+}

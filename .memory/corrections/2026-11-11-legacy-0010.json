@@ -1,0 +1,7 @@
+{
+  "date": "2026-11-11",
+  "scope": "sourcelist",
+  "correction": "OpenGeneration must use its own membership snapshot, not probe for a future MyGo Selection.Generation method that a dependency bump could silently activate with unchecked semantics. Adopt dependency APIs explicitly with compatibility tests.",
+  "evidence": "https://github.com/frostyard/frostui/pull/7#pullrequestreview-5855093905, M1",
+  "promoted_to": "AGENTS.md"
+}

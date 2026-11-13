@@ -1,0 +1,7 @@
+{
+  "date": "2026-11-12",
+  "scope": "docs/plans/roadmap.md, docs/design/frostui.md",
+  "correction": "Marking roadmap phases done renamed their headings, so links to the old anchors broke silently (two earlier \"(done)\" headings had already broken links to the Frostyard look plan); and phase 6 was marked done although examples/sourcelist does not use the Opener, a part of its Done when. Links now name the current anchors, test/doc-anchors.test.mjs fails on a link to a missing heading, and the roadmap states that a phase is done only when every part of its Done when holds by checked evidence",
+  "evidence": "frostyard/frostui#26 cross-review at 4789699 (openai/gpt-6.1-sol): 2 blocking findings, broken phase anchors and phase 6 marked done",
+  "promoted_to": "test/doc-anchors.test.mjs, docs/plans/roadmap.md"
+}

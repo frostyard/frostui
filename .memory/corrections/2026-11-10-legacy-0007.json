@@ -1,0 +1,7 @@
+{
+  "date": "2026-11-10",
+  "scope": "palette",
+  "correction": "Selecting a palette row must also scroll the list to it: Show and a changed query reset Selected to 0 but kept the ListState offset, so after Down 35 times, Escape and Ctrl K the list showed commands 22 to 39 while Enter ran command 0, off screen",
+  "evidence": "frostyard/frostui#2, review of head 5f902b7, finding 1",
+  "promoted_to": "frostui_test.go"
+}

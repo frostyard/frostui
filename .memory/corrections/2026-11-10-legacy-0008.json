@@ -1,0 +1,7 @@
+{
+  "date": "2026-11-10",
+  "scope": "console",
+  "correction": "A per-line contract must be applied per line: ConsoleWriter called Classify once on a whole write and Console.Add split the text under that one level, so with an ERROR-prefix classifier the write \"okay\\nERROR failed\\n\" recorded both lines as Info and the reverse order counted an ordinary line as an error; the writer now splits the write and classifies each line",
+  "evidence": "frostyard/frostui#2, review of head 5f902b7, finding 2",
+  "promoted_to": "frostui_test.go"
+}

@@ -1,0 +1,7 @@
+{
+  "date": "2026-11-12",
+  "scope": "launch_linux.go",
+  "correction": "The first GIO launcher was assumed to preserve gtk-launch's detached output behavior. g_app_info_launch actually passed the caller's stdout and stderr through to launched apps, holding pipelines open and mixing app output into the caller's logs. The manager launch now discards both streams.",
+  "evidence": "frostyard/frostui#21 review by bketelsen (2026-11-12), pipeline measurement; TestLaunchDesktopApp checks stdout and stderr are not inherited",
+  "promoted_to": "launch_linux_test.go"
+}

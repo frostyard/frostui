@@ -27,8 +27,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          # The corrections check compares .memory/corrections.jsonl with the
-          # base, which needs the base commit's history.
+          # The corrections check compares the records in .memory/corrections/
+          # with the base, which needs the base commit's history.
           fetch-depth: 0
       # Go comes from go.mod's go line, the only Go pin.
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0

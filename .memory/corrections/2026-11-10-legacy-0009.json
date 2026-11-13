@@ -1,0 +1,7 @@
+{
+  "date": "2026-11-10",
+  "scope": "jobs",
+  "correction": "Jobs.Find must follow Enqueue order to return the newest job of a source and key: it returned the running job first and then searched the queue oldest-first, so with A running and B of the same pair queued it returned A; it now searches the queue newest-first, then the running job, then the batch, and Pending checks the running and queued jobs itself, so a newer job dropped by CancelAll does not hide an Unstoppable one still running",
+  "evidence": "frostyard/frostui#2, review of head 5f902b7, finding 3",
+  "promoted_to": "frostui_test.go"
+}

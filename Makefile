@@ -137,8 +137,10 @@ ci: verify
 	$(MAKE) --no-print-directory cross
 	@echo "==> ci passed"
 
-# .memory/corrections.jsonl is append-only against BASE. A BASE that does not
-# resolve to a commit is an error, never a silent pass.
+# The records in .memory/corrections/ against BASE: no record removed or
+# renamed, only an empty promoted_to filled, and the old single corrections
+# file does not come back. A BASE that does not resolve to a commit is an
+# error, never a silent pass.
 corrections-base:
 	@if [ -z "$(BASE)" ]; then exit 0; fi; \
 	if ! git rev-parse --verify --quiet "$(BASE)^{commit}" >/dev/null; then \

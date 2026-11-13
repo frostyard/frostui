@@ -1,0 +1,7 @@
+{
+  "date": "2026-11-12",
+  "scope": "AGENTS.md",
+  "correction": "The new Releases and dependencies section said go.mod requires only MyGo and purego; go.mod also lists 4 indirect requirements (go-text/typesetting, golang.org/x/image, net, text). It now says go.mod directly requires only MyGo and purego, and a Housekeeping rule asks every go.mod claim to say directly when it means the direct requirements",
+  "evidence": "frostyard/frostui#27 cross-review at 35ff38d (openai/gpt-6.1-sol): 1 blocking finding, AGENTS.md:181-182",
+  "promoted_to": "AGENTS.md"
+}
