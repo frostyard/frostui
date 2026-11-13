@@ -512,7 +512,7 @@ text pair of both themes, with and without high contrast, to 4.5:1 and the
 focus ring to 3:1.
 
 The components are drawn in the brand
-([the Frostyard look, phase 2](../plans/frostyard-look.md#phase-2--components-in-the-brand-medium)),
+([the Frostyard look, phase 2](../plans/frostyard-look.md#phase-2--components-in-the-brand-done)),
 from `brand.go`'s helpers:
 
 - **Corners.** `RadiusCard` is 0 (cards, figures, disclosure cards,
@@ -758,4 +758,4 @@ nothing; an app that filtered mailto links itself can drop its copy.
 
 - Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md), [ADR-0006](../adr/0006-a-frame-without-the-rail.md), [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md), [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md), [ADR-0009](../adr/0009-the-top-bars-end-belongs-to-the-window.md), [ADR-0010](../adr/0010-keep-only-a-mailto-links-addressees-subject-and-body.md)
 - Contracts: [spec: API stability](../specs/api-stability.md)
-- Built in: [roadmap — Phase 1](../plans/roadmap.md#phase-1--extract-the-kit-done), [Phase 5](../plans/roadmap.md#phase-5--the-frame-and-the-layout), [Phase 6](../plans/roadmap.md#phase-6--commands-navigation-and-settings-for-v020-medium)
+- Built in: [roadmap — Phase 1](../plans/roadmap.md#phase-1--extract-the-kit-done), [Phase 5](../plans/roadmap.md#phase-5--the-frame-and-the-layout-done), [Phase 6](../plans/roadmap.md#phase-6--commands-navigation-and-settings-for-v020-medium)
