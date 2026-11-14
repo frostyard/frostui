@@ -14,6 +14,9 @@ type SourceSection[K comparable] struct {
 	// Title heads the section; a click on it hides and shows its items.
 	// Empty, the section has no header and its items always show.
 	Title string
+	// Tooltip, when set, is what hovering the section's header shows, as
+	// the rule that chooses its items. Empty, the header shows none.
+	Tooltip string
 	// Items are the section's items at the top of its tree. One item may
 	// show in several sections, as a favorite mailbox does.
 	Items []K
@@ -335,6 +338,16 @@ func (s *SourceList[K]) title(k sourceKey[K]) string {
 	return s.Row(k.item).Title
 }
 
+// tooltip is the tooltip of the header of the section with the ID.
+func (s *SourceList[K]) tooltip(id string) string {
+	for _, sec := range s.sections {
+		if sec.ID == id {
+			return sec.Tooltip
+		}
+	}
+	return ""
+}
+
 // titled reports whether the section with the ID has a header.
 func (s *SourceList[K]) titled(id string) bool {
 	for _, sec := range s.sections {
@@ -597,11 +610,15 @@ func (s *SourceList[K]) View(c *ui.Context, sections []SourceSection[K]) ui.Elem
 }
 
 // header draws a section's header: its title, which hides and shows the
-// section's items, with an arrow that shows as the pointer rests on it.
+// section's items, with an arrow that shows as the pointer rests on it,
+// and the section's tooltip when it has one.
 func (s *SourceList[K]) header(c *ui.Context, t *ui.Theme, k sourceKey[K]) {
 	r := s.cur
 	head := r.Arrow().Grow(1).Height(28).Row().Gap(SpaceS).Padding(0, SpaceS).AlignItems(ui.Center).
 		Cursor(ui.CursorPointer).Background(Chrome(t))
+	if tip := s.tooltip(k.section); tip != "" {
+		head.Tooltip(tip)
+	}
 	head.Children(func() {
 		Label(c, s.title(k)).Grow(1).SingleLine()
 		chevron := "go-next"

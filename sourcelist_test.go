@@ -94,6 +94,44 @@ func TestSourceListRowShowsItsTooltipOnHover(t *testing.T) {
 	}
 }
 
+// hoverText rests the pointer on the text until a tooltip would show, and
+// returns the texts on screen then.
+func hoverText(t *testing.T, tt *ui.Tester, text string) []string {
+	t.Helper()
+	at, ok := tt.Find(text)
+	if !ok {
+		t.Fatalf("no %q in %q", text, tt.Texts())
+	}
+	tt.Move(at.X+at.W/2, at.Y+at.H/2)
+	tt.Advance(2 * time.Second)
+	tt.Frame()
+	return tt.Texts()
+}
+
+func TestSourceListSectionHeaderShowsItsTooltipOnHover(t *testing.T) {
+	const tip = "Messages that wait for an answer"
+	sections := mailSections()
+	sections[1].Tooltip = tip
+	tt := listTester(mailList(), sections)
+	if tt.HasText(tip) {
+		t.Fatal("the tooltip shows before the pointer rests on the header")
+	}
+	if texts := hoverText(t, tt, "Favorites"); slices.Contains(texts, tip) {
+		t.Errorf("hovering another section's header shows its tooltip: %q", texts)
+	}
+	if texts := hoverText(t, tt, "Work"); !slices.Contains(texts, tip) {
+		t.Errorf("hovering the header shows no tooltip: %q", texts)
+	}
+}
+
+func TestSourceListSectionHeaderWithoutTooltipShowsNone(t *testing.T) {
+	tt := listTester(mailList(), mailSections())
+	before := slices.Clone(tt.Texts())
+	if after := hoverText(t, tt, "Work"); !slices.Equal(before, after) {
+		t.Errorf("hovering a header without a tooltip changed the texts:\nbefore %q\nafter  %q", before, after)
+	}
+}
+
 func TestSourceListSectionHeaderHidesItsItems(t *testing.T) {
 	l := mailList()
 	tt := listTester(l, mailSections())

@@ -178,7 +178,8 @@ func (d *demo) sections() []frostui.SourceSection[string] {
 		folders[i] = folderPrefix + f.name
 	}
 	return []frostui.SourceSection[string]{
-		{ID: "pinned", Title: "Pinned", Items: pinned},
+		{ID: "pinned", Title: "Pinned", Items: pinned,
+			Tooltip: "Notes pinned from a note's menu or with Pin Note"},
 		{ID: "vault", Title: "Vault", Items: folders},
 	}
 }
