@@ -115,26 +115,13 @@ func Filter(cmds []Command, query string) []Command {
 		sort.SliceStable(out, func(i, j int) bool { return order[out[i].Group] < order[out[j].Group] })
 		return out
 	}
-	type scored struct {
-		cmd   Command
-		score int
-	}
-	var hits []scored
-	for _, c := range cmds {
+	return ranked(cmds, 0, func(c Command) (int, bool) {
 		best, ok := Match(query, c.Title)
 		if s, hok := Match(query, c.Hint); hok && c.Hint != "" && (!ok || s-4 > best) {
 			best, ok = s-4, true
 		}
-		if ok {
-			hits = append(hits, scored{c, best})
-		}
-	}
-	sort.SliceStable(hits, func(i, j int) bool { return hits[i].score > hits[j].score })
-	out := make([]Command, len(hits))
-	for i, h := range hits {
-		out[i] = h.cmd
-	}
-	return out
+		return best, ok
+	})
 }
 
 // Rank returns the items whose text matches query, best first (Match),
@@ -148,13 +135,20 @@ func Rank[T any](items []T, query string, limit int, text func(T) string) []T {
 		}
 		return append([]T(nil), items...)
 	}
+	return ranked(items, limit, func(it T) (int, bool) { return Match(query, text(it)) })
+}
+
+// ranked returns the items whose score is ok, best first, at most limit
+// of them (0 or less for all); ties keep the items' order. It returns a
+// non-nil slice, empty when nothing scores.
+func ranked[T any](items []T, limit int, score func(T) (int, bool)) []T {
 	type scored struct {
 		item  T
 		score int
 	}
 	var hits []scored
 	for _, it := range items {
-		if s, ok := Match(query, text(it)); ok {
+		if s, ok := score(it); ok {
 			hits = append(hits, scored{it, s})
 		}
 	}
