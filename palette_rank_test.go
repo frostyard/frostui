@@ -30,7 +30,7 @@ func TestFilterScoresHintsAndKeepsTies(t *testing.T) {
 		{ID: "title-wins", Title: "ab", Hint: "ab"},   // 13; hint 9 is lower
 		{ID: "none", Title: "zz"},                     // no match
 		{ID: "empty-hint", Title: "zz", Hint: ""},     // no match
-		{ID: "late-tie", Title: "zz", Hint: "x ab z"}, // no match: hint needs "ab" in order; it has it
+		{ID: "late-tie", Title: "zz", Hint: "x ab z"}, // hint 10-4 = 6
 	}
 	// "x ab z": a after space 6, b 4, len 6/16 = 0: 10, minus 4 = 6.
 	got := ids(Filter(cmds, "ab"))
