@@ -117,7 +117,7 @@ func (s *PaneShell) View(c *ui.Context, f PaneFrame) {
 		connectingWindow(c, *f.Connection, func() { s.mainMenu(c, f) })
 	} else {
 		if f.ConsoleData != nil && f.Table == nil {
-			c.OnWindowShortcut(ui.Cmd, ui.KeyJ, s.toggleConsole)
+			c.OnWindowShortcut(ui.Cmd, ui.KeyJ, s.Console.toggle)
 		}
 		ui.Column(c).Fill().AlignItems(ui.Stretch).Background(t.Background).Children(func() {
 			if len(f.Panes) == 0 {
@@ -143,17 +143,11 @@ func (s *PaneShell) View(c *ui.Context, f PaneFrame) {
 	s.Palette.View(c, s.commands(f))
 }
 
-func (s *PaneShell) toggleConsole() { s.Console.Open = !s.Console.Open }
-
 // ConsoleCommand is the palette's command that shows or hides the console,
 // in the group "View". PaneFrame adds it; an app that keeps its commands in
 // a table of its own may add it there, with another Group.
 func (s *PaneShell) ConsoleCommand() Command {
-	verb := "Show "
-	if s.Console.Open {
-		verb = "Hide "
-	}
-	return consoleCommand(verb+s.Console.title(), s.toggleConsole)
+	return s.Console.command()
 }
 
 // consoleCommand is the command that shows or hides a frame's console.
@@ -411,15 +405,21 @@ func (s *PaneShell) trailing(c *ui.Context, f PaneFrame) {
 	}
 	if f.ConsoleData != nil {
 		if toggleButton(c, "utilities-terminal", s.Console.title()+" (Ctrl J)", s.Console.Open).Clicked() {
-			s.toggleConsole()
+			s.Console.toggle()
 		}
 	}
 	s.mainMenu(c, f)
 }
 
 func (s *PaneShell) mainMenu(c *ui.Context, f PaneFrame) {
-	if f.Menu != nil {
-		ui.MenuButton(c, "", f.Menu).Label("Main menu").Tooltip("Main menu").Children(func() {
+	mainMenuButton(c, f.Menu)
+}
+
+// mainMenuButton is the top bar's main menu button, the bar's last item;
+// it draws nothing for a nil menu.
+func mainMenuButton(c *ui.Context, menu func(*ui.Menu)) {
+	if menu != nil {
+		ui.MenuButton(c, "", menu).Label("Main menu").Tooltip("Main menu").Children(func() {
 			Icon(c, "open-menu")
 		})
 	}

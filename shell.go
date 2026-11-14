@@ -89,17 +89,11 @@ type Frame struct {
 	ConsoleData *Console
 }
 
-func (s *Shell) toggleConsole() { s.Console.Open = !s.Console.Open }
-
 // ConsoleCommand is the command that shows or hides the console, in the
 // group "View". With Frame.Table the shell adds it to the table, unless
 // the table or Frame.Commands holds a command with its ID.
 func (s *Shell) ConsoleCommand() Command {
-	verb := "Show "
-	if s.Console.Open {
-		verb = "Hide "
-	}
-	return consoleCommand(verb+s.Console.title(), s.toggleConsole)
+	return s.Console.command()
 }
 
 // View draws the shell.
@@ -119,7 +113,7 @@ func (s *Shell) View(c *ui.Context, f Frame) {
 		c.OnWindowShortcut(ui.Cmd, ui.KeyK, func() { s.Palette.Show() })
 	}
 	if f.ConsoleData != nil && f.Table == nil {
-		c.OnWindowShortcut(ui.Cmd, ui.KeyJ, s.toggleConsole)
+		c.OnWindowShortcut(ui.Cmd, ui.KeyJ, s.Console.toggle)
 	}
 	ui.Column(c).Fill().AlignItems(ui.Stretch).Background(t.Background).Children(func() {
 		s.topBar(c, f)
@@ -204,14 +198,10 @@ func (s *Shell) topBar(c *ui.Context, f Frame) {
 			if f.ConsoleData != nil {
 				b := IconButton(c, "utilities-terminal", "Console (Ctrl J)").Selected(s.Console.Open)
 				if b.Clicked() {
-					s.Console.Open = !s.Console.Open
+					s.Console.toggle()
 				}
 			}
-			if f.Menu != nil {
-				ui.MenuButton(c, "", f.Menu).Label("Main menu").Tooltip("Main menu").Children(func() {
-					Icon(c, "open-menu")
-				})
-			}
+			mainMenuButton(c, f.Menu)
 		})
 	})
 }
@@ -263,7 +253,7 @@ func (s *Shell) statusBar(c *ui.Context, f Frame) {
 		}
 		if f.ConsoleData != nil {
 			statusItem(c.Key("console"), StatusItem{Icon: "utilities-terminal", Text: "Console", Tooltip: "Show or hide the console (Ctrl J)", Progress: -1,
-				OnClick: func() { s.Console.Open = !s.Console.Open }})
+				OnClick: s.Console.toggle})
 		}
 	})
 }

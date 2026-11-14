@@ -35,6 +35,19 @@ func (v *ConsoleView) title() string {
 	return "Console"
 }
 
+// toggle shows the pane while hidden and hides it while shown.
+func (v *ConsoleView) toggle() { v.Open = !v.Open }
+
+// command is the command that shows or hides the pane, titled by what it
+// does now and the pane's title.
+func (v *ConsoleView) command() Command {
+	verb := "Show "
+	if v.Open {
+		verb = "Hide "
+	}
+	return consoleCommand(verb+v.title(), v.toggle)
+}
+
 // showing is the levels whose lines show: those turned on and offered.
 func (v *ConsoleView) showing() LevelSet {
 	if v.Offered != 0 {
