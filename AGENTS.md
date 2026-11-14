@@ -139,8 +139,12 @@ L2, which declares tier 3. Here go.mod, go.sum, the guards
 (`internal/repocheck/**`, with `api.txt`), `.golangci.yml` and
 `appid_linux.go` are L2, and `.svu.yml` and the tool pins are L1. Add a path
 when you add a file of that kind (signing, auth, publish, secrets,
-destructive operations, CI, native code), with a `why` that names its
-category. The gate requires schema version 2.
+destructive operations, CI, native code). The `why` of an L1 or L2 entry
+starts with 1 category of core's
+[risk-path spec, rule B](https://github.com/frostyard/core/blob/main/docs/specs/risk-paths.md#b-categories)
+and a colon, such as `auth:` or `governance:`; core's check rejects any
+other word (for example `security` or `native code`). The gate
+requires schema version 2.
 
 **Vendored files.** `scripts/lib/risk-paths.mjs` and
 `scripts/check-corrections.mjs` are copies from frostyard/core; never edit them
