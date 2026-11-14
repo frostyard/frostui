@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/egoist/mygo/ui"
 
@@ -54,6 +55,23 @@ func TestSourceListSnapshot(t *testing.T) {
 		}
 		t.Logf("wrote %s", f.Name())
 	}
+}
+
+func TestPinnedHeaderExplainsItsRule(t *testing.T) {
+	const tip = "Notes pinned from a note's menu or with Pin Note"
+	d := newDemo(frostuitest.NewLoop().Post)
+	tt := ui.NewTester(d.view, 1000, 680)
+	if tt.HasText(tip) {
+		t.Fatal("the tooltip shows before the pointer rests on the header")
+	}
+	at, ok := tt.Find("Pinned")
+	if !ok {
+		t.Fatalf("no Pinned header in %q", tt.Texts())
+	}
+	tt.Move(at.X+at.W/2, at.Y+at.H/2)
+	tt.Advance(2 * time.Second)
+	tt.Frame()
+	hasAll(t, tt, tip)
 }
 
 func clickRole(t *testing.T, tt *ui.Tester, role ui.Role, name string) {

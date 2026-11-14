@@ -310,6 +310,7 @@ field frostui.SourceRow.Tooltip string
 field frostui.SourceSection.ID string
 field frostui.SourceSection.Items []K
 field frostui.SourceSection.Title string
+field frostui.SourceSection.Tooltip string
 field frostui.Stage.Empty string
 field frostui.Stage.Icon string
 field frostui.Stage.Note string

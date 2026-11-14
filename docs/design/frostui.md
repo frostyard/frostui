@@ -393,7 +393,9 @@ is its section and item, so one mailbox can show under Favorites and under
 its account.
 
 - **Sections** are outline branches marked as list headers: never chosen,
-  pinned while their rows scroll, and a click hides their items.
+  pinned while their rows scroll, and a click hides their items. A
+  section's `Tooltip`, when set, is what hovering its header shows, as the
+  rule that chooses its items; empty, the header shows none.
 - **Rows** (`SourceRow`): icon, title, `Tag`, `Busy` (spinner), `Alert`
   (warning sign with a tooltip), `Count`, `Dim`, and `Tooltip`, what
   hovering the row shows (the alert's own tooltip shows over its sign).
@@ -710,6 +712,10 @@ ChairLift's examples (Homebrew taps, firmware, bootc deployments); and
 `Pipeline`'s list is named "Pipeline" instead of "Update run".
 
 ## API changes
+
+2026-11-13: additive `SourceSection.Tooltip`: what hovering the section's
+header shows, as the rule that chooses its items. Empty, the header shows no
+tooltip and draws as before (frostyard/frostui#33).
 
 2026-11-12: additive `DiffView`, `SetPatch` and `View` provide a native
 read-only unified diff with line numbers and selectable, wrapped text.
