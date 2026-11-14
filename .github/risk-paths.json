@@ -35,7 +35,7 @@
     {
       "glob": "opener.go",
       "level": "L2",
-      "why": "security: the allow-lists that decide what the system's handlers open"
+      "why": "auth: the allow-lists that decide what the system's handlers open"
     },
     {
       "glob": "mise.toml",
@@ -70,12 +70,12 @@
     {
       "glob": "appid_linux.go",
       "level": "L2",
-      "why": "native code: loads GLib with purego and calls it by symbol"
+      "why": "auth: the program identity (app ID) that the desktop sees; native code that loads GLib with purego and calls it by symbol"
     },
     {
       "glob": "launch_linux.go",
       "level": "L2",
-      "why": "native code: loads GIO with purego and calls it by symbol"
+      "why": "auth: which desktop app the kit starts; native code that loads GIO with purego and calls it by symbol"
     },
     {
       "glob": ".svu.yml",
