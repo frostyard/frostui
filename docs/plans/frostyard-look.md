@@ -175,7 +175,8 @@ rather than the kit's sizes.
   the one that explained its rule when it became a source-list section.
 - A kit primary button for code that calls MyGo's `ui.PrimaryButton`
   directly, which keeps the plain accent face rather than the brand's
-  gradient.
+  gradient. Done: `PrimaryButton` (frostyard/frostui#34); the apps adopt
+  it in their own repositories.
 
 ## Open questions
 

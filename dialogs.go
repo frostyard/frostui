@@ -72,7 +72,7 @@ func (d *Dialogs) View(c *ui.Context) {
 				if ui.Button(c, cancel).Clicked() {
 					decided = true
 				}
-				action := ui.PrimaryButton(c, req.Action).AutoFocus()
+				action := PrimaryButton(c, req.Action).AutoFocus()
 				if req.Destructive {
 					action.Background(ToneFill(t, Danger)).TextColor(t.Danger).Border(1, ToneLine(t, Danger))
 				}
@@ -117,7 +117,7 @@ func CodeDialog(c *ui.Context, title, summary, text, action string) (acted, canc
 				if ui.Button(c, "Cancel").AutoFocus().Clicked() {
 					canceled = true
 				}
-				if ui.PrimaryButton(c, action).Clicked() {
+				if PrimaryButton(c, action).Clicked() {
 					acted = true
 				}
 			})

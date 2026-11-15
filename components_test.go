@@ -2,6 +2,7 @@ package frostui
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -388,5 +389,179 @@ func TestTopToastsCloseWithTheirButton(t *testing.T) {
 	tt.Advance(time.Second)
 	if tt.HasText("The configuration has an error") {
 		t.Error("the toast stayed after Close")
+	}
+}
+
+// colorDistance is the largest difference of two colors' channels.
+func colorDistance(a, b ui.Color) int {
+	d := 0
+	for _, p := range [][2]uint8{{a.R, b.R}, {a.G, b.G}, {a.B, b.B}} {
+		d = max(d, abs(int(p[0])-int(p[1])))
+	}
+	return d
+}
+
+func abs(v int) int {
+	if v < 0 {
+		return -v
+	}
+	return v
+}
+
+// pixel is the color of the frame at x, y.
+func pixel(tt *ui.Tester, x, y float32) ui.Color {
+	p := tt.Image().RGBAAt(int(x), int(y))
+	return ui.Color{R: p.R, G: p.G, B: p.B, A: p.A}
+}
+
+// faceEnds returns a button's face near its leading and its trailing edge,
+// halfway down, inside its border and its corners.
+func faceEnds(tt *ui.Tester, b ui.Rect) (lead, trail ui.Color) {
+	y := b.Y + b.H/2
+	return pixel(tt, b.X+4, y), pixel(tt, b.X+b.W-5, y)
+}
+
+// onBrandGradient reports why the face of b is not the brand gradient
+// from k.GradientFrom to k.GradientTo at 135 degrees, or "" when it is:
+// its leading edge nearer GradientFrom, its trailing edge nearer
+// GradientTo, and the two far apart.
+func onBrandGradient(tt *ui.Tester, k ThemeColors, b ui.Rect) string {
+	lead, trail := faceEnds(tt, b)
+	switch {
+	case colorDistance(lead, k.GradientFrom) >= colorDistance(lead, k.GradientTo):
+		return fmt.Sprintf("leading edge %v is not nearer %v than %v", lead, k.GradientFrom, k.GradientTo)
+	case colorDistance(trail, k.GradientTo) >= colorDistance(trail, k.GradientFrom):
+		return fmt.Sprintf("trailing edge %v is not nearer %v than %v", trail, k.GradientTo, k.GradientFrom)
+	case colorDistance(lead, trail) < 24:
+		return fmt.Sprintf("edges %v and %v are too close for a gradient", lead, trail)
+	}
+	return ""
+}
+
+// darkest is the pixel of r with the lowest luminance: a label's ink.
+func darkest(tt *ui.Tester, r ui.Rect) ui.Color {
+	best, lum := ui.Color{}, 2.0
+	for y := r.Y; y < r.Y+r.H; y++ {
+		for x := r.X; x < r.X+r.W; x++ {
+			if p := pixel(tt, x, y); luminance(p) < lum {
+				best, lum = p, luminance(p)
+			}
+		}
+	}
+	return best
+}
+
+// TestPrimaryButtonDrawsTheBrandFace draws PrimaryButton, enabled and
+// disabled, in the dark and the light Frostyard theme. Its face is the
+// brand gradient and its label is in the on-gradient text, which in the
+// light theme differs from the accent's text MyGo's PrimaryButton uses.
+// Disabled, face and label show at half their opacity over the window,
+// and a click on it reports nothing.
+func TestPrimaryButtonDrawsTheBrandFace(t *testing.T) {
+	for _, dark := range []bool{true, false} {
+		var th *ui.Theme
+		clicks := 0
+		tt := ui.NewTesterWith(func(c *ui.Context) {
+			th = Adapt(c)
+			ui.Column(c).Fill().Background(th.Background).Padding(20).Gap(20).AlignItems(ui.Start).Children(func() {
+				if PrimaryButton(c, "Save changes").Width(180).Clicked() {
+					clicks++
+				}
+				if PrimaryButton(c, "Apply update").Width(180).Disabled(true).Clicked() {
+					clicks++
+				}
+			})
+		}, 400, 200, ui.TesterOptions{Dark: dark})
+		tt.Frame()
+		k := ColorsOf(th)
+		on, ok := tt.AccessByRole(ui.RoleButton, "Save changes")
+		off, ok2 := tt.AccessByRole(ui.RoleButton, "Apply update")
+		if !ok || !ok2 {
+			t.Fatalf("dark=%v: buttons missing: %q", dark, tt.Texts())
+		}
+		if why := onBrandGradient(tt, k, on.Bounds); why != "" {
+			t.Errorf("dark=%v: enabled face: %s", dark, why)
+		}
+		// Disabled: each point of the face is half the enabled face's
+		// over the window's background.
+		onLead, onTrail := faceEnds(tt, on.Bounds)
+		offLead, offTrail := faceEnds(tt, off.Bounds)
+		for _, p := range [][2]ui.Color{{onLead, offLead}, {onTrail, offTrail}} {
+			want := p[0].Alpha(0.5).Over(th.Background)
+			if colorDistance(p[1], want) > 6 {
+				t.Errorf("dark=%v: disabled face %v, want %v (half of %v over %v)", dark, p[1], want, p[0], th.Background)
+			}
+		}
+
+		// The labels' ink, where the system draws text: js/wasm's Tester
+		// has no text engine and paints no glyphs.
+		if interErr != nil && strings.Contains(interErr.Error(), "no text engine") {
+			t.Logf("dark=%v: no label ink to check: %v", dark, interErr)
+		} else {
+			label, _ := tt.Find("Save changes")
+			ink := darkest(tt, label)
+			if colorDistance(ink, k.OnGradient) > 48 {
+				t.Errorf("dark=%v: label ink %v, want the on-gradient text %v", dark, ink, k.OnGradient)
+			}
+			// MyGo dims each paint of a disabled element: the label is
+			// half its ink over the dimmed face beside it.
+			offLabel, _ := tt.Find("Apply update")
+			offInk := darkest(tt, offLabel)
+			offFace := pixel(tt, offLabel.X-3, offLabel.Y+offLabel.H/2)
+			if want := ink.Alpha(0.5).Over(offFace); colorDistance(offInk, want) > 24 || colorDistance(offInk, ink) < 12 {
+				t.Errorf("dark=%v: disabled label ink %v, want near %v (half of %v over the dimmed face %v)", dark, offInk, want, ink, offFace)
+			}
+		}
+
+		if err := tt.Click("Save changes"); err != nil {
+			t.Fatal(err)
+		}
+		_ = tt.Click("Apply update")
+		if clicks != 1 {
+			t.Errorf("dark=%v: clicks %d, want 1 (the disabled button reports none)", dark, clicks)
+		}
+	}
+}
+
+// TestDialogActionsUseThePrimaryButton draws the kit's dialogs in the
+// Frostyard theme: the action of a confirmation and of CodeDialog is on
+// the brand gradient, and a destructive confirmation's is not.
+func TestDialogActionsUseThePrimaryButton(t *testing.T) {
+	for _, tc := range []struct {
+		name, action string
+		brand        bool
+		view         func(c *ui.Context)
+	}{
+		{"confirmation", "Turn on", true, func(c *ui.Context) {
+			d := Dialogs{}
+			d.Ask(Confirm{Title: "Turn on sync?", Action: "Turn on"})
+			d.View(c)
+		}},
+		{"destructive confirmation", "Delete", false, func(c *ui.Context) {
+			d := Dialogs{}
+			d.Ask(Confirm{Title: "Delete it?", Action: "Delete", Destructive: true})
+			d.View(c)
+		}},
+		{"code dialog", "Send", true, func(c *ui.Context) {
+			CodeDialog(c, "Report this problem?", "", "kind: crash", "Send")
+		}},
+	} {
+		var th *ui.Theme
+		tt := ui.NewTesterWith(func(c *ui.Context) {
+			th = Adapt(c)
+			tc.view(c)
+		}, 900, 700, ui.TesterOptions{Dark: true})
+		tt.Frame()
+		b, ok := tt.AccessByRole(ui.RoleButton, tc.action)
+		if !ok {
+			t.Fatalf("%s: no %s button: %q", tc.name, tc.action, tt.Texts())
+		}
+		why := onBrandGradient(tt, ColorsOf(th), b.Bounds)
+		if tc.brand && why != "" {
+			t.Errorf("%s: action face: %s", tc.name, why)
+		}
+		if !tc.brand && why == "" {
+			t.Errorf("%s: the action is on the brand gradient, want the danger fill", tc.name)
+		}
 	}
 }
