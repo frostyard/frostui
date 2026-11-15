@@ -1,13 +1,16 @@
 package frostui
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
+	"time"
 	"unsafe"
 
 	"github.com/ebitengine/purego"
@@ -110,42 +113,129 @@ func TestSetAppIDRejectsAnEmptyID(t *testing.T) {
 	}
 }
 
+// appIDHelperEnv is the helper's environment: environ without what could
+// let GTK open a display or make App.Run stop early, with GDK held to X11
+// with no DISPLAY, so that gtk_init_check fails also where Wayland would
+// find $XDG_RUNTIME_DIR/wayland-0 with no WAYLAND_DISPLAY. Every MYGO_
+// variable goes too: MYGO_GENERATE makes Run return before it names the
+// program.
+func appIDHelperEnv(environ []string, id string) []string {
+	env := []string{appIDRunEnv + "=" + id, "GDK_BACKEND=x11"}
+	for _, kv := range environ {
+		k, _, _ := strings.Cut(kv, "=")
+		switch {
+		case k == "DISPLAY", k == "WAYLAND_DISPLAY", k == "WAYLAND_SOCKET", k == "GDK_BACKEND", k == appIDRunEnv,
+			strings.HasPrefix(k, "MYGO_"):
+			continue
+		}
+		env = append(env, kv)
+	}
+	return env
+}
+
+// errNoGTK is why parseAppIDHelper skips: MyGo could not load GTK 3 or
+// another library it opens, so Run failed before it named the program.
+var errNoGTK = errors.New("MyGo's App.Run could not load its libraries (no GTK 3?)")
+
+// parseAppIDHelper reads what runAppIDHelper printed by name (run,
+// prgname, application). Run must have failed at gtk_init_check, after it
+// named the program; a library it could not load gives errNoGTK, and any
+// other result is an error, so that the name checks never pass unrun.
+func parseAppIDHelper(out string) (map[string]string, error) {
+	got := map[string]string{}
+	for line := range strings.SplitSeq(strings.TrimSpace(out), "\n") {
+		if k, v, ok := strings.Cut(line, ": "); ok {
+			got[k] = v
+		}
+	}
+	run, ok := got["run"]
+	switch {
+	case !ok:
+		return nil, fmt.Errorf("the helper printed no result of App.Run:\n%s", out)
+	case strings.Contains(run, "cannot open shared object file"):
+		return nil, fmt.Errorf("%w: %s", errNoGTK, run)
+	case !strings.Contains(run, "cannot open display"):
+		return nil, fmt.Errorf("App.Run = %s, want the error of gtk_init_check with no display", run)
+	}
+	for _, k := range []string{"prgname", "application"} {
+		if _, ok := got[k]; !ok {
+			return nil, fmt.Errorf("the helper printed no %s:\n%s", k, out)
+		}
+	}
+	return got, nil
+}
+
 // runAppIDHelperProcess runs the test binary as the helper of
-// runAppIDHelper, with no display, and returns what it printed by name
-// (run, prgname, application). It skips the test when MyGo cannot load
-// GTK 3, as Run then fails before it names the program.
+// runAppIDHelper, with no display (appIDHelperEnv), and returns what it
+// printed (parseAppIDHelper). It skips the test only when MyGo cannot
+// load GTK 3, and not in CI (CI=true), which installs it. A deadline
+// ends a helper that hangs, as one that opened a display would in MyGo's
+// event loop.
 func runAppIDHelperProcess(t *testing.T, id string) map[string]string {
 	t.Helper()
 	exe, err := os.Executable()
 	if err != nil {
 		t.Fatalf("os.Executable: %v", err)
 	}
-	cmd := exec.Command(exe)
-	// No display: MyGo names the program, then gtk_init_check fails, and
-	// Run returns before it opens a window or runs the event loop.
-	env := []string{appIDRunEnv + "=" + id}
-	for _, kv := range os.Environ() {
-		switch strings.SplitN(kv, "=", 2)[0] {
-		case "DISPLAY", "WAYLAND_DISPLAY", appIDRunEnv:
-			continue
-		}
-		env = append(env, kv)
-	}
-	cmd.Env = env
+	ctx, cancel := context.WithTimeout(t.Context(), time.Minute)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, exe)
+	cmd.Env = appIDHelperEnv(os.Environ(), id)
+	cmd.WaitDelay = time.Second
 	out, err := cmd.Output()
 	if err != nil {
 		t.Fatalf("helper: %v\n%s", err, out)
 	}
-	got := map[string]string{}
-	for line := range strings.SplitSeq(strings.TrimSpace(string(out)), "\n") {
-		if k, v, ok := strings.Cut(line, ": "); ok {
-			got[k] = v
-		}
+	got, err := parseAppIDHelper(string(out))
+	if errors.Is(err, errNoGTK) && os.Getenv("CI") != "true" {
+		// CI installs GTK 3 (.github/workflows/ci.yml), so there it fails.
+		t.Skip(err)
 	}
-	if run := got["run"]; !strings.Contains(run, "cannot open display") {
-		t.Skipf("MyGo's App.Run did not reach gtk_init_check (no GTK 3?): %s", run)
+	if err != nil {
+		t.Fatal(err)
 	}
 	return got
+}
+
+func TestAppIDHelperEnvHasNoDisplayAndNoMyGoSettings(t *testing.T) {
+	environ := []string{
+		"PATH=/usr/bin", "DISPLAY=:0", "WAYLAND_DISPLAY=wayland-0", "WAYLAND_SOCKET=3", "GDK_BACKEND=wayland",
+		"MYGO_GENERATE=/tmp/client.ts", "MYGO_E2E=1", appIDRunEnv + "=org.example.Old", "XDG_RUNTIME_DIR=/run/user/1000",
+	}
+	env := appIDHelperEnv(environ, "org.example.New")
+	want := []string{appIDRunEnv + "=org.example.New", "GDK_BACKEND=x11", "PATH=/usr/bin", "XDG_RUNTIME_DIR=/run/user/1000"}
+	if !slices.Equal(env, want) {
+		t.Errorf("appIDHelperEnv = %q, want %q", env, want)
+	}
+}
+
+func TestParseAppIDHelperFailsUnlessRunReachedTheDisplay(t *testing.T) {
+	const names = "prgname: org.example.X\napplication: X\n"
+	for _, tc := range []struct {
+		name, out string
+		noGTK     bool
+		ok        bool
+	}{
+		{name: "display", out: "run: mygo: cannot open display (is DISPLAY or WAYLAND_DISPLAY set?)\n" + names, ok: true},
+		{name: "no GTK", out: "run: libgtk-3.so.0: cannot open shared object file: No such file or directory\n" + names, noGTK: true},
+		{name: "no result", out: names},
+		{name: "empty", out: ""},
+		{name: "success", out: "run: <nil>\n" + names},
+		{name: "not main", out: "run: mygo: App.Run must be called from the main goroutine\n" + names},
+		{name: "no names", out: "run: mygo: cannot open display\n"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := parseAppIDHelper(tc.out)
+			switch {
+			case tc.ok && (err != nil || got["prgname"] != "org.example.X"):
+				t.Errorf("parseAppIDHelper = %v, %v, want the names", got, err)
+			case tc.noGTK && !errors.Is(err, errNoGTK):
+				t.Errorf("parseAppIDHelper error = %v, want errNoGTK", err)
+			case !tc.ok && !tc.noGTK && (err == nil || errors.Is(err, errNoGTK)):
+				t.Errorf("parseAppIDHelper error = %v, want a failure, not a skip", err)
+			}
+		})
+	}
 }
 
 // MyGo's App.Run names the program after its executable when the app has

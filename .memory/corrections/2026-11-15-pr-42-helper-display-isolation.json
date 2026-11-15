@@ -1,0 +1,7 @@
+{
+  "date": "2026-11-15",
+  "scope": "appid_linux_test.go",
+  "correction": "A test helper that runs MyGo App.Run with no display must not only drop DISPLAY and WAYLAND_DISPLAY: GDK on Wayland finds $XDG_RUNTIME_DIR/wayland-0 without WAYLAND_DISPLAY, and an inherited GDK_BACKEND or MYGO_ variable changes what Run does. Hold GDK_BACKEND=x11 with no DISPLAY, drop every MYGO_ variable, and put a deadline on the subprocess.",
+  "evidence": "frostyard/frostui#42, cross-review (openai/gpt-6.1-sol) of head ce6c614416b2da5ffd96fdbef2e1a3c22ac60ab8, finding 1",
+  "promoted_to": "appid_linux_test.go (TestAppIDHelperEnvHasNoDisplayAndNoMyGoSettings)"
+}
