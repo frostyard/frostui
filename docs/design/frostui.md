@@ -606,20 +606,19 @@ function from `*_linux.go` or `*_other.go` (`//go:build !linux`):
 
 | Function | Linux | Elsewhere |
 | --- | --- | --- |
-| `SetAppID` (`appid*.go`) | `g_set_prgname` and `g_set_application_name` through purego, so the Wayland app ID and X11 `WM_CLASS` match the `.desktop` file; `g_set_prgname` again from `mygo.App.WhenReady`, because MyGo's `App.Run` names the program after its executable | loads nothing; rejects an empty ID |
+| `SetAppID` (`appid*.go`) | `g_set_prgname` and `g_set_application_name` through purego, before `mygo.App.Run`, so the Wayland app ID and X11 `WM_CLASS` match the `.desktop` file | loads nothing; rejects an empty ID |
 | `DesktopIconTheme` (`icons*.go`) | as above | "" |
 | `NewIcons` (`icons*.go`) | embedded icons, the theme directories, then the kit's set | embedded icons, then the kit's set |
 | `LaunchDesktopApp` (`launch*.go`) | GIO resolves and launches the desktop ID, without waiting for the application; stdout and stderr go to `/dev/null` | an error wrapping `errors.ErrUnsupported` |
 
 Only the first `SetAppID` call counts, on every system. On Linux, call it
-before the `mygo.App.WhenReady` that opens the app's first window: MyGo
-since v0.9.0 names the program after its executable when `App.Run` starts
-(egoist/mygo#1640), and GLib keeps the last name it is given, so
-`SetAppID` names the program again from its own `WhenReady` callback, which
-runs before the callbacks registered after it. GTK reads the name when it
-creates a window. X11's `WM_CLASS` class part keeps the name GDK took from
-the executable when it opened the display; GNOME matches the instance
-part first.
+before `mygo.App.Run`: `App.Run` names the program after its executable
+only while GLib has no name for it (egoist/mygo#1761, in MyGo v0.9.1), so
+the name `SetAppID` gave holds. GTK reads the name when it creates a
+window. MyGo v0.9.0 named the program after its executable in every case
+(egoist/mygo#1640), and the kit named it again from `mygo.App.WhenReady`
+until MyGo v0.9.1. The tests in `appid_linux_test.go` run `App.Run` with
+no display, up to `gtk_init_check`, and check that the name holds.
 
 ### Rules
 
