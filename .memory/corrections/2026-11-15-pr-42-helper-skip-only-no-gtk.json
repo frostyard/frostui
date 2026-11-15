@@ -1,0 +1,7 @@
+{
+  "date": "2026-11-15",
+  "scope": "appid_linux_test.go",
+  "correction": "The App.Run helper tests skipped on any result without the no-display error, so a malformed output, an unexpected success or an early return (MYGO_GENERATE) skipped the name checks. Skip only when MyGo cannot load its libraries; fail on every other result.",
+  "evidence": "frostyard/frostui#42, cross-review (openai/gpt-6.1-sol) of head ce6c614416b2da5ffd96fdbef2e1a3c22ac60ab8, finding 2",
+  "promoted_to": "appid_linux_test.go (TestParseAppIDHelperFailsUnlessRunReachedTheDisplay)"
+}
