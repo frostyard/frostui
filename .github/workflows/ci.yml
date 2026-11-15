@@ -43,10 +43,12 @@ jobs:
           install_args: golangci-lint node
           cache: true
       # MyGo's Tester lays text out with Pango and cairo (no GTK, no display).
+      # GTK 3 lets the SetAppID tests run MyGo's App.Run up to
+      # gtk_init_check, which fails with no display (appid_linux_test.go).
       - name: Install the text runtime of the UI tests
         run: |
           sudo apt-get update
-          sudo apt-get install --yes --no-install-recommends fonts-dejavu-core libpangocairo-1.0-0
+          sudo apt-get install --yes --no-install-recommends fonts-dejavu-core libpangocairo-1.0-0 libgtk-3-0t64
       - run: make ci BASE="$BASE"
         env:
           BASE: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || '' }}
