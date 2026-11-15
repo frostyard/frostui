@@ -3,6 +3,7 @@ package frostui
 import (
 	"context"
 	"fmt"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -494,9 +495,10 @@ func TestPrimaryButtonDrawsTheBrandFace(t *testing.T) {
 		}
 
 		// The labels' ink, where the system draws text: js/wasm's Tester
-		// has no text engine and paints no glyphs.
-		if interErr != nil && strings.Contains(interErr.Error(), "no text engine") {
-			t.Logf("dark=%v: no label ink to check: %v", dark, interErr)
+		// has no text engine and paints no glyphs. Elsewhere the check
+		// runs, so a missing native text engine fails it.
+		if runtime.GOOS == "js" {
+			t.Logf("dark=%v: js/wasm paints no glyphs: no label ink to check", dark)
 		} else {
 			label, _ := tt.Find("Save changes")
 			ink := darkest(tt, label)
