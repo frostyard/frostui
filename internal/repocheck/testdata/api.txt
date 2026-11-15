@@ -411,6 +411,7 @@ func frostui.Panel(*ui.Theme) ui.Color
 func frostui.Pill(*ui.Context, string, Tone) ui.Element
 func frostui.PillTabs(*ui.Context, *int, []Tab) ui.Element
 func frostui.Pipeline(*ui.Context, []Stage) ui.Element
+func frostui.PrimaryButton(*ui.Context, string) ui.Element
 func frostui.Problem(*ui.Context, string) ui.Element
 func frostui.Rank[T any]([]T, string, int, func(T) string) []T
 func frostui.RowDivider(*ui.Context) ui.Element

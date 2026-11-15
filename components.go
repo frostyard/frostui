@@ -179,9 +179,18 @@ func IconButton(c *ui.Context, icon, label string) ui.Element {
 	})
 }
 
+// PrimaryButton is the main action as a button with a text label: MyGo's
+// PrimaryButton on the brand gradient, with the on-gradient text, the face
+// of LabeledButton's primary button. Disabled, AutoFocus, Tooltip, Clicked
+// and OnClick chain on it as on MyGo's; disabled, it shows at half its
+// opacity, face and text, as MyGo dims every disabled element.
+func PrimaryButton(c *ui.Context, label string) ui.Element {
+	return primaryFace(ui.PrimaryButton(c, label), c.Theme())
+}
+
 // LabeledButton is a button with an icon before its label. primary makes
-// it the primary button, on the brand gradient; otherwise it is a ghost,
-// as IconButton.
+// it the primary button, on the brand gradient, as PrimaryButton;
+// otherwise it is a ghost, as IconButton.
 func LabeledButton(c *ui.Context, icon, label string, primary bool) ui.Element {
 	var b ui.Element
 	if primary {

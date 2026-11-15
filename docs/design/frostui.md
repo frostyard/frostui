@@ -273,8 +273,8 @@ monospaced box with Cancel and an action, and holds no state of its own.
 - `components.go`, `text.go`: `Card`, `CardHeader`, `PageHeader`, `Section`
   and `SectionHeader` (`SectionHead`: icon, title, note, aside, `Quiet`),
   `Figures`, `Pill`, `IconPill`, `ColorPill`, `DotPill`, `SquareAvatar` and
-  `Initials`, `IconTile`, `IconButton`, `LabeledButton`, `Banner` (and
-  `BannerClose`, which names its close button), `Empty`,
+  `Initials`, `IconTile`, `IconButton`, `PrimaryButton`, `LabeledButton`,
+  `Banner` (and `BannerClose`, which names its close button), `Empty`,
   `Loading`, `Problem`, `KeyValues` (with `KeyValuesStyle`), `PillTabs`,
   `SoftSelection`, `RowDivider`, `Kbd`/`Shortcut`, and the text styles
   `Title`, `Heading`, `Strong`, `Body`, `Muted`, `Caption`, `Mono`, `Toned`.
@@ -532,9 +532,11 @@ from `brand.go`'s helpers:
   pipeline rows), and the theme's `Radius` 4 (buttons, the brand tile,
   avatars and icon tiles). MyGo's own dialogs keep their own corners.
 - **Faces.** Cards, `Figures` and `DisclosureCard` fill with the panel
-  gradient over a hairline. The primary face (`LabeledButton` with
-  `primary`, the brand tile, the About and hero logos) is the brand
-  gradient with `OnGradient`. `IconButton`, `LabeledButton` and the
+  gradient over a hairline. The primary face (`PrimaryButton`,
+  `LabeledButton` with `primary`, the action of a confirmation and of
+  `CodeDialog`, the brand tile, the About and hero logos) is the brand
+  gradient with `OnGradient`. A disabled `PrimaryButton` shows at half its
+  opacity, face and text, as MyGo dims every disabled element. `IconButton`, `LabeledButton` and the
   compact palette button are ghosts: a hairline, no face, and the hover
   text while the pointer is over them; `Selected` still gives a toggle
   the accent's face. A destructive confirmation is the danger fill and
@@ -712,6 +714,14 @@ ChairLift's examples (Homebrew taps, firmware, bootc deployments); and
 `Pipeline`'s list is named "Pipeline" instead of "Update run".
 
 ## API changes
+
+2026-11-14: additive `PrimaryButton(c, label)`: MyGo's `ui.PrimaryButton`
+with a text label on the brand gradient and `OnGradient` text, the face of
+`LabeledButton`'s primary button, for the main action with no icon. It
+returns MyGo's element, so `Disabled`, `AutoFocus`, `Tooltip`, `Clicked`
+and `OnClick` chain as before. No signature change elsewhere, but the
+action of a non-destructive `Confirm` and of `CodeDialog` now draws on
+the brand gradient instead of the plain accent (frostyard/frostui#34).
 
 2026-11-13: additive `SourceSection.Tooltip`: what hovering the section's
 header shows, as the rule that chooses its items. Empty, the header shows no
