@@ -24,6 +24,7 @@ Docs are split by the question they answer:
 - [0009 — The top bar's end belongs to the window, and the palette field turns compact](adr/0009-the-top-bars-end-belongs-to-the-window.md)
 - [0010 — Keep only a mailto link's addressees, subject and body](adr/0010-keep-only-a-mailto-links-addressees-subject-and-body.md)
 - [0011 — Draw the frostyard brand, in a dark and a light theme](adr/0011-draw-the-frostyard-brand-in-a-dark-and-a-light-theme.md)
+- [0012 — One tray component, with a close-to-tray check the app switches](adr/0012-one-tray-component-with-a-close-to-tray-check-the-app-switches.md)
 
 ### Org-wide decisions
 

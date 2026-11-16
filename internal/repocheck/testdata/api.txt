@@ -351,6 +351,16 @@ field frostui.Tile.Icon string
 field frostui.Tile.Pill string
 field frostui.Tile.PillIcon string
 field frostui.Tile.Value string
+field frostui.TrayItem.Click func()
+field frostui.TrayItem.Disabled bool
+field frostui.TrayItem.ID string
+field frostui.TrayItem.Label string
+field frostui.TrayOptions.ID string
+field frostui.TrayOptions.Icon []byte
+field frostui.TrayOptions.Items []TrayItem
+field frostui.TrayOptions.OpenLabel string
+field frostui.TrayOptions.ToolTip string
+field frostui.TrayOptions.Window *mygo.Window
 func frostui.AboutBody(About) func(c *ui.Context)
 func frostui.Adapt(*ui.Context) *ui.Theme
 func frostui.Banner(*ui.Context, Tone, string, string, string, bool) (bool, bool)
@@ -402,6 +412,7 @@ func frostui.NewCommandTable(...Command) *CommandTable
 func frostui.NewConsole(int) *Console
 func frostui.NewIcons(map[string][]byte) *Icons
 func frostui.NewJobs(func(func()), *Console) *Jobs
+func frostui.NewTray(TrayOptions) (*Tray, error)
 func frostui.NewWaker(func(func()), time.Duration) *Waker
 func frostui.NumberRow(*ui.Context, string, string, *float64, float64, float64, float64) ui.Element
 func frostui.PageHeader(*ui.Context, string, string, func())
@@ -444,6 +455,7 @@ func frostui.ToneFill(*ui.Theme, Tone) ui.Color
 func frostui.ToneLine(*ui.Theme, Tone) ui.Color
 func frostui.Toned(*ui.Context, string, Tone) ui.Element
 func frostui.TopToasts(*ui.Context, string)
+func frostui.TrayHosted() bool
 func frostui.VersionChange(*ui.Context, string, string) ui.Element
 func frostuitest.NewLoop() *Loop
 method (*CommandTable) frostui.Add(...Command)
@@ -533,6 +545,11 @@ method (*SourceList[K]) frostui.SetOpen(string, K, bool)
 method (*SourceList[K]) frostui.SetSectionOpen(string, bool)
 method (*SourceList[K]) frostui.StartRename(string, K)
 method (*SourceList[K]) frostui.View(*ui.Context, []SourceSection[K]) ui.Element
+method (*Tray) frostui.CloseToTray(*mygo.CloseEvent, bool) bool
+method (*Tray) frostui.Destroy()
+method (*Tray) frostui.SetDot(bool)
+method (*Tray) frostui.SetItems([]TrayItem)
+method (*Tray) frostui.SetStatus(string)
 method (*Waker) frostui.Wake()
 method (Command) frostui.Resolve() Command
 method (JobState) frostui.Ended() bool
@@ -608,6 +625,9 @@ type frostui.Tab struct
 type frostui.ThemeColors struct
 type frostui.Tile struct
 type frostui.Tone int
+type frostui.Tray struct
+type frostui.TrayItem struct
+type frostui.TrayOptions struct
 type frostui.Waker struct
 type frostuitest.Loop struct
 var frostui.ErrNotAllowed = errors.New("not allowed")

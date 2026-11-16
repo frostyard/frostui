@@ -124,6 +124,20 @@ v0.2.0, `api.txt` gains 230 lines and loses none.
 wrapped and selectable text, virtualized rows, and accessible signed changes;
 parser and headless rendering tests pass in `make ci`.
 
+## Phase 8 — Tray icon (small)
+
+- Add 1 tray component that Frostmail, Frostnotes, ChairLift and the
+  Pocket client share: a menu of a status line, Open, the app's items and
+  Quit, a dot, and a close-to-tray check that the app switches
+  ([design: tray](../design/frostui.md#tray),
+  [ADR-0012](../adr/0012-one-tray-component-with-a-close-to-tray-check-the-app-switches.md)),
+  additive to the [API](../specs/api-stability.md).
+
+**Done when:** `examples/commandcenter` shows a tray with a status, a dot
+and a "Close to the tray" setting, the tests cover the menu shape, the close
+table, the dot and an injected watcher check, `make ci` passes, and
+`api.txt` only gains lines.
+
 ## Open questions
 
 - Should `Adapt` leave MyGo's inactive-window accent alone on macOS, where
@@ -137,5 +151,6 @@ parser and headless rendering tests pass in `make ci`.
   [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md),
   [ADR-0006](../adr/0006-a-frame-without-the-rail.md),
   [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md),
-  [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md)
+  [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md),
+  [ADR-0012](../adr/0012-one-tray-component-with-a-close-to-tray-check-the-app-switches.md)
 - Followed by: [the Frostyard look](frostyard-look.md)

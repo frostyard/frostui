@@ -81,7 +81,7 @@ its skills there (core ADR-0026); start a repo-local one from
   use belongs here; one that is about one app stays in it.
 - **UI thread.** Views and every model (`Shell`, `PaneShell`, `Panes`,
   `Jobs`, `Palette`, `Dialogs`, `ConsoleView`, `CommandTable`, `SourceList`,
-  `Settings`, `DiffView`) belong to the UI thread; only `Console.Add`, `Addf`, `Writer`,
+  `Settings`, `DiffView`, `Tray`) belong to the UI thread; only `Console.Add`, `Addf`, `Writer`,
   `Progress.Set`, `Progress.Log`, `Waker.Wake`, `PaletteQuery.Context` and
   `Opener` are safe from any goroutine. Workers hand results back through
   the post function the app gives `NewJobs` (MyGo's `Window.Update`), which
@@ -110,8 +110,9 @@ its skills there (core ADR-0026); start a repo-local one from
 - **Tests run headless.** Views are tested with `ui.NewTester`; a test that
   stands in for the UI thread posts to a `frostuitest.Loop`. No test
   needs a display, a network or a real desktop app; `LaunchDesktopApp` is
-  tested against a temporary desktop entry, and `Opener` through its
-  `Launch` and `LaunchFile` fields.
+  tested against a temporary desktop entry, `Opener` through its
+  `Launch` and `LaunchFile` fields, and `Tray` through a fake icon and an
+  injected watcher check.
 - Run `make verify` before you call any change done, and `make ci` before
   you push. CI job `verify` runs `make ci`, which also checks the
   corrections records in `.memory/corrections/` against the PR base: no
@@ -136,8 +137,8 @@ every glob carries a level, and a PR that touches one gets that level label from
 `.github/workflows/risk-paths.yml` (`level:L1` read every line, `level:L2` read
 the diff, `level:L3` skim, `level:L4` title and CI), plus `risk:high` at L1 and
 L2, which declares tier 3. Here go.mod, go.sum, the guards
-(`internal/repocheck/**`, with `api.txt`), `.golangci.yml` and
-`appid_linux.go` are L2, and `.svu.yml` and the tool pins are L1. Add a path
+(`internal/repocheck/**`, with `api.txt`), `.golangci.yml`,
+`appid_linux.go`, `launch_linux.go` and `tray_linux.go` are L2, and `.svu.yml` and the tool pins are L1. Add a path
 when you add a file of that kind (signing, auth, publish, secrets,
 destructive operations, CI, native code). The `why` of an L1 or L2 entry
 starts with 1 category of core's

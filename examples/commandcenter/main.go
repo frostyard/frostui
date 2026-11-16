@@ -4,15 +4,23 @@
 // all" queues one job per folder; the jobs run one at a time and write
 // their progress to the rail, the status bar and the console. Nothing
 // talks to a server: a folder's sync waits a moment and makes up a count.
+// A tray icon carries the status bar's text, a dot after a failed sync, and
+// Open, "Sync all accounts" and Quit; with "Close to the tray" on in the
+// settings, closing the window hides it while a panel shows the icon.
 //
 //	go run ./examples/commandcenter
 package main
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"image"
+	"image/color"
+	"image/png"
 	"log"
+	"math"
 	"sync"
 	"time"
 
@@ -42,6 +50,16 @@ func main() {
 			Content:       ui.View(d.view),
 		})
 		p.attach(win)
+		tray, err := frostui.NewTray(frostui.TrayOptions{
+			ID: "commandcenter", ToolTip: "Command center", OpenLabel: "Open Command center",
+			Icon: trayIcon(), Window: win, Items: d.trayItems(),
+		})
+		if err != nil {
+			log.Printf("commandcenter: no tray icon: %v", err)
+			return
+		}
+		d.tray = tray
+		win.OnClose(func(e *mygo.CloseEvent) { tray.CloseToTray(e, d.closeToTray) })
 	})
 	if err := mygo.App.Run(); err != nil {
 		log.Fatal(err)
@@ -104,6 +122,50 @@ func (p *poster) attach(w *mygo.Window) {
 	for _, fn := range pending {
 		w.Update(fn)
 	}
+}
+
+// trayIcon draws the example's mark for the tray: the six-armed star of
+// logoSVG in the brand's blue, 32 pixels square, smoothed by 4 by 4
+// samples a pixel. A tray icon is a PNG in color (frostui.TrayOptions).
+func trayIcon() []byte {
+	const size, samples = 32, 4
+	img := image.NewNRGBA(image.Rect(0, 0, size, size))
+	for y := range size {
+		for x := range size {
+			in := 0
+			for sy := range samples {
+				for sx := range samples {
+					px := float64(x) + (float64(sx)+0.5)/samples - size/2
+					py := float64(y) + (float64(sy)+0.5)/samples - size/2
+					if onStar(px, py) {
+						in++
+					}
+				}
+			}
+			if in > 0 {
+				img.SetNRGBA(x, y, color.NRGBA{R: 0x47, G: 0xb8, B: 0xef, A: uint8(255 * in / (samples * samples))})
+			}
+		}
+	}
+	var b bytes.Buffer
+	if err := png.Encode(&b, img); err != nil {
+		panic(err) // an NRGBA image in memory always encodes
+	}
+	return b.Bytes()
+}
+
+// onStar reports whether a point, from the icon's center, is on one of
+// the star's three arms: bars 28 long and 4 wide at 90, 30 and 150 degrees.
+func onStar(x, y float64) bool {
+	for _, deg := range []float64{90, 30, 150} {
+		a := deg * math.Pi / 180
+		along := x*math.Cos(a) + y*math.Sin(a)
+		across := -x*math.Sin(a) + y*math.Cos(a)
+		if math.Abs(along) <= 14 && math.Abs(across) <= 2 {
+			return true
+		}
+	}
+	return false
 }
 
 // logoSVG is the example's mark, a six-armed star, drawn in the text color.
