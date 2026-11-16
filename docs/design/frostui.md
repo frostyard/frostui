@@ -1,6 +1,6 @@
 # frostui: frostyard's desktop UI kit
 
-Living document. Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md), [ADR-0006](../adr/0006-a-frame-without-the-rail.md), [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md), [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md), [ADR-0009](../adr/0009-the-top-bars-end-belongs-to-the-window.md), [ADR-0010](../adr/0010-keep-only-a-mailto-links-addressees-subject-and-body.md).
+Living document. Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md), [ADR-0006](../adr/0006-a-frame-without-the-rail.md), [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md), [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md), [ADR-0009](../adr/0009-the-top-bars-end-belongs-to-the-window.md), [ADR-0010](../adr/0010-keep-only-a-mailto-links-addressees-subject-and-body.md), [ADR-0012](../adr/0012-one-tray-component-with-a-close-to-tray-check-the-app-switches.md).
 Contracts: [spec: API stability](../specs/api-stability.md).
 Built in: [roadmap](../plans/roadmap.md), [the Frostyard look](../plans/frostyard-look.md).
 
@@ -483,6 +483,62 @@ roots are the app's own directories. The policy is
 and the mailto rule
 [ADR-0010](../adr/0010-keep-only-a-mailto-links-addressees-subject-and-body.md).
 
+### Tray
+
+`tray.go`, `tray_linux.go`, `tray_other.go`
+([ADR-0012](../adr/0012-one-tray-component-with-a-close-to-tray-check-the-app-switches.md)):
+`Tray` is an icon in the notification area or menu bar over MyGo's
+`mygo.NewTray`, with 1 menu shape for every app. It belongs to the UI
+thread: `NewTray(TrayOptions)` runs in `mygo.App.WhenReady`, after the
+window exists, and fails when `Window` is nil, the icon is not a PNG, or the
+platform has no tray (on Linux MyGo needs `libayatana-appindicator3`).
+
+- **Menu.** From the top: the status line (`SetStatus`), disabled, and a
+  separator, while there is a status; Open (`OpenLabel`, "Open" when
+  empty), which shows and focuses `Window`; the app's `TrayItem`s
+  (`SetItems`; each `Click` runs on the UI thread); a separator; Quit
+  (MyGo's `RoleQuit`, which runs `App.Quit` and takes the platform's label).
+  IDs that start with `frostui.tray.` are the kit's.
+- **Clicks.** The menu is always set. Linux (the panel draws an
+  AppIndicator menu) and macOS open it on a click; the panel's activation
+  (GNOME: a double click; KDE Plasma: a click) and a Windows click show
+  and focus `Window`; a Windows right click opens the menu.
+- **Tooltip.** `ToolTip`, then " — " and the status line. GNOME shows no
+  tooltip, so the status line carries what the tooltip says.
+- **Dot.** `SetDot(true)` sets a copy of the icon with a disc of the
+  Frostyard dark theme's Danger (`#e07a72`) in its top right corner,
+  about 2 fifths of the icon wide, cut out of the icon by a clear ring;
+  `SetDot(false)` sets the icon again. The copy is drawn once, in
+  `NewTray`. The dot is never the only cue: say its meaning in the status
+  line.
+- **Close to tray.** The app keeps its setting and its own `OnClose`, and
+  calls `CloseToTray(e, enabled)` there. It prevents the close and hides
+  the window only when `enabled`, the event is for `Window`, no quit runs
+  (the tray follows `App.OnBeforeQuit` and `App.OnQuitCanceled`, so the
+  menu's Quit, `App.Quit` and SIGTERM on Linux close the window), the tray
+  is not destroyed, and `TrayHosted` reports true. Else it reports false
+  and the close goes on as without a tray. frostyard's apps offer close to
+  tray as an opt-in setting, off by default, so a close quits as before
+  until the user turns it on; the kit takes the setting at each close. The
+  kit does nothing at login: the tray shows while the app runs. The app
+  shows a hidden window again in `App.OnSecondInstance`.
+- **`TrayHosted`.** On Linux, whether `org.kde.StatusNotifierWatcher` has
+  an owner on the session bus (`NameHasOwner` through GIO, 0.5 seconds at
+  most), false when the bus cannot be asked: GNOME has no watcher without
+  the AppIndicator extension, and MyGo's tray then shows nothing with no
+  error. `CloseToTray` asks at each close, as a panel can go and come back.
+  Elsewhere it reports true.
+- **`Destroy`** removes the icon and the quit listeners; `CloseToTray`
+  reports false after it, and later calls do nothing.
+
+A tray keeps nothing alive by itself, and the menu shape is fixed: an app
+that needs another shape calls `mygo.NewTray` itself. A Flatpak app also
+bundles the AppIndicator libraries, which the GNOME runtime lacks, and
+needs `--talk-name=org.kde.StatusNotifierWatcher`, without which the
+sandbox's bus answers that the watcher has no owner. `examples/commandcenter`
+shows a tray with a status, a dot after a failed sync, an item, and a
+"Close to the tray" setting.
+
 ### Theming
 
 The kit draws frostyard's brand, in two themes of its own
@@ -599,7 +655,7 @@ every name the kit draws is mapped (`TestKitDrawsOnlyMappedIcons`).
 
 ### Platforms
 
-Four functions have a Linux part and a fallback
+Five functions have a Linux part and a fallback
 ([ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md)).
 Each exported function sits in an untagged file and calls a lower-case
 function from `*_linux.go` or `*_other.go` (`//go:build !linux`):
@@ -610,6 +666,7 @@ function from `*_linux.go` or `*_other.go` (`//go:build !linux`):
 | `DesktopIconTheme` (`icons*.go`) | as above | "" |
 | `NewIcons` (`icons*.go`) | embedded icons, the theme directories, then the kit's set | embedded icons, then the kit's set |
 | `LaunchDesktopApp` (`launch*.go`) | GIO resolves and launches the desktop ID, without waiting for the application; stdout and stderr go to `/dev/null` | an error wrapping `errors.ErrUnsupported` |
+| `TrayHosted` (`tray*.go`) | GIO asks the session bus whether `org.kde.StatusNotifierWatcher` has an owner; false when it cannot ask | true |
 
 Only the first `SetAppID` call counts, on every system. On Linux, call it
 before `mygo.App.Run`: `App.Run` names the program after its executable
@@ -629,7 +686,7 @@ no display, up to `gtk_init_check`, and check that the name holds.
   else (`TestModuleRequiresOnlyMyGoAndPurego`).
 - **No app code.** A helper that is about one app stays in that app; one
   that any app could use (a pill, a row, a status, a dialog) belongs here.
-- **Threads.** Views and every model belong to the UI thread, except
+- **Threads.** Views and every model (a `Tray` too) belong to the UI thread, except
   `Console.Add`/`Addf`/`Writer`, `Progress.Set`/`Log` and `Waker.Wake`,
   which any goroutine may call. Apps hand work back with MyGo's
   `Window.Update`. It rebuilds the view on every call, so wake the window
@@ -663,7 +720,7 @@ no display, up to `gtk_init_check`, and check that the name holds.
   dialogs and the shell; `components_test.go` and `widgets_test.go` the
   pieces; `commandtable_test.go`, `editors_test.go` (MyGo's real rich text
   and code editors), `palette_sources_test.go`, `sourcelist_test.go`,
-  `settings_test.go` and `opener_test.go` the shared pieces; `*_linux_test.go` the freedesktop parts (`LaunchDesktopApp`
+  `settings_test.go`, `opener_test.go` and `tray_test.go` (the menu shape, the close table, the dot) the shared pieces; `*_linux_test.go` the freedesktop parts (`LaunchDesktopApp`
   against a temporary desktop entry); `*_other_test.go` the fallbacks,
   which run under `make test-wasm`. `frostuitest.Loop` stands in for the UI
   thread: workers `Post` from any goroutine and the test runs what they
@@ -713,6 +770,12 @@ ChairLift's examples (Homebrew taps, firmware, bootc deployments); and
 `Pipeline`'s list is named "Pipeline" instead of "Update run".
 
 ## API changes
+
+2026-11-15: additive `Tray`, `TrayOptions`, `TrayItem`, `NewTray`,
+`TrayHosted`: a tray icon with Open, app items and Quit, a status line, a
+dot and a close-to-tray check (`SetStatus`, `SetDot`, `SetItems`,
+`CloseToTray(e, enabled)`, `Destroy`). No signature change elsewhere
+([ADR-0012](../adr/0012-one-tray-component-with-a-close-to-tray-check-the-app-switches.md)).
 
 2026-11-14: additive `PrimaryButton(c, label)`: MyGo's `ui.PrimaryButton`
 with a text label on the brand gradient and `OnGradient` text, the face of
@@ -784,6 +847,6 @@ nothing; an app that filtered mailto links itself can drop its copy.
 
 ## References
 
-- Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md), [ADR-0006](../adr/0006-a-frame-without-the-rail.md), [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md), [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md), [ADR-0009](../adr/0009-the-top-bars-end-belongs-to-the-window.md), [ADR-0010](../adr/0010-keep-only-a-mailto-links-addressees-subject-and-body.md)
+- Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md), [ADR-0006](../adr/0006-a-frame-without-the-rail.md), [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md), [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md), [ADR-0009](../adr/0009-the-top-bars-end-belongs-to-the-window.md), [ADR-0010](../adr/0010-keep-only-a-mailto-links-addressees-subject-and-body.md), [ADR-0012](../adr/0012-one-tray-component-with-a-close-to-tray-check-the-app-switches.md)
 - Contracts: [spec: API stability](../specs/api-stability.md)
-- Built in: [roadmap — Phase 1](../plans/roadmap.md#phase-1--extract-the-kit-done), [Phase 5](../plans/roadmap.md#phase-5--the-frame-and-the-layout-done), [Phase 6](../plans/roadmap.md#phase-6--commands-navigation-and-settings-for-v020-medium), [Phase 7](../plans/roadmap.md#phase-7--native-diff-viewer)
+- Built in: [roadmap — Phase 1](../plans/roadmap.md#phase-1--extract-the-kit-done), [Phase 5](../plans/roadmap.md#phase-5--the-frame-and-the-layout-done), [Phase 6](../plans/roadmap.md#phase-6--commands-navigation-and-settings-for-v020-medium), [Phase 7](../plans/roadmap.md#phase-7--native-diff-viewer), [Phase 8](../plans/roadmap.md#phase-8--tray-icon-small)

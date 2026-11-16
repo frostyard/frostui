@@ -15,15 +15,15 @@ frostui is a Go module that gives desktop apps on [MyGo](https://github.com/egoi
 
 | Package | What it gives you |
 | --- | --- |
-| `frostui` | The shell (top bar with a command palette, rail, console and status bar), a frame without the rail for apps made of panes, a serial job queue, a command table behind keys, menus and the palette, a source list, a settings layout, an allow-listed opener, dialogs, cards, rows, charts, a native unified diff viewer, the desktop's icons (with an embedded set), and frostyard's look: the Frostyard and Frostyard light themes, set in Inter. |
+| `frostui` | The shell (top bar with a command palette, rail, console and status bar), a frame without the rail for apps made of panes, a serial job queue, a command table behind keys, menus and the palette, a source list, a settings layout, an allow-listed opener, a tray icon with a close-to-tray check, dialogs, cards, rows, charts, a native unified diff viewer, the desktop's icons (with an embedded set), and frostyard's look: the Frostyard and Frostyard light themes, set in Inter. |
 | `frostuitest` | A stand-in for the UI thread, so tests run what workers post without a window. |
 
-It builds without CGO for Linux, Windows and macOS on amd64 and arm64, and for js/wasm. The freedesktop parts (app ID, icon theme, launching desktop apps) work on Linux and fall back elsewhere.
+It builds without CGO for Linux, Windows and macOS on amd64 and arm64, and for js/wasm. The freedesktop parts (app ID, icon theme, launching desktop apps, whether a panel hosts the tray icon) work on Linux and fall back elsewhere.
 
 ## Requirements
 
 - Go 1.27.
-- At run time, what MyGo needs: GTK 3, libepoxy and Pango on Linux.
+- At run time, what MyGo needs: GTK 3, libepoxy and Pango on Linux, and `libayatana-appindicator3` for a tray icon.
 - For the tests: Pango and cairo, and no display.
 
 ## Install

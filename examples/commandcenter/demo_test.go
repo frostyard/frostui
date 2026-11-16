@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"image/png"
@@ -167,5 +168,65 @@ func TestStopAtTheFirstFailureDropsTheRest(t *testing.T) {
 	loop.RunUntil(t, func() bool { return !d.jobs.Busy() })
 	if s := frostui.RunSummary(d.lastRun); s != "1 failed · 2 canceled" {
 		t.Errorf("run = %q, want the failure and the two folders after it canceled", s)
+	}
+}
+
+// recordTray records what the example sets on its tray icon.
+type recordTray struct {
+	status string
+	dot    bool
+}
+
+func (r *recordTray) SetStatus(line string) { r.status = line }
+func (r *recordTray) SetDot(on bool)        { r.dot = on }
+
+// TestTheTrayFollowsTheSync checks what the tray icon shows: the status
+// bar's text, and a dot once a sync ended with a failure.
+func TestTheTrayFollowsTheSync(t *testing.T) {
+	loop := frostuitest.NewLoop()
+	d := newDemo(loop.Post, fakeFetch("", nil))
+	rec := &recordTray{}
+	d.tray = rec
+	tt := ui.NewTester(d.view, 1280, 800)
+	if rec.status != "Idle" || rec.dot {
+		t.Errorf("before a sync: status %q, dot %v; want Idle and no dot", rec.status, rec.dot)
+	}
+	items := d.trayItems()
+	if len(items) != 1 || items[0].Label != "Sync all accounts" {
+		t.Fatalf("tray items = %+v, want Sync all accounts", items)
+	}
+	items[0].Click()
+	loop.RunUntil(t, func() bool { return !d.jobs.Busy() })
+	tt.Frame()
+	if want := "Last sync: " + frostui.RunSummary(d.lastRun); rec.status != want || !rec.dot {
+		t.Errorf("after a failed sync: status %q, dot %v; want %q and a dot", rec.status, rec.dot, want)
+	}
+	if err := tt.Click("Settings"); err != nil {
+		t.Fatal(err)
+	}
+	sw, ok := tt.AccessByRole(ui.RoleSwitch, "Close to the tray")
+	if !ok || sw.Checked {
+		t.Fatalf("Close to the tray switch = %+v, %v; want it shown and off", sw, ok)
+	}
+	tt.ClickAt(sw.Bounds.X+sw.Bounds.W/2, sw.Bounds.Y+sw.Bounds.H/2)
+	if !d.closeToTray {
+		t.Error("the Close to the tray switch did not turn the setting on")
+	}
+}
+
+// TestTrayIconIsASquarePNG checks the example's tray icon.
+func TestTrayIconIsASquarePNG(t *testing.T) {
+	img, err := png.Decode(bytes.NewReader(trayIcon()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if b := img.Bounds(); b.Dx() != 32 || b.Dy() != 32 {
+		t.Errorf("tray icon is %v, want 32 by 32", b)
+	}
+	if _, _, _, a := img.At(16, 16).RGBA(); a == 0 {
+		t.Error("the star's center is clear")
+	}
+	if _, _, _, a := img.At(0, 0).RGBA(); a != 0 {
+		t.Error("the icon's corner is not clear")
 	}
 }

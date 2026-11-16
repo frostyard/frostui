@@ -37,9 +37,21 @@ type demo struct {
 	lastRun []*frostui.Job
 
 	openConsoleOnError, stopOnFailure bool
+	// closeToTray is the example's close-to-tray setting, off until the
+	// user turns it on (frostui.Tray.CloseToTray).
+	closeToTray bool
 
 	fetch fetchFunc
 	quit  func()
+	// tray is the tray icon, nil where the platform has none.
+	tray trayStatus
+}
+
+// trayStatus is what the example sets on its tray icon: a *frostui.Tray in
+// the program, a recorder in the tests.
+type trayStatus interface {
+	SetStatus(line string)
+	SetDot(on bool)
 }
 
 // pages are the rail's pages, in order, with the Alt+number that opens
@@ -125,6 +137,7 @@ func (d *demo) job(a *account, folder string) *frostui.Job {
 }
 
 func (d *demo) view(c *ui.Context) {
+	d.updateTray()
 	for i, key := range pageKeys {
 		id := pages[i].ID
 		c.OnWindowShortcut(ui.Alt, key, func() { d.shell.Selected = id })
@@ -165,6 +178,33 @@ func (d *demo) nav() []frostui.NavItem {
 		items[1].Badge, items[1].BadgeTone = fmt.Sprint(never), frostui.Accent
 	}
 	return items
+}
+
+// trayItems are the app's entries of the tray menu, between Open and Quit.
+func (d *demo) trayItems() []frostui.TrayItem {
+	return []frostui.TrayItem{{ID: "sync", Label: "Sync all accounts", Click: func() { d.sync(d.accounts...) }}}
+}
+
+// updateTray gives the tray icon the status bar's text and a dot while
+// the last sync has failures. The Tray changes nothing when neither
+// changed, so this runs at every build pass.
+func (d *demo) updateTray() {
+	if d.tray == nil {
+		return
+	}
+	d.tray.SetStatus(d.status()[0].Text)
+	d.tray.SetDot(d.failed() > 0 && !d.jobs.Busy())
+}
+
+// failed counts the folders that failed in the last run.
+func (d *demo) failed() int {
+	n := 0
+	for _, j := range d.lastRun {
+		if j.State == frostui.JobFailed {
+			n++
+		}
+	}
+	return n
 }
 
 func (d *demo) actions(c *ui.Context) {
@@ -264,12 +304,7 @@ func (d *demo) overviewPage(c *ui.Context) {
 			d.sync(d.accounts...)
 		}
 	})
-	failed := 0
-	for _, j := range d.lastRun {
-		if j.State == frostui.JobFailed {
-			failed++
-		}
-	}
+	failed := d.failed()
 	if failed > 0 && !d.jobs.Busy() {
 		if acted, _ := frostui.Banner(c, frostui.Warning, "dialog-warning",
 			fmt.Sprintf("%d folders failed to sync. The console has the error.", failed), "Open the console", false); acted {
@@ -364,5 +399,7 @@ func (d *demo) settingsPage(c *ui.Context) {
 		frostui.SwitchRow(c.Key("console"), "Open the console on a failure", "", &d.openConsoleOnError)
 		frostui.RowDivider(c)
 		frostui.SwitchRow(c.Key("stop"), "Stop at the first failure", "Drop the folders that wait when one fails", &d.stopOnFailure)
+		frostui.RowDivider(c)
+		frostui.SwitchRow(c.Key("tray"), "Close to the tray", "Off: closing the window quits. On: it hides while a panel shows the tray icon", &d.closeToTray)
 	})
 }

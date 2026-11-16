@@ -78,6 +78,11 @@
       "why": "auth: which desktop app the kit starts; native code that loads GIO with purego and calls it by symbol"
     },
     {
+      "glob": "tray_linux.go",
+      "level": "L2",
+      "why": "auth: the session-bus query whose answer decides whether a close hides the window or quits; native code that loads GIO with purego and calls it by symbol"
+    },
+    {
       "glob": ".svu.yml",
       "level": "L1",
       "why": "publication: the version rule for release tags (make bump)"
