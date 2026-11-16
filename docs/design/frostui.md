@@ -523,8 +523,11 @@ platform has no tray (on Linux MyGo needs `libayatana-appindicator3`).
   kit does nothing at login: the tray shows while the app runs. The app
   shows a hidden window again in `App.OnSecondInstance`.
 - **`TrayHosted`.** On Linux, whether `org.kde.StatusNotifierWatcher` has
-  an owner on the session bus (`NameHasOwner` through GIO, 0.5 seconds at
-  most), false when the bus cannot be asked: GNOME has no watcher without
+  an owner on the session bus (`NameHasOwner` through GIO), false when the
+  bus cannot be asked or gives no answer within 0.5 seconds. The query runs
+  on a goroutine, so the deadline covers the connection to the bus too; a
+  query that outlives it goes on, and the next checks wait on it rather
+  than start more: GNOME has no watcher without
   the AppIndicator extension, and MyGo's tray then shows nothing with no
   error. `CloseToTray` asks at each close, as a panel can go and come back.
   Elsewhere it reports true.

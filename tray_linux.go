@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 	"unsafe"
 
 	"github.com/ebitengine/purego"
@@ -13,13 +14,58 @@ import (
 // a panel owns while it can show AppIndicator icons.
 const trayWatcherName = "org.kde.StatusNotifierWatcher"
 
-// trayNameHasOwner asks the session bus whether a name has an owner. A
-// test replaces it.
-var trayNameHasOwner = gioNameHasOwner
+// trayHostedWait is the longest trayHosted waits for an answer.
+const trayHostedWait = 500 * time.Millisecond
 
+// trayNameHasOwner asks the session bus whether a name has an owner, and
+// trayDeadline starts the wait of 1 trayHosted call. A test replaces
+// them.
+var (
+	trayNameHasOwner = gioNameHasOwner
+	trayDeadline     = func() <-chan time.Time { return time.After(trayHostedWait) }
+)
+
+// trayQuery is 1 watcher query: done closes once owned and err are set.
+type trayQuery struct {
+	done  chan struct{}
+	owned bool
+	err   error
+}
+
+// trayInFlight is the query that runs, nil when none does.
+var trayInFlight struct {
+	mu sync.Mutex
+	q  *trayQuery
+}
+
+// trayHosted asks for the watcher on a goroutine and waits for the answer
+// until trayDeadline fires, then reports false. GIO's own timeout covers
+// only the call, not the connection to the bus before it, which can
+// stall: the deadline holds for both. A query that outlives its deadline
+// goes on, and the calls after it wait on that same query, so a stalled
+// bus never piles queries up.
 func trayHosted() bool {
-	owned, err := trayNameHasOwner(trayWatcherName)
-	return err == nil && owned
+	trayInFlight.mu.Lock()
+	q := trayInFlight.q
+	if q == nil {
+		q = &trayQuery{done: make(chan struct{})}
+		trayInFlight.q = q
+		ask := trayNameHasOwner
+		go func() {
+			q.owned, q.err = ask(trayWatcherName)
+			trayInFlight.mu.Lock()
+			trayInFlight.q = nil
+			trayInFlight.mu.Unlock()
+			close(q.done)
+		}()
+	}
+	trayInFlight.mu.Unlock()
+	select {
+	case <-q.done:
+		return q.err == nil && q.owned
+	case <-trayDeadline():
+		return false
+	}
 }
 
 var busGIO struct {
