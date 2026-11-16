@@ -1,0 +1,7 @@
+{
+  "date": "2026-11-15",
+  "scope": "tray_linux.go",
+  "correction": "A GIO D-Bus call's timeout covers only the call, not g_bus_get_sync's connection and authentication before it. A check that the UI thread waits on runs the query on a goroutine under 1 deadline for both, reports false when the deadline fires, and keeps 1 query in flight so a stalled bus does not pile queries up.",
+  "evidence": "frostyard/frostui#43, cross-review (openai/gpt-6.1-sol) of head b8365a384c7a50458ea1ff1aabc06e38e789f296, finding 1",
+  "promoted_to": "tray_linux_test.go (TestTrayHostedGivesUpAtTheDeadline)"
+}

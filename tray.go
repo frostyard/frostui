@@ -320,7 +320,10 @@ func clamp01(v float64) float64 { return math.Min(1, math.Max(0, v)) }
 // it asks the session bus whether org.kde.StatusNotifierWatcher has an
 // owner: GNOME has none without the AppIndicator extension, and MyGo's
 // tray then shows nothing and reports no error. It reports false when
-// the bus cannot be asked. Elsewhere it reports true. It blocks for a
-// D-Bus round trip at most half a second on Linux; call it on the UI
-// thread only where that is acceptable, as at a close.
+// the bus cannot be asked or does not answer within half a second.
+// Elsewhere it reports true. On Linux it waits for a D-Bus round trip,
+// and for the connection to the bus on the first call, half a second at
+// most: a query that takes longer goes on in the background, and the
+// calls after it wait on that same query. Call it on the UI thread only
+// where that wait is acceptable, as at a close.
 func TrayHosted() bool { return trayHosted() }

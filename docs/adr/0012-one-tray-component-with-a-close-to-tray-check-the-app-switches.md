@@ -60,8 +60,11 @@ The kit has **one tray component**, `Tray` (`tray.go`), made by
   nothing at login.
 - **The watcher check at each close.** `TrayHosted` asks the session bus
   `NameHasOwner("org.kde.StatusNotifierWatcher")` through GIO with purego
-  (`tray_linux.go`, as `launch_linux.go` loads GIO), with a 0.5 second
-  timeout, and reports false when the bus cannot be asked. It is asked at
+  (`tray_linux.go`, as `launch_linux.go` loads GIO), and reports false
+  when the bus cannot be asked or gives no answer within 0.5 seconds. The
+  query runs on a goroutine, so the deadline covers the connection to the
+  bus as well as the call; a query that outlives it goes on, and the next
+  checks wait on that same query rather than start more. It is asked at
   each close, not once, because the panel or its extension can go and come
   back while the app runs. Off Linux it reports true (`tray_other.go`).
 
@@ -72,7 +75,7 @@ The kit has **one tray component**, `Tray` (`tray.go`), made by
 - The close rule fails safe: no panel, no setting, a quit, or a bus that does
   not answer, and the window closes as it did before the tray.
 - A close on Linux with the setting on waits for 1 D-Bus round trip on the UI
-  thread, at most 0.5 seconds when the bus does not answer.
+  thread, at most 0.5 seconds when the bus or the connection to it stalls.
 - The menu shape is fixed: an app that needs submenus, check items or another
   order uses `mygo.NewTray` itself, or the kit grows the shape in a new
   additive change.
