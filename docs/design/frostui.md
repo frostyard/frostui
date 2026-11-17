@@ -1,6 +1,6 @@
 # frostui: frostyard's desktop UI kit
 
-Living document. Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md), [ADR-0006](../adr/0006-a-frame-without-the-rail.md), [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md), [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md), [ADR-0009](../adr/0009-the-top-bars-end-belongs-to-the-window.md), [ADR-0010](../adr/0010-keep-only-a-mailto-links-addressees-subject-and-body.md), [ADR-0012](../adr/0012-one-tray-component-with-a-close-to-tray-check-the-app-switches.md).
+Living document. Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md), [ADR-0006](../adr/0006-a-frame-without-the-rail.md), [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md), [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md), [ADR-0009](../adr/0009-the-top-bars-end-belongs-to-the-window.md), [ADR-0010](../adr/0010-keep-only-a-mailto-links-addressees-subject-and-body.md), [ADR-0012](../adr/0012-one-tray-component-with-a-close-to-tray-check-the-app-switches.md), [ADR-0013](../adr/0013-hold-text-to-7-to-1-under-high-contrast.md).
 Contracts: [spec: API stability](../specs/api-stability.md).
 Built in: [roadmap](../plans/roadmap.md), [the Frostyard look](../plans/frostyard-look.md).
 
@@ -546,19 +546,28 @@ shows a tray with a status, a dot after a failed sync, an item, and a
 
 The kit draws frostyard's brand, in two themes of its own
 ([ADR-0011](../adr/0011-draw-the-frostyard-brand-in-a-dark-and-a-light-theme.md),
+[ADR-0013](../adr/0013-hold-text-to-7-to-1-under-high-contrast.md),
 [spec](../specs/frostyard-theme.md)): **Frostyard**, near-black blue inks
 with a sky accent, and **Frostyard light**, an ice ground with the brand's
 ink as text and a deep sky accent. `Adapt` runs first in every frame
 (`Shell.View` and `PaneShell.View` call it; MyGo resets the theme at each
 build pass): it takes Frostyard when MyGo picked a dark theme for the
 desktop and Frostyard light otherwise, applies the desktop's preferences
-without the accent (high contrast and text size apply, the accent stays
-the brand's, also in windows without the focus), and sets it. A theme that
+without the accent (text size applies, the accent stays the brand's, also
+in windows without the focus), and sets it. A theme that
 is already Frostyard is kept, so an app with its own light or dark setting
 sets `FrostyardTheme(dark).WithPreferences(p)` itself before the shell
 draws. The first `Adapt` registers the embedded Inter (`fonts/`, OFL-1.1)
 under `FontFamily`; a text system that cannot add fonts draws in its
 default family.
+
+With the desktop's high contrast on, MyGo's own mix falls short of 7:1
+(WCAG 2 AAA) for several text pairs, so `Adapt` then sets the kit's own
+high-contrast values over the brand's theme and over a Frostyard theme an
+app set itself: another `Text` and `TextMuted`, another accent with its
+hover and pressed faces, `InactiveAccent` and `Focus` on the accent, the
+three tones, the light theme's `Label` and the gradient's end. Without
+high contrast nothing changes.
 
 `ui.Theme` has no field for several of the kit's roles, so `ThemeColors`
 holds them: `Chrome` for the bars, rail, console and source lists, `Panel`
@@ -567,7 +576,9 @@ and its gradient (`PanelFrom`, `PanelTo`) for cards, `SelectedFill` and
 gradient and `OnGradient`, `Label`, `TagText`, `Code`, `LineStrong`, and a
 fill and a line per tone. `ColorsOf(t)` finds them by the theme's `Dark`
 and `Background`, which neither the desktop's preferences nor
-`SoftSelection` change, so the kit's functions keep taking only the theme.
+`SoftSelection` change, and by its `Text`, which tells the kit's
+high-contrast colors from the brand's, so the kit's functions keep taking
+only the theme.
 For any other theme (MyGo's own, or an app's) it derives what the kit drew
 before: `Chrome` and `Panel` mixed from `Background` toward `Surface`, tone
 fills at 16%. `Chrome(t)`, `Panel(t)`, `ToneFill` and `ToneLine` read it;
@@ -579,8 +590,11 @@ Text styles (`Title`, `Heading`, `Strong`, `Body`, `Muted`, `Caption`,
 scale them with the theme's `FontSize` through `TextSize`, so the desktop's
 text size reaches them. `Title` is tightly spaced, as the brand's; `Label`
 is the brand's uppercase monospace label. `frostyard_test.go` holds every
-text pair of both themes, with and without high contrast, to 4.5:1 and the
-focus ring to 3:1.
+text pair of both themes to 4.5:1 without high contrast, and to 7:1 (WCAG 2
+AAA) with the kit's high contrast, and the focus ring to 3:1
+([ADR-0013](../adr/0013-hold-text-to-7-to-1-under-high-contrast.md));
+`TestSpecListsHighContrastRatios` holds the spec's ratio table to the
+values the kit sets.
 
 The components are drawn in the brand
 ([the Frostyard look, phase 2](../plans/frostyard-look.md#phase-2--components-in-the-brand-done)),
@@ -774,6 +788,15 @@ ChairLift's examples (Homebrew taps, firmware, bootc deployments); and
 
 ## API changes
 
+2026-11-16: no signature change, but under the desktop's high contrast
+`Adapt` now sets the kit's high-contrast values in both themes: `Text`,
+`TextMuted`, the accent with its hover and pressed faces, `InactiveAccent`,
+`Focus`, the three tones, the light theme's `Label` and the gradient's end.
+It does so over a Frostyard theme an app set itself too, and `ColorsOf`
+returns the high-contrast `ThemeColors` for such a theme. Without high
+contrast nothing changes (frostyard/frostui#32,
+[ADR-0013](../adr/0013-hold-text-to-7-to-1-under-high-contrast.md)).
+
 2026-11-15: additive `Tray`, `TrayOptions`, `TrayItem`, `NewTray`,
 `TrayHosted`: a tray icon with Open, app items and Quit, a status line, a
 dot and a close-to-tray check (`SetStatus`, `SetDot`, `SetItems`,
@@ -850,6 +873,6 @@ nothing; an app that filtered mailto links itself can drop its copy.
 
 ## References
 
-- Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md), [ADR-0006](../adr/0006-a-frame-without-the-rail.md), [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md), [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md), [ADR-0009](../adr/0009-the-top-bars-end-belongs-to-the-window.md), [ADR-0010](../adr/0010-keep-only-a-mailto-links-addressees-subject-and-body.md), [ADR-0012](../adr/0012-one-tray-component-with-a-close-to-tray-check-the-app-switches.md)
+- Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md), [ADR-0006](../adr/0006-a-frame-without-the-rail.md), [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md), [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md), [ADR-0009](../adr/0009-the-top-bars-end-belongs-to-the-window.md), [ADR-0010](../adr/0010-keep-only-a-mailto-links-addressees-subject-and-body.md), [ADR-0012](../adr/0012-one-tray-component-with-a-close-to-tray-check-the-app-switches.md), [ADR-0013](../adr/0013-hold-text-to-7-to-1-under-high-contrast.md)
 - Contracts: [spec: API stability](../specs/api-stability.md)
 - Built in: [roadmap — Phase 1](../plans/roadmap.md#phase-1--extract-the-kit-done), [Phase 5](../plans/roadmap.md#phase-5--the-frame-and-the-layout-done), [Phase 6](../plans/roadmap.md#phase-6--commands-navigation-and-settings-for-v020-medium), [Phase 7](../plans/roadmap.md#phase-7--native-diff-viewer), [Phase 8](../plans/roadmap.md#phase-8--tray-icon-small)

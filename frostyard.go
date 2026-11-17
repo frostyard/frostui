@@ -5,6 +5,9 @@ import "github.com/egoist/mygo/ui"
 // The kit's look is frostyard's brand, in a dark theme (Frostyard) and a
 // light one (Frostyard light): ADR-0011. docs/specs/frostyard-theme.md
 // lists every value below, and frostyard_test.go measures their contrast.
+// Under the desktop's high contrast the kit adds a set of its own on top of
+// MyGo's mix, so that every text pair holds 7:1: ADR-0013
+// (frostyard/frostui#32).
 
 // ThemeColors holds the colors of the kit's roles that ui.Theme has no field
 // for. ColorsOf returns the one that goes with a theme.
@@ -51,9 +54,10 @@ func clampTone(tone Tone) Tone {
 
 // FrostyardTheme returns the kit's dark theme (Frostyard) or its light one
 // (Frostyard light), before the desktop's preferences. Adapt sets the one
-// the desktop asks for each frame; an app with its own light or dark
-// setting passes its choice here, then the desktop's preferences without
-// the accent:
+// the desktop asks for each frame, and gives it the kit's high-contrast
+// values when the desktop asks for high contrast. An app with its own light
+// or dark setting passes its choice here, then the desktop's preferences
+// without the accent:
 //
 //	p := c.Preferences()
 //	p.Accent = ui.Color{}
@@ -181,15 +185,91 @@ var (
 
 // frostyardColors returns the colors of a Frostyard theme, found by its
 // background, which neither the desktop's preferences nor a scope that
-// recolors the accent (SoftSelection) changes.
+// recolors the accent (SoftSelection) changes, and by its text: a theme
+// with the kit's high-contrast text takes the high-contrast colors
+// (ADR-0013).
 func frostyardColors(t *ui.Theme) (ThemeColors, bool) {
 	switch {
 	case t.Dark && t.Background == ui.Hex("#06111d"):
+		if frostyardHigh(t) {
+			return frostyardDarkHigh.colors, true
+		}
 		return frostyardDark, true
 	case !t.Dark && t.Background == ui.Hex("#f5f9fc"):
+		if frostyardHigh(t) {
+			return frostyardLightHigh.colors, true
+		}
 		return frostyardLight, true
 	}
 	return ThemeColors{}, false
+}
+
+// frostyardHighSet is what the kit changes under the desktop's high
+// contrast: the fields of ui.Theme that differ from the brand's, and the
+// theme colors that go with them. MyGo's own mix leaves several text pairs
+// under 7:1, so the kit sets its own values
+// (frostyard/frostui#32, ADR-0013, docs/specs/frostyard-theme.md).
+type frostyardHighSet struct {
+	text, textMuted                    ui.Color
+	accent, accentHover, accentPressed ui.Color
+	success, warning, danger           ui.Color
+	colors                             ThemeColors
+}
+
+var (
+	frostyardDarkHigh  = frostyardHighValues(true)
+	frostyardLightHigh = frostyardHighValues(false)
+)
+
+// frostyardHighValues builds the high-contrast set of Frostyard (dark) or
+// Frostyard light: the brand's values with the fields that need more
+// contrast replaced.
+func frostyardHighValues(dark bool) frostyardHighSet {
+	if dark {
+		h := frostyardHighSet{colors: frostyardDark}
+		h.text, h.textMuted = ui.Hex("#ffffff"), ui.Hex("#cce0ec")
+		// The dark accent's faces keep the brand's steps: 20% toward the
+		// text for a hover, 10% of the background for a press.
+		h.accent, h.accentHover, h.accentPressed = ui.Hex("#71c8f3"), ui.Hex("#8dd3f5"), ui.Hex("#66b6de")
+		h.success, h.warning, h.danger = ui.Hex("#7edafa"), ui.Hex("#e0b15c"), ui.Hex("#e89e98")
+		h.colors.GradientTo = ui.Hex("#3baae3")
+		return h
+	}
+	h := frostyardHighSet{colors: frostyardLight}
+	h.text, h.textMuted = ui.Hex("#000000"), ui.Hex("#283d4c")
+	h.accent, h.accentHover, h.accentPressed = ui.Hex("#08517b"), ui.Hex("#074569"), ui.Hex("#063956")
+	h.success, h.warning, h.danger = ui.Hex("#065465"), ui.Hex("#704300"), ui.Hex("#862621")
+	h.colors.Label, h.colors.GradientTo = ui.Hex("#2f5266"), ui.Hex("#3baae3")
+	return h
+}
+
+// frostyardHigh reports whether t carries the kit's high-contrast values.
+// Its text tells: neither the desktop's preferences nor SoftSelection
+// change it, and the brand has no text color like it in either theme.
+func frostyardHigh(t *ui.Theme) bool {
+	if t.Dark {
+		return t.Text == frostyardDarkHigh.text
+	}
+	return t.Text == frostyardLightHigh.text
+}
+
+// frostyardHighContrast returns a copy of the Frostyard theme t with the
+// kit's high-contrast values set, and t itself for any other theme. Every
+// field it does not name stays as t has it, the desktop's text size too.
+func frostyardHighContrast(t *ui.Theme) *ui.Theme {
+	if _, ok := frostyardColors(t); !ok {
+		return t
+	}
+	h := frostyardLightHigh
+	if t.Dark {
+		h = frostyardDarkHigh
+	}
+	u := *t
+	u.Text, u.TextMuted = h.text, h.textMuted
+	u.Accent, u.AccentHover, u.AccentPressed = h.accent, h.accentHover, h.accentPressed
+	u.InactiveAccent, u.Focus = h.accent, h.accent
+	u.Success, u.Warning, u.Danger = h.success, h.warning, h.danger
+	return &u
 }
 
 // ColorsOf returns the theme colors that go with t: the Frostyard colors of
