@@ -566,8 +566,10 @@ With the desktop's high contrast on, MyGo's own mix falls short of 7:1
 high-contrast values over the brand's theme and over a Frostyard theme an
 app set itself: another `Text` and `TextMuted`, another accent with its
 hover and pressed faces, `InactiveAccent` and `Focus` on the accent, the
-three tones, the light theme's `Label` and the gradient's end. Without
-high contrast nothing changes.
+brand's `AccentText` and `Selection`, the three tones, the light theme's
+`Label` and the gradient's end. It keeps a Frostyard theme only when every
+one of those fields already holds its value. Without high contrast nothing
+changes.
 
 `ui.Theme` has no field for several of the kit's roles, so `ThemeColors`
 holds them: `Chrome` for the bars, rail, console and source lists, `Panel`
@@ -791,7 +793,8 @@ ChairLift's examples (Homebrew taps, firmware, bootc deployments); and
 2026-11-16: no signature change, but under the desktop's high contrast
 `Adapt` now sets the kit's high-contrast values in both themes: `Text`,
 `TextMuted`, the accent with its hover and pressed faces, `InactiveAccent`,
-`Focus`, the three tones, the light theme's `Label` and the gradient's end.
+`Focus`, the brand's `AccentText` and `Selection`, the three tones, the
+light theme's `Label` and the gradient's end.
 It does so over a Frostyard theme an app set itself too, and `ColorsOf`
 returns the high-contrast `ThemeColors` for such a theme. Without high
 contrast nothing changes (frostyard/frostui#32,

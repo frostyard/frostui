@@ -340,6 +340,43 @@ func TestAdaptAppliesHighContrast(t *testing.T) {
 	}
 }
 
+// TestAdaptCompletesPartialHighContrast gives the kit's high-contrast
+// values to a Frostyard theme that has only some of them: an app set the
+// high-contrast text itself, or a later WithPreferences changed the
+// accent. Every text pair then holds 7:1 (frostyard/frostui#45 review).
+func TestAdaptCompletesPartialHighContrast(t *testing.T) {
+	p := ui.Preferences{HighContrast: true}
+	for _, dark := range []bool{true, false} {
+		brand := FrostyardTheme(dark)
+		if h := frostyardHighContrast(brand); h.AccentText != brand.AccentText || h.Selection != brand.Selection {
+			t.Errorf("dark=%v: high contrast sets accent text %v and selection %v, not the brand's %v and %v",
+				dark, h.AccentText, h.Selection, brand.AccentText, brand.Selection)
+		}
+		marked := FrostyardTheme(dark).WithPreferences(p)
+		marked.Text = frostyardHighContrast(marked).Text
+		recolored := frostyardHighContrast(FrostyardTheme(dark).WithPreferences(p)).
+			WithPreferences(ui.Preferences{HighContrast: true, Accent: ui.Hex("#e01b24")})
+		for _, tc := range []struct {
+			name  string
+			theme *ui.Theme
+		}{{"only the text", marked}, {"a recolored accent", recolored}} {
+			if frostyardHighComplete(tc.theme) {
+				t.Fatalf("dark=%v, %s: the setup already has every high-contrast value", dark, tc.name)
+			}
+			var got *ui.Theme
+			tt := ui.NewTesterWith(func(c *ui.Context) {
+				c.SetTheme(tc.theme)
+				got = Adapt(c)
+			}, 400, 200, ui.TesterOptions{Dark: dark, Preferences: p})
+			tt.Frame()
+			if got == nil || !frostyardHighComplete(got) {
+				t.Fatalf("dark=%v, %s: Adapt left %+v", dark, tc.name, got)
+			}
+			checkContrast(t, fmt.Sprintf("dark=%v, %s", dark, tc.name), frostyardPairs(got), 7)
+		}
+	}
+}
+
 // TestSpecListsHighContrastRatios keeps the ratio table of
 // docs/specs/frostyard-theme.md in step with the kit's colors: the spec
 // holds the table this builds, character for character. Its failure prints

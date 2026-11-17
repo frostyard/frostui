@@ -1,0 +1,7 @@
+{
+  "date": "2026-11-16",
+  "scope": "theme.go",
+  "correction": "A marker field tells which colors a theme has, but it does not prove that every field of the set holds its value. Before Adapt keeps a Frostyard theme under high contrast, it checks every ui.Theme field that the kit's high-contrast set gives (text, accent faces, accent text, selection, tones); a theme with only the marker text, or with an accent that a later WithPreferences changed, gets the whole set again.",
+  "evidence": "frostyard/frostui#45, cross-review (openai/gpt-6.1-sol) of head 7b1724a0fc6bfc14947f140061dd653ce22c9a7d, finding 1",
+  "promoted_to": "frostyard_test.go (TestAdaptCompletesPartialHighContrast)"
+}

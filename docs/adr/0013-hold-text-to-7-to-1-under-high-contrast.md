@@ -28,11 +28,13 @@ every pair already holds without it. The kit cannot reach 7:1 by changing
 
 - Under the desktop's high contrast, the kit applies its own values after
   MyGo's mix, in `Adapt`: `Text`, `TextMuted`, the accent and its hover and
-  pressed faces, `InactiveAccent`, `Focus`, the three tones, and two
+  pressed faces, `InactiveAccent`, `Focus`, the brand's `AccentText` and
+  `Selection` (which a desktop accent would change), the three tones, and two
   `ThemeColors` fields, the label in Frostyard light and the gradient's end
   in both themes. The spec lists them.
 - `Adapt` also applies them over a Frostyard theme an app set itself, as
-  the Pocket client does.
+  the Pocket client does, unless every one of them already holds its
+  value: the high-contrast `Text` alone does not prove the rest.
 - `ColorsOf` still finds a Frostyard theme by its `Dark` and `Background`,
   and tells the high-contrast theme colors by the theme's `Text`, which
   neither the desktop's preferences nor `SoftSelection` change; `ToneFill`,
