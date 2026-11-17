@@ -73,7 +73,7 @@ func Adapt(c *ui.Context) *ui.Theme {
 	t := c.Theme()
 	p := c.Preferences()
 	if _, ok := frostyardColors(t); ok {
-		if !p.HighContrast || frostyardHigh(t) {
+		if !p.HighContrast || frostyardHighComplete(t) {
 			return t
 		}
 		ht := frostyardHighContrast(t)

@@ -89,15 +89,22 @@ mix, so `Adapt` sets the kit's own values over it
 | `Success` | `#7edafa` (the brand's) | `#065465` |
 | `Warning` | `#e0b15c` (the brand's) | `#704300` |
 | `Danger` | `#e89e98` | `#862621` |
+| `AccentText` | `#02131f` (the brand's) | `#ffffff` (the brand's) |
+| `Selection` | `rgba(71,184,239,0.35)` (the brand's) | `rgba(11,110,166,0.25)` (the brand's) |
 | `ColorsOf(t).GradientTo` | `#3baae3` | `#3baae3` |
 | `ColorsOf(t).Label` | `#82b6d0` (the brand's) | `#2f5266` |
 
 Every other field keeps what the brand's theme has, or what the desktop's
 mix gives it: `Background`, `Surface`, `SurfaceHover`, `SurfacePressed`,
-`Border`, `Selection`, `Scrollbar`, `AccentText`, the `ThemeColors`'
+`Border`, `Scrollbar`, the `ThemeColors`'
 `Chrome`, `Panel`, both `Panel` ends, `SelectedFill`, `SelectedText`,
 `HoverText`, `GradientFrom`, `OnGradient`, `TagText`, `Code`, `LineStrong`,
 the fills and the lines.
+
+`Adapt` keeps a Frostyard theme under high contrast only when every
+`ui.Theme` field of the table holds its value; else it sets them all
+again, for example after an app set only `Text`, or after a later
+`WithPreferences` with an accent of its own.
 
 Measured in both themes, the ratio of every pair of the list below:
 

@@ -212,6 +212,7 @@ func frostyardColors(t *ui.Theme) (ThemeColors, bool) {
 type frostyardHighSet struct {
 	text, textMuted                    ui.Color
 	accent, accentHover, accentPressed ui.Color
+	accentText, selection              ui.Color
 	success, warning, danger           ui.Color
 	colors                             ThemeColors
 }
@@ -228,10 +229,11 @@ func frostyardHighValues(dark bool) frostyardHighSet {
 	if dark {
 		h := frostyardHighSet{colors: frostyardDark}
 		h.text, h.textMuted = ui.Hex("#ffffff"), ui.Hex("#cce0ec")
-		// The dark accent's faces keep the brand's steps: 20% toward the
-		// text for a hover, 10% of the background for a press.
+		// The hover goes 20% toward the text, as the brand's; the press goes
+		// 10% toward the background, not 20%, so the accent text holds 7:1.
 		h.accent, h.accentHover, h.accentPressed = ui.Hex("#71c8f3"), ui.Hex("#8dd3f5"), ui.Hex("#66b6de")
 		h.success, h.warning, h.danger = ui.Hex("#7edafa"), ui.Hex("#e0b15c"), ui.Hex("#e89e98")
+		h.accentText, h.selection = ui.Hex("#02131f"), ui.RGBA(71, 184, 239, 0.35)
 		h.colors.GradientTo = ui.Hex("#3baae3")
 		return h
 	}
@@ -239,6 +241,7 @@ func frostyardHighValues(dark bool) frostyardHighSet {
 	h.text, h.textMuted = ui.Hex("#000000"), ui.Hex("#283d4c")
 	h.accent, h.accentHover, h.accentPressed = ui.Hex("#08517b"), ui.Hex("#074569"), ui.Hex("#063956")
 	h.success, h.warning, h.danger = ui.Hex("#065465"), ui.Hex("#704300"), ui.Hex("#862621")
+	h.accentText, h.selection = ui.Hex("#ffffff"), ui.RGBA(11, 110, 166, 0.25)
 	h.colors.Label, h.colors.GradientTo = ui.Hex("#2f5266"), ui.Hex("#3baae3")
 	return h
 }
@@ -251,6 +254,22 @@ func frostyardHigh(t *ui.Theme) bool {
 		return t.Text == frostyardDarkHigh.text
 	}
 	return t.Text == frostyardLightHigh.text
+}
+
+// frostyardHighComplete reports whether every field frostyardHighContrast
+// sets holds the kit's high-contrast value in t. The text alone does not
+// tell: an app can set it, or a later WithPreferences can change the
+// accent, and Adapt must then set the rest.
+func frostyardHighComplete(t *ui.Theme) bool {
+	h := frostyardLightHigh
+	if t.Dark {
+		h = frostyardDarkHigh
+	}
+	return t.Text == h.text && t.TextMuted == h.textMuted &&
+		t.Accent == h.accent && t.AccentHover == h.accentHover && t.AccentPressed == h.accentPressed &&
+		t.InactiveAccent == h.accent && t.Focus == h.accent &&
+		t.AccentText == h.accentText && t.Selection == h.selection &&
+		t.Success == h.success && t.Warning == h.warning && t.Danger == h.danger
 }
 
 // frostyardHighContrast returns a copy of the Frostyard theme t with the
@@ -268,6 +287,7 @@ func frostyardHighContrast(t *ui.Theme) *ui.Theme {
 	u.Text, u.TextMuted = h.text, h.textMuted
 	u.Accent, u.AccentHover, u.AccentPressed = h.accent, h.accentHover, h.accentPressed
 	u.InactiveAccent, u.Focus = h.accent, h.accent
+	u.AccentText, u.Selection = h.accentText, h.selection
 	u.Success, u.Warning, u.Danger = h.success, h.warning, h.danger
 	return &u
 }
