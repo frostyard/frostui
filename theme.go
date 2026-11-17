@@ -61,19 +61,30 @@ func ToneFill(t *ui.Theme, tone Tone) ui.Color { return ColorsOf(t).Fill(tone) }
 // MyGo picked a dark theme for the desktop, Frostyard light otherwise
 // (ADR-0011). The desktop's high contrast and text size still apply, but
 // not its accent: the accent is the brand's, and it stays in windows
-// without the focus. A theme that is already Frostyard (an app chose one
-// itself, or Adapt ran earlier in the frame) is kept. MyGo resets the theme
-// at each build pass, so call it first in the root view; Shell.View and
-// PaneShell.View do. The first call registers the kit's font.
+// without the focus. With high contrast the kit adds its own values, so
+// that every text pair holds 7:1, also over a Frostyard theme an app set
+// itself (ADR-0013, frostyard/frostui#32). A theme that is already
+// Frostyard (an app chose one itself, or Adapt ran earlier in the frame)
+// is kept. MyGo resets the theme at each build pass, so call it first in
+// the root view; Shell.View and PaneShell.View do. The first call
+// registers the kit's font.
 func Adapt(c *ui.Context) *ui.Theme {
 	registerInter()
 	t := c.Theme()
-	if _, ok := frostyardColors(t); ok {
-		return t
-	}
 	p := c.Preferences()
+	if _, ok := frostyardColors(t); ok {
+		if !p.HighContrast || frostyardHigh(t) {
+			return t
+		}
+		ht := frostyardHighContrast(t)
+		c.SetTheme(ht)
+		return ht
+	}
 	p.Accent = ui.Color{}
 	ft := FrostyardTheme(t.Dark).WithPreferences(p)
+	if p.HighContrast {
+		ft = frostyardHighContrast(ft)
+	}
 	c.SetTheme(ft)
 	return ft
 }

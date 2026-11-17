@@ -25,6 +25,7 @@ Docs are split by the question they answer:
 - [0010 — Keep only a mailto link's addressees, subject and body](adr/0010-keep-only-a-mailto-links-addressees-subject-and-body.md)
 - [0011 — Draw the frostyard brand, in a dark and a light theme](adr/0011-draw-the-frostyard-brand-in-a-dark-and-a-light-theme.md)
 - [0012 — One tray component, with a close-to-tray check the app switches](adr/0012-one-tray-component-with-a-close-to-tray-check-the-app-switches.md)
+- [0013 — Hold text to 7:1 under the desktop's high contrast](adr/0013-hold-text-to-7-to-1-under-high-contrast.md)
 
 ### Org-wide decisions
 

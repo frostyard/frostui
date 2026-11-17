@@ -169,8 +169,12 @@ rather than the kit's sizes.
 
 - Refresh the apps' README screenshots and store listings (Flathub,
   Homebrew) once phases 3 to 5 ship.
-- A high-contrast pass beyond MyGo's mix, if the measured high-contrast
-  values in the spec fall short of 7:1 for text.
+- High contrast, done: measured, MyGo's mix alone left several text pairs
+  between 4.65:1 and 6.90:1, so the kit applies its own high-contrast
+  values in `Adapt`, over a Frostyard theme an app set itself too, and every
+  text pair of both themes now holds 7:1 with them (frostyard/frostui#32,
+  [ADR-0013](../adr/0013-hold-text-to-7-to-1-under-high-contrast.md),
+  [spec: high contrast](../specs/frostyard-theme.md#high-contrast)).
 - A tooltip on a `SourceSection` header: Frostmail's Follow Up header lost
   the one that explained its rule when it became a source-list section.
 - A kit primary button for code that calls MyGo's `ui.PrimaryButton`
@@ -206,4 +210,4 @@ rather than the kit's sizes.
   [design: console](../design/frostui.md#console)
 - Builds on: [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md),
   [roadmap](roadmap.md)
-- Fixes: frostyard/frostui#15, frostyard/frostui#16
+- Fixes: frostyard/frostui#15, frostyard/frostui#16, frostyard/frostui#32
