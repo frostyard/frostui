@@ -36,6 +36,10 @@ type demo struct {
 	settings frostui.Settings
 	table    *frostui.CommandTable
 	editor   ui.Handle
+	opener   frostui.Opener
+
+	linkPending bool
+	linkStatus  string
 
 	folders []*folder
 	notes   []*note
@@ -206,6 +210,9 @@ func (d *demo) setUpCommands() {
 		frostui.Command{ID: "commands", Title: "Commands", Group: "Go to", Unlisted: true,
 			Bindings: []frostui.KeyBinding{{Mods: ui.Cmd, Key: ui.KeyP, Scope: frostui.Everywhere}},
 			Run:      func() { d.palette.ShowSource(frostui.PaletteCommands) }},
+		frostui.Command{ID: "open-example-link", Title: "Open Example Link", Group: "App",
+			Enabled: func() (bool, string) { return !d.linkPending, "A link is still opening" },
+			Run:     func() { d.openLink("https://example.org") }},
 		frostui.Command{ID: "settings", Title: "Settings", Group: "App", Icon: "preferences-system",
 			Bindings: []frostui.KeyBinding{{Mods: ui.Cmd, Key: ui.KeyComma, Scope: frostui.Everywhere}},
 			Run:      func() { d.settings.Show("") }},
@@ -214,6 +221,27 @@ func (d *demo) setUpCommands() {
 			Run:      func() { d.info.Show("Keyboard shortcuts", frostui.ShortcutsBody(d.table.Shortcuts())) }},
 	)
 	d.table.Editing = func(c *ui.Context) bool { return c.FocusWithin(d.editor) }
+}
+
+// openLink opens raw on a worker and keeps its status on the UI thread.
+func (d *demo) openLink(raw string) {
+	if d.linkPending {
+		return
+	}
+	d.linkPending = true
+	d.linkStatus = "Opening " + raw + "…"
+	opener, post := d.opener, d.post
+	go func() {
+		err := opener.OpenURL(raw)
+		post(func() {
+			d.linkPending = false
+			if err != nil {
+				d.linkStatus = fmt.Sprintf("Could not open %s: %v", raw, err)
+				return
+			}
+			d.linkStatus = "Sent " + raw + " to the system handler"
+		})
+	}()
 }
 
 // noteSource finds notes by title on a worker, and posts them back.
@@ -275,6 +303,9 @@ func (d *demo) view(c *ui.Context) {
 			ui.Box(c).Width(1).Background(t.Border)
 			d.page(c)
 		})
+		if d.linkStatus != "" {
+			frostui.Caption(c, d.linkStatus).Padding(frostui.SpaceS, frostui.SpaceL)
+		}
 	})
 	d.info.View(c)
 	d.settings.Dialog(c, "Settings", d.settingsPages())
@@ -293,7 +324,7 @@ func (d *demo) bar(c *ui.Context, t *ui.Theme) {
 		}
 		ui.Spacer(c)
 		ui.MenuButton(c, "", func(m *ui.Menu) {
-			d.table.Menu("new", "", "switcher", "settings", "shortcuts")(m)
+			d.table.Menu("new", "", "switcher", "open-example-link", "settings", "shortcuts")(m)
 			m.Submenu("Note", d.table.Menu("rename", "pin"))
 		}).Label("Main menu").Tooltip("Main menu").Children(func() { frostui.Icon(c, "open-menu") })
 	})

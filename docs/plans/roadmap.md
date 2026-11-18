@@ -8,8 +8,10 @@ Since then, two more apps import the module: the Firn GUI installer
 (the `gui/` module of frostyard/firn) and the Pocket client
 (frostyard/pocket).
 
-Each phase's evidence was checked on 2026-11-12, against frostui's
-`main` at 14ef2d6 (tag v0.6.0) and the apps' `main` branches. A phase is
+Unless a phase gives a later evidence date, its evidence was checked on
+2026-11-12, against frostui's `main` at 14ef2d6 (tag v0.6.0) and the apps'
+`main` branches. Phase 6's example, API evidence and `make ci` gate were
+checked on 2026-11-17. A phase is
 marked done only when every part of its "Done when" holds by evidence that
 was checked; a part that does not hold, or that nobody checked, keeps the
 phase open, and its state paragraph says which part.
@@ -92,7 +94,7 @@ on branch `feat/frame-panes`.
 `examples/threepane` uses `PaneShell` with its `Panes`, `Connection`,
 `ActionToast`, `NewWaker` and the embedded icons (`NewIcons`, `SetIcons`).
 
-## Phase 6 — Commands, navigation and settings for v0.2.0 (medium)
+## Phase 6 — Commands, navigation and settings for v0.2.0 (medium, done)
 
 - The second half: a command table, palette sources, a source list, a settings layout and
   an allow-listed opener, for Frostmail's and Frostnotes' desktop apps
@@ -107,13 +109,31 @@ on branch `feat/frame-panes`.
 **Done when:** `examples/sourcelist` draws them all, `make ci` passes, and
 `api.txt` only gains lines against v0.1.0.
 
-**State:** open: `examples/sourcelist` does not use the `Opener`. The rest
-holds. frostyard/frostui#5 merged with the `verify` check (`make ci`)
-green, and tag v0.2.0 is its merge (a51e185). There, `examples/sourcelist`
-draws the `CommandTable`, the palette sources, the `SourceList` and the
-`Settings` pages. `opener_test.go` tests the `Opener`, which draws
-nothing, but no example opens a link or a file through it. From v0.1.0 to
-v0.2.0, `api.txt` gains 230 lines and loses none.
+**Evidence:** checked on 2026-11-17, on branch `ghanima/5000fd7c` from
+`main` at 95083df: the
+[source-list example](../../examples/sourcelist/demo.go) now includes
+**Open Example Link** in the main menu and palette. It calls
+`Opener.OpenURL("https://example.org")` on a worker, keeps pending state
+on the UI thread, guards duplicate opens and posts the persistent result
+back ([design](../design/frostui.md#source-list)). The
+[deterministic headless tests](../../examples/sourcelist/demo_test.go)
+inject `Opener.Launch` and use `frostuitest.Loop` and channels. They cover
+main-menu success, palette discovery, empty/JavaScript/hostless HTTPS
+refusals without launch, launch errors, duplicate guards, command
+enablement, and New Note while launch blocks. They also check that a
+completed worker leaves the UI pending until its post runs.
+`env -u DISPLAY -u WAYLAND_DISPLAY CGO_ENABLED=0 go test ./examples/sourcelist`
+passed. `mise exec go@1.27.4 -- make ci BASE=origin/main` passed, including
+headless tests, js/wasm tests, the race detector and all cross-build targets.
+
+Historical evidence remains: frostyard/frostui#5 merged with the `verify`
+check (`make ci`) green, and tag v0.2.0 is its merge (a51e185). There,
+`examples/sourcelist` draws the `CommandTable`, the palette sources, the
+`SourceList` and the `Settings` pages. The independently checked
+`git diff --numstat v0.1.0 v0.2.0 -- internal/repocheck/testdata/api.txt`
+reports 230 additions and 0 deletions. That confirms the additive API
+condition for the v0.2.0 API. This example change leaves the library API
+and opener policy unchanged.
 
 ## Phase 7 — Native diff viewer
 
