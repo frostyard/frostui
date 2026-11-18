@@ -68,6 +68,18 @@ func main() {
 
 [examples/commandcenter](examples/commandcenter) adds the palette, the console, the job queue and the status bar: `go run ./examples/commandcenter`. [examples/threepane](examples/threepane) is a window of panes with no rail: `go run ./examples/threepane`. [examples/sourcelist](examples/sourcelist) shows a source list, a command table, a lazy palette source and a settings dialog: `go run ./examples/sourcelist`.
 
+The source-list example also has **Open Example Link** in its main menu
+and command palette, with no new key binding. Its
+[command and helper](examples/sourcelist/demo.go) call
+[`Opener.OpenURL`](docs/design/frostui.md#opener) for `https://example.org`
+on a worker. The UI thread shows pending status and disables duplicate
+opens until it applies the worker's posted result. The result stays
+visible, with the URL and any launch error; no status appears before
+invocation.
+The [headless tests](examples/sourcelist/demo_test.go) inject `Opener.Launch`
+and use `frostuitest.Loop` to check refusals, results and a responsive UI
+without a browser or network.
+
 ## Develop
 
 ```sh

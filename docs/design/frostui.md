@@ -432,6 +432,28 @@ drops, and a header's whole title opens and closes it.
 
 The picture is `examples/sourcelist` drawn by its snapshot test.
 
+The [example's command table and helper](../../examples/sourcelist/demo.go)
+add **Open Example Link** to the main menu and palette, without a key
+binding. It opens `https://example.org` through [`Opener`](#opener) on a
+worker. The helper snapshots the opener, URL and post function before the
+worker starts. Pending state and status text belong to the UI thread.
+While pending, the command is disabled and the helper guards duplicate
+opens. Completion posts through the
+[example's `Window.Update` adapter](../../examples/sourcelist/main.go),
+then clears pending state and sets persistent success or error text.
+The text includes the URL and any launch error. Nothing appears before
+invocation, so the initial snapshot stays unchanged.
+
+The [headless tests](../../examples/sourcelist/demo_test.go) inject
+`Opener.Launch` and use [`frostuitest.Loop`](../../frostuitest/loop.go).
+Channels synchronize a blocked launch without sleeps or desktop access.
+The tests check main-menu success, palette discovery, refused URLs,
+launch errors, duplicate guards and command enablement. They also check
+that New Note works while launch blocks, and that completion changes no
+UI state until its post runs. This adopts the existing
+[Opener contract](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md)
+and completes the example portion of [roadmap phase 6](../plans/roadmap.md#phase-6--commands-navigation-and-settings-for-v020-medium-done).
+
 ### Settings layout
 
 `settings.go`: `Settings` draws a list of `SettingsPage`s at the left and the
@@ -454,6 +476,8 @@ message, an attachment) with the system's handlers, through MyGo's
 state and is safe from any goroutine; it waits for the system, so call it
 from a worker. Anything not allowed returns an error wrapping
 `ErrNotAllowed`; `CheckURL` and `CheckFile` answer without opening.
+The [source-list example](#source-list) demonstrates a worker launch with
+UI-thread pending state and a posted result.
 
 - `OpenURL`: the scheme must be in `Schemes` (http, https and mailto by
   default); http and https need a host; spaces and control characters are
@@ -878,4 +902,4 @@ nothing; an app that filtered mailto links itself can drop its copy.
 
 - Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md), [ADR-0006](../adr/0006-a-frame-without-the-rail.md), [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md), [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md), [ADR-0009](../adr/0009-the-top-bars-end-belongs-to-the-window.md), [ADR-0010](../adr/0010-keep-only-a-mailto-links-addressees-subject-and-body.md), [ADR-0012](../adr/0012-one-tray-component-with-a-close-to-tray-check-the-app-switches.md), [ADR-0013](../adr/0013-hold-text-to-7-to-1-under-high-contrast.md)
 - Contracts: [spec: API stability](../specs/api-stability.md)
-- Built in: [roadmap — Phase 1](../plans/roadmap.md#phase-1--extract-the-kit-done), [Phase 5](../plans/roadmap.md#phase-5--the-frame-and-the-layout-done), [Phase 6](../plans/roadmap.md#phase-6--commands-navigation-and-settings-for-v020-medium), [Phase 7](../plans/roadmap.md#phase-7--native-diff-viewer), [Phase 8](../plans/roadmap.md#phase-8--tray-icon-small)
+- Built in: [roadmap — Phase 1](../plans/roadmap.md#phase-1--extract-the-kit-done), [Phase 5](../plans/roadmap.md#phase-5--the-frame-and-the-layout-done), [Phase 6](../plans/roadmap.md#phase-6--commands-navigation-and-settings-for-v020-medium-done), [Phase 7](../plans/roadmap.md#phase-7--native-diff-viewer), [Phase 8](../plans/roadmap.md#phase-8--tray-icon-small)
