@@ -107,7 +107,8 @@ on branch `feat/frame-panes`.
   additive to the API ([spec](../specs/api-stability.md)).
 
 **Done when:** `examples/sourcelist` draws them all, `make ci` passes, and
-`api.txt` only gains lines against v0.1.0.
+the v0.2.0 `api.txt` only gains lines against v0.1.0. Later intentional
+API changes are recorded in the [design's API changes](../design/frostui.md#api-changes).
 
 **Evidence:** checked on 2026-11-17, on branch `ghanima/5000fd7c` from
 `main` at 95083df: the
@@ -115,16 +116,12 @@ on branch `feat/frame-panes`.
 **Open Example Link** in the main menu and palette. It calls
 `Opener.OpenURL("https://example.org")` on a worker, keeps pending state
 on the UI thread, guards duplicate opens and posts the persistent result
-back ([design](../design/frostui.md#source-list)). The
-[deterministic headless tests](../../examples/sourcelist/demo_test.go)
-inject `Opener.Launch` and use `frostuitest.Loop` and channels. They cover
-main-menu success, palette discovery, empty/JavaScript/hostless HTTPS
-refusals without launch, launch errors, duplicate guards, command
-enablement, and New Note while launch blocks. They also check that a
-completed worker leaves the UI pending until its post runs.
+back ([design](../design/frostui.md#source-list)).
 `env -u DISPLAY -u WAYLAND_DISPLAY CGO_ENABLED=0 go test ./examples/sourcelist`
 passed. `mise exec go@1.27.4 -- make ci BASE=origin/main` passed, including
 headless tests, js/wasm tests, the race detector and all cross-build targets.
+For the current rendering and detailed test inventory, see the
+[source-list design](../design/frostui.md#source-list).
 
 Historical evidence remains: frostyard/frostui#5 merged with the `verify`
 check (`make ci`) green, and tag v0.2.0 is its merge (a51e185). There,

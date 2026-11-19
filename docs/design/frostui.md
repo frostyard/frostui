@@ -441,16 +441,28 @@ While pending, the command is disabled and the helper guards duplicate
 opens. Completion posts through the
 [example's `Window.Update` adapter](../../examples/sourcelist/main.go),
 then clears pending state and sets persistent success or error text.
-The text includes the URL and any launch error. Nothing appears before
-invocation, so the initial snapshot stays unchanged.
+The text includes the URL and any launch error. It uses larger,
+normal-color `Body` text instead of smaller, muted `Caption` text to make
+persistent results easier to read. Both [text styles](../../text.go) use
+`ui.Text`'s existing width-based wrapping; this changes the size and color,
+not wrapping support. Nothing appears before invocation, so the initial
+snapshot stays unchanged.
 
 The [headless tests](../../examples/sourcelist/demo_test.go) inject
 `Opener.Launch` and use [`frostuitest.Loop`](../../frostuitest/loop.go).
 Channels synchronize a blocked launch without sleeps or desktop access.
-The tests check main-menu success, palette discovery, refused URLs,
-launch errors, duplicate guards and command enablement. They also check
-that New Note works while launch blocks, and that completion changes no
-UI state until its post runs. This adopts the existing
+The tests check main-menu success, palette discovery, launch errors,
+duplicate guards and command enablement. Empty, JavaScript and hostless
+HTTPS targets are refused without launch; the assertions check the visible
+failure prefix, target and reason, not the full library error format.
+They also check that New Note works while launch blocks, and that
+completion changes no UI state until its post runs.
+`TestExampleLinkLongErrorStaysReadableInNarrowWindow` injects a long launch
+error in a 520×680-DIP window. It compares the status height with an
+independently laid-out multiline `Body` paragraph plus padding, checks
+that the bounds stay inside the viewport, and repeats those checks after
+New Note. This guards body-text readability and persistence, not newly
+introduced wrapping. This adopts the existing
 [Opener contract](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md)
 and completes the example portion of [roadmap phase 6](../plans/roadmap.md#phase-6--commands-navigation-and-settings-for-v020-medium-done).
 
