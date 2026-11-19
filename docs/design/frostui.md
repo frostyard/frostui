@@ -458,11 +458,14 @@ failure prefix, target and reason, not the full library error format.
 They also check that New Note works while launch blocks, and that
 completion changes no UI state until its post runs.
 `TestExampleLinkLongErrorStaysReadableInNarrowWindow` injects a long launch
-error in a 520×680-DIP window. It compares the status height with an
-independently laid-out multiline `Body` paragraph plus padding, checks
-that the bounds stay inside the viewport, and repeats those checks after
-New Note. This guards body-text readability and persistence, not newly
-introduced wrapping. This adopts the existing
+error in a 520×680-DIP window. On native renderer platforms it compares
+the status height with an independently laid-out multiline `Body`
+paragraph plus padding, checks that the bounds stay inside the viewport,
+and repeats those checks after New Note. Under Node, js/wasm uses MyGo's
+stub text engine without wrapping or glyphs; the test checks the full
+status text and its persistence after New Note, but not multiline geometry.
+This guards body-text readability and persistence, not newly introduced
+wrapping. This adopts the existing
 [Opener contract](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md)
 and completes the example portion of [roadmap phase 6](../plans/roadmap.md#phase-6--commands-navigation-and-settings-for-v020-medium-done).
 

@@ -6,6 +6,7 @@ import (
 	"image/png"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -300,29 +301,41 @@ func TestExampleLinkLongErrorStaysReadableInNarrowWindow(t *testing.T) {
 	tt.Frame()
 	want := "Could not open https://example.org: " + cause.Error()
 
-	// Measure ordinary body text independently, at the footer's content
-	// width. Find returns clipped bounds, so matching the full paragraph's
-	// height also checks that no lines were cut off at the window's edge.
-	reference := ui.NewTester(func(c *ui.Context) {
-		frostui.Adapt(c)
-		ui.Column(c).Fill().Padding(0, frostui.SpaceL).AlignItems(ui.Stretch).Children(func() {
-			frostui.Body(c, "One line")
-			frostui.Body(c, want)
-		})
-	}, width, height)
-	single, ok := reference.Find("One line")
-	if !ok {
-		t.Fatal("the body-text reference has no single line")
-	}
-	paragraph, ok := reference.Find(want)
-	if !ok || paragraph.H <= single.H {
-		t.Fatalf("the reference paragraph did not wrap: paragraph=%+v, line=%+v", paragraph, single)
+	// Node's js/wasm Tester uses MyGo's stub text engine: it neither
+	// wraps nor paints glyphs. Check text and persistence there, but keep
+	// the multiline geometry requirement on native renderer platforms.
+	var paragraph ui.Rect
+	if runtime.GOOS == "js" {
+		t.Log("js/wasm under Node has no wrapping text engine; checking text and persistence only")
+	} else {
+		// Measure ordinary body text independently, at the footer's content
+		// width. Find returns clipped bounds, so matching the full paragraph's
+		// height also checks that no lines were cut off at the window's edge.
+		reference := ui.NewTester(func(c *ui.Context) {
+			frostui.Adapt(c)
+			ui.Column(c).Fill().Padding(0, frostui.SpaceL).AlignItems(ui.Stretch).Children(func() {
+				frostui.Body(c, "One line")
+				frostui.Body(c, want)
+			})
+		}, width, height)
+		single, ok := reference.Find("One line")
+		if !ok {
+			t.Fatal("the body-text reference has no single line")
+		}
+		var found bool
+		paragraph, found = reference.Find(want)
+		if !found || paragraph.H <= single.H {
+			t.Fatalf("the reference paragraph did not wrap: paragraph=%+v, line=%+v", paragraph, single)
+		}
 	}
 	checkStatus := func() {
 		t.Helper()
 		bounds, ok := tt.Find(want)
 		if !ok {
 			t.Fatalf("missing persistent launch error in %q", tt.Texts())
+		}
+		if runtime.GOOS == "js" {
+			return
 		}
 		if bounds.H != paragraph.H+2*frostui.SpaceS {
 			t.Errorf("status height = %v, want full multiline body height %v plus padding", bounds.H, paragraph.H)
