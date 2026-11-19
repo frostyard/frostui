@@ -304,7 +304,7 @@ func (d *demo) view(c *ui.Context) {
 			d.page(c)
 		})
 		if d.linkStatus != "" {
-			frostui.Caption(c, d.linkStatus).Padding(frostui.SpaceS, frostui.SpaceL)
+			frostui.Body(c, d.linkStatus).Padding(frostui.SpaceS, frostui.SpaceL)
 		}
 	})
 	d.info.View(c)

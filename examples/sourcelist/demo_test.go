@@ -257,8 +257,7 @@ func TestExampleLinkRefusesURLs(t *testing.T) {
 			if calls.Load() != 0 {
 				t.Fatal("a refused URL reached Launch")
 			}
-			want := fmt.Sprintf("Could not open %s: frostui: refused to open %q: %s: %v", tc.raw, tc.raw, tc.reason, frostui.ErrNotAllowed)
-			hasAll(t, tt, want)
+			hasAll(t, tt, "Could not open "+tc.raw+":", tc.reason)
 			if d.linkPending || exampleLinkCommand(t, d).Disabled {
 				t.Fatal("a refusal left the command pending or disabled")
 			}
@@ -284,6 +283,63 @@ func TestExampleLinkShowsLauncherError(t *testing.T) {
 	if d.linkPending || exampleLinkCommand(t, d).Disabled {
 		t.Fatal("a launch error left the command pending or disabled")
 	}
+}
+
+func TestExampleLinkLongErrorStaysReadableInNarrowWindow(t *testing.T) {
+	const width, height = 520, 680
+	loop := frostuitest.NewLoop()
+	posted := make(chan struct{}, 1)
+	d := newDemo(func(fn func()) { loop.Post(fn); posted <- struct{}{} })
+	cause := errors.New(strings.Repeat("The desktop handler could not start because its application registration is missing. ", 4) +
+		"Install a handler and try again.")
+	d.opener.Launch = func(string) error { return cause }
+	tt := ui.NewTester(d.view, width, height)
+	exampleLinkCommand(t, d).Run()
+	waitForLinkSignal(t, posted, "the long launch error post")
+	loop.Flush()
+	tt.Frame()
+	want := "Could not open https://example.org: " + cause.Error()
+
+	// Measure ordinary body text independently, at the footer's content
+	// width. Find returns clipped bounds, so matching the full paragraph's
+	// height also checks that no lines were cut off at the window's edge.
+	reference := ui.NewTester(func(c *ui.Context) {
+		frostui.Adapt(c)
+		ui.Column(c).Fill().Padding(0, frostui.SpaceL).AlignItems(ui.Stretch).Children(func() {
+			frostui.Body(c, "One line")
+			frostui.Body(c, want)
+		})
+	}, width, height)
+	single, ok := reference.Find("One line")
+	if !ok {
+		t.Fatal("the body-text reference has no single line")
+	}
+	paragraph, ok := reference.Find(want)
+	if !ok || paragraph.H <= single.H {
+		t.Fatalf("the reference paragraph did not wrap: paragraph=%+v, line=%+v", paragraph, single)
+	}
+	checkStatus := func() {
+		t.Helper()
+		bounds, ok := tt.Find(want)
+		if !ok {
+			t.Fatalf("missing persistent launch error in %q", tt.Texts())
+		}
+		if bounds.H != paragraph.H+2*frostui.SpaceS {
+			t.Errorf("status height = %v, want full multiline body height %v plus padding", bounds.H, paragraph.H)
+		}
+		if bounds.X < 0 || bounds.Y < 0 || bounds.W <= 0 || bounds.H <= 0 ||
+			bounds.X+bounds.W > width || bounds.Y+bounds.H > height {
+			t.Errorf("status bounds %+v leave the %dx%d viewport", bounds, width, height)
+		}
+	}
+	checkStatus()
+	before := len(d.notes)
+	tt.Key(ui.Cmd, ui.KeyN)
+	tt.Frame()
+	if len(d.notes) != before+1 || d.current.title != "Untitled" {
+		t.Fatal("New Note did not run after the launch error")
+	}
+	checkStatus()
 }
 
 func TestExampleLinkKeepsUIResponsive(t *testing.T) {

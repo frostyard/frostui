@@ -76,9 +76,8 @@ on a worker. The UI thread shows pending status and disables duplicate
 opens until it applies the worker's posted result. The result stays
 visible, with the URL and any launch error; no status appears before
 invocation.
-The [headless tests](examples/sourcelist/demo_test.go) inject `Opener.Launch`
-and use `frostuitest.Loop` to check refusals, results and a responsive UI
-without a browser or network.
+See the [source-list design and test coverage](docs/design/frostui.md#source-list)
+for the rendering and headless checks.
 
 ## Develop
 
