@@ -145,14 +145,16 @@ func (i *Info) View(c *ui.Context) {
 		return
 	}
 	ui.Modal(c, &i.Open, func() {
-		ui.Column(c).Width(460).Gap(SpaceM).AlignItems(ui.Stretch).Role(ui.RoleDialog).Label(i.title).Children(func() {
-			ui.Row(c).AlignItems(ui.Center).Children(func() {
+		ui.Column(c).Width(460).MaxWidthPercent(100).MinHeight(0).Gap(SpaceM).AlignItems(ui.Stretch).Role(ui.RoleDialog).Label(i.title).Children(func() {
+			ui.Row(c).Shrink(0).AlignItems(ui.Center).Children(func() {
 				ui.Text(c, i.title).FontSize(18).Bold().Grow(1)
 				if IconButton(c, "window-close", "Close").Clicked() {
 					i.Open = false
 				}
 			})
-			i.body(c)
+			ui.Scroll(c).Gap(SpaceM).AlignItems(ui.Stretch).Children(func() {
+				i.body(c)
+			})
 		})
 	})
 }
