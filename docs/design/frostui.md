@@ -264,9 +264,16 @@ when empty).
 `dialogs.go`: `Dialogs.Ask(Confirm{…})` queues confirmations and shows them
 one at a time (a destructive action in the danger color, a `Note` with a
 password icon for administrator authentication). `Info` shows content
-dialogs; `ShortcutsBody` and `AboutBody` build the usual two. `CodeDialog`
-shows text exactly as it is (a report before it is sent) in a scrollable
-monospaced box with Cancel and an action, and holds no state of its own.
+dialogs; `ShortcutsBody` and `AboutBody` build the usual two. A short `Info`
+body keeps its natural, content-sized height. Overflow scrolls inside the
+viewport-bounded dialog, while the header and Close button stay fixed.
+Only the body scrolls; the app's supplied shortcut titles stay unchanged.
+This changes behavior, not public signatures. The
+[headless tests](../../dialogs_info_test.go) check short-body sizing,
+scrolling, resizing, dismissal and focus in both themes, natively and as
+js/wasm. `CodeDialog` shows text exactly as it is (a report before it is
+sent) in a scrollable monospaced box with Cancel and an action, and holds
+no state of its own.
 
 ### Building blocks, rows and visualizations
 
@@ -828,6 +835,12 @@ ChairLift's examples (Homebrew taps, firmware, bootc deployments); and
 `Pipeline`'s list is named "Pipeline" instead of "Update run".
 
 ## API changes
+
+2026-11-19: no signature change. `Info` keeps short bodies content-sized
+and scrolls overflow within the viewport bounds. The header and Close
+button stay fixed above the scrolling body. This fixes content that was
+unreachable in long dialogs; it does not change app-supplied shortcut
+titles. See [Dialogs](#dialogs).
 
 2026-11-16: no signature change, but under the desktop's high contrast
 `Adapt` now sets the kit's high-contrast values in both themes: `Text`,
