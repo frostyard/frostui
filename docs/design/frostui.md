@@ -264,16 +264,34 @@ when empty).
 `dialogs.go`: `Dialogs.Ask(Confirm{…})` queues confirmations and shows them
 one at a time (a destructive action in the danger color, a `Note` with a
 password icon for administrator authentication). `Info` shows content
-dialogs; `ShortcutsBody` and `AboutBody` build the usual two. A short `Info`
-body keeps its natural, content-sized height. Overflow scrolls inside the
-viewport-bounded dialog, while the header and Close button stay fixed.
-Only the body scrolls; the app's supplied shortcut titles stay unchanged.
-This changes behavior, not public signatures. The
-[headless tests](../../dialogs_info_test.go) check short-body sizing,
+dialogs; `ShortcutsBody` and `AboutBody` build the usual two. The dialog
+stacks a fixed header row (title and Close button) above a vertical scroll
+container. The body callback's direct children stack vertically with
+`SpaceM` gaps and stretch across the available width if they have no width
+of their own. Short bodies keep their content height; when the body
+exceeds the available height, only the body scrolls.
+
+Prefer content-sized children, or set an explicit height for a child
+that needs one. MyGo v0.10.0 measures and lays out the scroll content
+without a bounded height. `Grow` on a direct child does not fill the
+visible body: there is no finite leftover height to distribute.
+`HeightPercent` on a direct child has no height to resolve against, so
+it falls back to normal sizing rather than taking a share of the visible
+body. A nested layout with its own definite height can size its children
+within that height.
+
+The [headless tests](../../dialogs_info_test.go) check short-body sizing,
 scrolling, resizing, dismissal and focus in both themes, natively and as
-js/wasm. `CodeDialog` shows text exactly as it is (a report before it is
-sent) in a scrollable monospaced box with Cancel and an action, and holds
-no state of its own.
+js/wasm. At 240×480 DIPs in the native Tester, the long header title
+wraps beside Close, which stays in the viewport and dismisses the dialog.
+The narrow-header check does not assert a line count or run under Node's
+non-wrapping text stub. A [narrow, short viewport can lose the body scroll
+area](https://github.com/frostyard/frostui/issues/53) when the wrapped header
+takes all the available height.
+
+`CodeDialog` shows text exactly as it is (a report before it is sent) in
+a scrollable monospaced box with Cancel and an action, and holds no state
+of its own.
 
 ### Building blocks, rows and visualizations
 

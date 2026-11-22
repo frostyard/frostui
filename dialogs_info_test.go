@@ -3,6 +3,7 @@ package frostui
 import (
 	"fmt"
 	"math"
+	"runtime"
 	"testing"
 
 	"github.com/egoist/mygo/ui"
@@ -115,6 +116,7 @@ func TestInfoLongBodyScrollsAndResizes(t *testing.T) {
 					second := infoVisible(t, tt, entries[1].Title, width, height)
 					key := infoVisible(t, tt, entries[0].Keys[1], width, height)
 					group := infoVisible(t, tt, entries[0].Group, width, height)
+					// MyGo v0.10.0 Find retains fully clipped labels with zero height.
 					last, ok := tt.Find(entries[len(entries)-1].Title)
 					if !ok || last.H != 0 {
 						t.Fatalf("long body's last row must initially be clipped: found=%v, bounds=%+v", ok, last)
@@ -221,5 +223,20 @@ func TestInfoDismissalAndFocus(t *testing.T) {
 				}
 			})
 		}
+	}
+}
+
+func TestInfoCloseWithLongTitleInNarrowViewport(t *testing.T) {
+	if runtime.GOOS == "js" {
+		t.Skip("Node's MyGo text stub does not wrap titles; narrow-header geometry needs a native text renderer")
+	}
+	const width, height = 240, 480
+	const title = "Keyboard shortcuts for navigating between windows, switching workspaces, and managing open documents"
+	var info Info
+	info.Show(title, func(c *ui.Context) { ui.Text(c, "Dialog body") })
+	tt := ui.NewTester(func(c *ui.Context) { Adapt(c); info.View(c) }, width, height)
+	infoVisible(t, tt, "Close", width, height)
+	if err := tt.Click("Close"); err != nil || info.Open {
+		t.Fatalf("Close with a long title: err=%v, open=%v", err, info.Open)
 	}
 }
