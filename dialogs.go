@@ -127,7 +127,14 @@ func CodeDialog(c *ui.Context, title, summary, text, action string) (acted, canc
 }
 
 // Info is a dialog that only shows content and closes: About, keyboard
-// shortcuts, help.
+// shortcuts, help. The body stacks its children vertically below the fixed
+// title and Close button. Short bodies take their content height; only the
+// body scrolls when it exceeds the available space.
+//
+// Use content-sized children, or give a child an explicit height if it needs
+// one. The scroll container lays out its direct children without a bounded
+// height, so Grow does not fill the visible body and percentage heights do
+// not resolve against it.
 type Info struct {
 	Open  bool
 	title string
