@@ -24,6 +24,12 @@ its natural height when it fits and scrolls when it overflows. Close stays
 fixed above the body, and a long wrapped title can scroll separately so it
 doesn't crowd out the body in a short window.
 
+`QuietIconButton(c, icon, label)` is an icon-only action with no resting
+fill or border, and visible hover, press and keyboard-focus treatments.
+Pass a nonempty label for its accessible name and tooltip; chain dimensions,
+`Disabled`, `Clicked` or `OnClick` as on `IconButton`. `IconButton` keeps
+its ghost hairline. See the [component design](docs/design/frostui.md#building-blocks-rows-and-visualizations).
+
 It builds without CGO for Linux, Windows and macOS on amd64 and arm64, and for js/wasm. The freedesktop parts (app ID, icon theme, launching desktop apps, whether a panel hosts the tray icon) work on Linux and fall back elsewhere.
 
 ## Requirements

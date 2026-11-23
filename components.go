@@ -179,6 +179,28 @@ func IconButton(c *ui.Context, icon, label string) ui.Element {
 	})
 }
 
+// QuietIconButton is an icon-only button with no resting face or border.
+// label names it for screen readers and its tooltip; it must not be empty.
+// Hover and press show the theme's surface treatments; MyGo retains focus,
+// activation and disabled behavior. Dimensions chain as on IconButton.
+func QuietIconButton(c *ui.Context, icon, label string) ui.Element {
+	b := ui.Button(c, "").Background(ui.Transparent).BorderWidth(0)
+	// MyGo skips its state faces for a custom background. Paint our faces
+	// after styling, when chained Disabled and inherited state are known.
+	b.Draw(func(p *ui.Painter, r ui.Rect) {
+		t := p.Theme()
+		switch {
+		case b.Pressed():
+			p.Fill(r, t.SurfacePressed, t.Radius)
+		case b.Hovered():
+			p.Fill(r, t.SurfaceHover, t.Radius)
+		}
+	})
+	return b.Label(label).Tooltip(label).Children(func() {
+		Icon(c, icon)
+	})
+}
+
 // PrimaryButton is the main action as a button with a text label: MyGo's
 // PrimaryButton on the brand gradient, with the on-gradient text, the face
 // of LabeledButton's primary button. Disabled, AutoFocus, Tooltip, Clicked

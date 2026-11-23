@@ -300,7 +300,7 @@ of its own.
 - `components.go`, `text.go`: `Card`, `CardHeader`, `PageHeader`, `Section`
   and `SectionHeader` (`SectionHead`: icon, title, note, aside, `Quiet`),
   `Figures`, `Pill`, `IconPill`, `ColorPill`, `DotPill`, `SquareAvatar` and
-  `Initials`, `IconTile`, `IconButton`, `PrimaryButton`, `LabeledButton`,
+  `Initials`, `IconTile`, `IconButton`, `QuietIconButton`, `PrimaryButton`, `LabeledButton`,
   `Banner` (and `BannerClose`, which names its close button), `Empty`,
   `Loading`, `Problem`, `KeyValues` (with `KeyValuesStyle`), `PillTabs`,
   `SoftSelection`, `RowDivider`, `Kbd`/`Shortcut`, and the text styles
@@ -680,7 +680,14 @@ from `brand.go`'s helpers:
   opacity, face and text, as MyGo dims every disabled element. `IconButton`, `LabeledButton` and the
   compact palette button are ghosts: a hairline, no face, and the hover
   text while the pointer is over them; `Selected` still gives a toggle
-  the accent's face. A destructive confirmation is the danger fill and
+  the accent's face. `QuietIconButton(c, icon, label)` is an icon-only
+  MyGo button without a resting fill or border, unlike the ghost. Its
+  nonempty label supplies its accessible name and tooltip. Hover uses
+  `SurfaceHover`, press takes precedence with `SurfacePressed`, and the
+  icon stays in `Text`, preserving 7:1 under `Adapt` high contrast. Faces
+  paint after MyGo's styling so chained `Disabled` is respected; MyGo
+  retains the focus ring, pointer and keyboard activation and disabled
+  dimming. Dimensions and button handlers chain normally. A destructive confirmation is the danger fill and
   line with danger text.
 - **Pills.** `Pill`, `IconPill`, `DotPill` and `ColorPill` are a 1px
   outline in the tone's line around their text in capitals, monospace and
@@ -855,6 +862,12 @@ ChairLift's examples (Homebrew taps, firmware, bootc deployments); and
 `Pipeline`'s list is named "Pipeline" instead of "Update run".
 
 ## API changes
+
+2026-11-23: additive `func QuietIconButton(c *ui.Context, icon, label string) ui.Element`.
+An icon-only action without the ghost's resting hairline or fill, with hover,
+pressed and keyboard-focus treatments. A nonempty label is required for the
+accessible name and tooltip, as on `IconButton`; existing helpers are unchanged.
+See [Building blocks](#building-blocks-rows-and-visualizations) and [issue #61](https://github.com/frostyard/frostui/issues/61).
 
 2026-11-23: no signature change. `Info` caps the title height so a long
 wrapped title cannot crowd out the body in a short window. Title overflow
