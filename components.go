@@ -210,6 +210,16 @@ func PrimaryButton(c *ui.Context, label string) ui.Element {
 	return primaryFace(ui.PrimaryButton(c, label), c.Theme())
 }
 
+// PrimaryIconButton is an icon-only button on the same brand gradient as
+// PrimaryButton, with the on-gradient icon color. label names it for screen
+// readers and its tooltip; it must not be empty. Dimensions, activation,
+// focus and Disabled chain as on MyGo's PrimaryButton.
+func PrimaryIconButton(c *ui.Context, icon, label string) ui.Element {
+	return primaryFace(ui.PrimaryButton(c, ""), c.Theme()).Label(label).Tooltip(label).Children(func() {
+		Icon(c, icon)
+	})
+}
+
 // LabeledButton is a button with an icon before its label. primary makes
 // it the primary button, on the brand gradient, as PrimaryButton;
 // otherwise it is a ghost, as IconButton.

@@ -300,9 +300,10 @@ of its own.
 - `components.go`, `text.go`: `Card`, `CardHeader`, `PageHeader`, `Section`
   and `SectionHeader` (`SectionHead`: icon, title, note, aside, `Quiet`),
   `Figures`, `Pill`, `IconPill`, `ColorPill`, `DotPill`, `SquareAvatar` and
-  `Initials`, `IconTile`, `IconButton`, `QuietIconButton`, `PrimaryButton`, `LabeledButton`,
-  `Banner` (and `BannerClose`, which names its close button), `Empty`,
-  `Loading`, `Problem`, `KeyValues` (with `KeyValuesStyle`), `PillTabs`,
+  `Initials`, `IconTile`, `IconButton`, `QuietIconButton`, `PrimaryButton`,
+  `PrimaryIconButton`, `LabeledButton`,
+  `Banner` (and `BannerClose`, which names its close button),
+  `Empty`, `Loading`, `Problem`, `KeyValues` (with `KeyValuesStyle`), `PillTabs`,
   `SoftSelection`, `RowDivider`, `Kbd`/`Shortcut`, and the text styles
   `Title`, `Heading`, `Strong`, `Body`, `Muted`, `Caption`, `Mono`, `Toned`.
 - `rows.go`: `JobStatus(c, RowStatus{…})` draws a row's state at its end (a
@@ -674,21 +675,25 @@ from `brand.go`'s helpers:
   avatars and icon tiles). MyGo's own dialogs keep their own corners.
 - **Faces.** Cards, `Figures` and `DisclosureCard` fill with the panel
   gradient over a hairline. The primary face (`PrimaryButton`,
-  `LabeledButton` with `primary`, the action of a confirmation and of
-  `CodeDialog`, the brand tile, the About and hero logos) is the brand
-  gradient with `OnGradient`. A disabled `PrimaryButton` shows at half its
-  opacity, face and text, as MyGo dims every disabled element. `IconButton`, `LabeledButton` and the
-  compact palette button are ghosts: a hairline, no face, and the hover
-  text while the pointer is over them; `Selected` still gives a toggle
-  the accent's face. `QuietIconButton(c, icon, label)` is an icon-only
+  `PrimaryIconButton`, `LabeledButton` with `primary`, the action of a
+  confirmation and of `CodeDialog`, the brand tile, the About and hero
+  logos) is the brand gradient with `OnGradient`. `PrimaryIconButton(c,
+  icon, label)` draws only an icon on that face. Its required nonempty
+  label supplies the accessible name and tooltip, and MyGo still handles
+  sizing, activation, focus and disabled semantics. Disabled primary
+  buttons show their face and content at half opacity. `IconButton`,
+  non-primary `LabeledButton` and the compact palette button are ghosts:
+  a hairline, no face, and the hover text while the pointer is over them;
+  `Selected` still gives a toggle the accent's face.
+  `QuietIconButton(c, icon, label)` is an icon-only
   MyGo button without a resting fill or border, unlike the ghost. Its
   nonempty label supplies its accessible name and tooltip. Hover uses
   `SurfaceHover`, press takes precedence with `SurfacePressed`, and the
   icon stays in `Text`, preserving 7:1 under `Adapt` high contrast. Faces
   paint after MyGo's styling so chained `Disabled` is respected; MyGo
   retains the focus ring, pointer and keyboard activation and disabled
-  dimming. Dimensions and button handlers chain normally. A destructive confirmation is the danger fill and
-  line with danger text.
+  dimming. Dimensions and button handlers chain normally.
+  A destructive confirmation is the danger fill and line with danger text.
 - **Pills.** `Pill`, `IconPill`, `DotPill` and `ColorPill` are a 1px
   outline in the tone's line around their text in capitals, monospace and
   letter-spaced, named as written; a neutral pill's text is the tag text.
@@ -862,6 +867,13 @@ ChairLift's examples (Homebrew taps, firmware, bootc deployments); and
 `Pipeline`'s list is named "Pipeline" instead of "Update run".
 
 ## API changes
+
+2026-11-23: additive `func PrimaryIconButton(c *ui.Context, icon, label string) ui.Element`.
+An icon-only primary action using `PrimaryButton`'s gradient and on-gradient
+foreground, with a required nonempty accessible name and tooltip label.
+Existing helpers are unchanged. See
+[Building blocks](#building-blocks-rows-and-visualizations) and
+[issue #59](https://github.com/frostyard/frostui/issues/59).
 
 2026-11-23: additive `func QuietIconButton(c *ui.Context, icon, label string) ui.Element`.
 An icon-only action without the ghost's resting hairline or fill, with hover,
