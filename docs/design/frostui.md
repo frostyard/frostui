@@ -265,11 +265,13 @@ when empty).
 one at a time (a destructive action in the danger color, a `Note` with a
 password icon for administrator authentication). `Info` shows content
 dialogs; `ShortcutsBody` and `AboutBody` build the usual two. The dialog
-stacks a fixed header row (title and Close button) above a vertical scroll
-container. The body callback's direct children stack vertically with
-`SpaceM` gaps and stretch across the available width if they have no width
-of their own. Short bodies keep their content height; when the body
-exceeds the available height, only the body scrolls.
+stacks a header row (wrapped title and fixed Close button) above a vertical
+scroll container. To leave room for the body in a short window, the title
+uses at most half the available dialog height and scrolls independently if
+it overflows. The dialog's accessible label keeps the full title. The body
+callback's direct children stack vertically with `SpaceM` gaps and stretch
+across the available width if they have no width of their own. Short bodies
+keep their content height; longer bodies scroll without moving the header.
 
 Prefer content-sized children, or set an explicit height for a child
 that needs one. MyGo v0.10.0 measures and lays out the scroll content
@@ -853,6 +855,10 @@ ChairLift's examples (Homebrew taps, firmware, bootc deployments); and
 `Pipeline`'s list is named "Pipeline" instead of "Update run".
 
 ## API changes
+
+2026-11-23: no signature change. `Info` caps the title height so a long
+wrapped title cannot crowd out the body in a short window. Title overflow
+scrolls independently and Close stays fixed. See [Dialogs](#dialogs).
 
 2026-11-19: no signature change. `Info` keeps short bodies content-sized
 and scrolls overflow within the viewport bounds. The header and Close

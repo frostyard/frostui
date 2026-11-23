@@ -20,8 +20,9 @@ frostui is a Go module that gives desktop apps on [MyGo](https://github.com/egoi
 
 [`Info` dialogs](docs/design/frostui.md#dialogs), including About and
 keyboard shortcuts, stack their body content vertically. The body takes
-its natural height when it fits and scrolls when it overflows. The title
-and Close button stay fixed above it.
+its natural height when it fits and scrolls when it overflows. Close stays
+fixed above the body, and a long wrapped title can scroll separately so it
+doesn't crowd out the body in a short window.
 
 It builds without CGO for Linux, Windows and macOS on amd64 and arm64, and for js/wasm. The freedesktop parts (app ID, icon theme, launching desktop apps, whether a panel hosts the tray icon) work on Linux and fall back elsewhere.
 

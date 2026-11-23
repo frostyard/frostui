@@ -127,9 +127,10 @@ func CodeDialog(c *ui.Context, title, summary, text, action string) (acted, canc
 }
 
 // Info is a dialog that only shows content and closes: About, keyboard
-// shortcuts, help. The body stacks its children vertically below the fixed
-// title and Close button. Short bodies take their content height; only the
-// body scrolls when it exceeds the available space.
+// shortcuts, help. The body stacks its children vertically below the
+// header and Close button. Short bodies take their content height; longer
+// bodies scroll. A long title wraps and can scroll separately in a short
+// window so the header does not crowd out the body.
 //
 // Use content-sized children, or give a child an explicit height if it needs
 // one. The scroll container lays out its direct children without a bounded
@@ -151,10 +152,17 @@ func (i *Info) View(c *ui.Context) {
 	if !i.Open || i.body == nil {
 		return
 	}
+	_, height := c.Size()
+	// MyGo Modal subtracts Space(10) from the window height and pads
+	// the panel by Space(5) at each end. Limit the title against the
+	// available height, not the dialog's content height.
+	titleLimit := max(0, height-c.Theme().Space(20)) / 2
 	ui.Modal(c, &i.Open, func() {
 		ui.Column(c).Width(460).MaxWidthPercent(100).MinHeight(0).Gap(SpaceM).AlignItems(ui.Stretch).Role(ui.RoleDialog).Label(i.title).Children(func() {
 			ui.Row(c).Shrink(0).AlignItems(ui.Center).Children(func() {
-				ui.Text(c, i.title).FontSize(18).Bold().Grow(1)
+				ui.Scroll(c).Grow(1).MaxHeight(titleLimit).Children(func() {
+					ui.Text(c, i.title).FontSize(18).Bold().Wrap()
+				})
 				if IconButton(c, "window-close", "Close").Clicked() {
 					i.Open = false
 				}
