@@ -226,6 +226,57 @@ func TestInfoDismissalAndFocus(t *testing.T) {
 	}
 }
 
+func TestInfoBodyScrollsWithLongTitleInShortViewport(t *testing.T) {
+	if runtime.GOOS == "js" {
+		t.Skip("Node's MyGo text stub does not wrap titles; short-header geometry needs a native text renderer")
+	}
+	const width, tall, short = 240, 480, 200
+	const title = "Keyboard shortcuts for navigating between windows, switching workspaces, and managing open documents"
+	const firstLabel, lastLabel = "Dialog body", "End of body"
+	const middleRows = 20
+	var info Info
+	info.Show(title, func(c *ui.Context) {
+		ui.Text(c, firstLabel)
+		for n := range middleRows {
+			ui.Text(c, fmt.Sprintf("Body row %d", n))
+		}
+		ui.Text(c, lastLabel)
+	})
+	tt := ui.NewTester(func(c *ui.Context) { Adapt(c); info.View(c) }, width, tall)
+	dialog := infoVisible(t, tt, title, width, tall)
+	close := infoVisible(t, tt, "Close", width, tall)
+	first := infoVisible(t, tt, firstLabel, width, tall)
+	if headerH := first.Y - dialog.Y - SpaceM; headerH <= close.H {
+		t.Fatalf("expected the wrapped header to be taller than Close at %dx%d: header=%v, Close=%v", width, tall, headerH, close.H)
+	}
+
+	tt.SetSize(width, short)
+	firstShort := infoVisible(t, tt, firstLabel, width, short)
+	infoSameHeight(t, firstLabel, firstShort.H, first.H)
+	dialog = infoVisible(t, tt, title, width, short)
+	closeShort := infoVisible(t, tt, "Close", width, short)
+	if closeShort.W != close.W || closeShort.H != close.H {
+		t.Fatalf("resize clipped Close: before=%+v, after=%+v", close, closeShort)
+	}
+	if end, ok := tt.Find(lastLabel); !ok || end.H != 0 {
+		t.Fatalf("overflowing body end must start clipped: found=%v, bounds=%+v", ok, end)
+	}
+	// Scroll past the height of the rows and their gaps to reach the end.
+	distance := (middleRows + 2) * (first.H + SpaceM)
+	tt.Scroll(firstShort.X+firstShort.W/2, firstShort.Y+firstShort.H/2, 0, distance)
+	end := infoVisible(t, tt, lastLabel, width, short)
+	infoSameHeight(t, lastLabel, end.H, first.H)
+	if end.Y < closeShort.Y+closeShort.H || end.Y+end.H > dialog.Y+dialog.H {
+		t.Errorf("scrolled row outside body: row=%+v, Close=%+v, dialog=%+v", end, closeShort, dialog)
+	}
+	if after := infoVisible(t, tt, "Close", width, short); after != closeShort {
+		t.Errorf("body scroll moved Close: before=%+v, after=%+v", closeShort, after)
+	}
+	if err := tt.Click("Close"); err != nil || info.Open {
+		t.Fatalf("Close at %dx%d after scrolling: err=%v, open=%v", width, short, err, info.Open)
+	}
+}
+
 func TestInfoCloseWithLongTitleInNarrowViewport(t *testing.T) {
 	if runtime.GOOS == "js" {
 		t.Skip("Node's MyGo text stub does not wrap titles; narrow-header geometry needs a native text renderer")
