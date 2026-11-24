@@ -1,2 +1,8 @@
 # make snapshot and other local output
 /build/
+
+# NSGo's build and test output
+.nsgo/
+# The gallery's binary, when built in place
+/workspaceui/gallery/gallery
+/workspaceui/gallery/gallery.exe

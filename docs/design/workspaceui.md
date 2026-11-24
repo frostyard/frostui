@@ -34,6 +34,14 @@ The module is one package:
 | `theme.go` | `Theme`, the Frostyard look as an NSGo theme with a dark and a light palette; `Apply`, which sets it and registers Inter; `Frame`, the window's root view, which sets the font family. `fonts/` holds Inter's upright variable file. |
 | `colors.go` | `ColorsOf` and `Tone`: the Frostyard colors NSGo has no role for (the chrome, the panel, the chosen row's fill, the label, each tone's fill and line). |
 | `appearance.go` | `AppearanceChoice`: the System, Light or Dark setting, as a segmented control. |
+| `parts.go` | The parts NSGo has no control for, and the content of its rows: `NavLabel` (a sidebar row's icon, name and count), `SummaryRow` (a list row of a sender, a subject and a preview), `SoftRows` (the rows' hover and chosen fills), `Banner`, `EmptyState`, `DialogPanel` (a dialog's opaque ground) and `ConnectionItem`. |
+
+`workspaceui/gallery/` is a third module, an app: the standard window on
+fixture mail, and a page for each family of controls (colors and type,
+buttons and toolbars, fields and forms, rows and marks, dialogs and
+menus). It is where a change of the look is drawn and accepted before an
+app takes it. Its picture tours keep 20 pictures in
+`workspaceui/gallery/comparison/linux`, each view in both themes.
 
 Every part reads its colors from the current theme, so it follows the
 desktop's light and dark appearance. An app takes the look with one call
@@ -58,8 +66,18 @@ no window controls and resizes no window under a hidden one (ADR-0014).
 
 ## Operational notes
 
-- **Gates.** The Makefile's `MODULES` lists both modules, and `make
-  verify`, `make ci` and `make cross` run each step in each. The module's
+- **The gallery.** `make gallery` opens it in a window. `make
+  gallery-live` runs its tours in a GTK 4 window under Xvfb, and `make
+  gallery-pictures` takes the kept pictures again; a change of the look
+  commits its changed pictures. The targets set `GDK_BACKEND=x11`: without
+  it GTK opens the windows on a Wayland desktop even under `xvfb-run`. Two
+  takes of the pictures give the same bytes; a control that animates (a
+  busy button's spinner) is left out of them for that reason. `go build`
+  in the gallery's directory writes a binary named `gallery`, which git
+  ignores.
+- **Gates.** The Makefile's `MODULES` lists the three modules, and `make
+  verify`, `make ci` and `make cross` run each step in each. The gallery's
+  tours run headless there; no gate runs them in a real window. The module's
   tests run headless on NSGo's `nsgotest`, with no display.
 - **Guards.** `workspaceui/imports_test.go` holds the module's imports and
   its one direct requirement. The root's guards (`internal/repocheck`)

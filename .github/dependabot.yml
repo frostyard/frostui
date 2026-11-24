@@ -31,6 +31,19 @@ updates:
       gomod-workspaceui:
         patterns: ["*"]
 
+  # The gallery of the NSGo kit, an app with a module of its own.
+  - package-ecosystem: "gomod"
+    directory: "/workspaceui/gallery"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "build"
+      include: "scope"
+    groups:
+      gomod-workspaceui-gallery:
+        patterns: ["*"]
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:

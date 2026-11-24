@@ -90,7 +90,7 @@ window, the rules for every app, the parts). The
   `background` (`#f4f9fc` for `#f5f9fc` on Linux); a settings dialog's
   sidebar is a neutral gray, not `inset`.
 
-## Phase 2 — The parts and the gallery (large)
+## Phase 2 — The parts and the gallery (large, in progress)
 
 - The parts the standard names, each with a layout test: the toolbar's
   segments and buttons, the navigation row with its count, the summary row
@@ -103,6 +103,28 @@ window, the rules for every app, the parts). The
   measure with the test that holds it.
 - **Done when:** the gallery shows every part in both themes on Linux and
   in a browser, and the owner accepts its pictures.
+- **Round 1 (2026-11-24).** The gallery, with the standard window and 5
+  pages of controls, 20 pictures in both themes from a GTK window on
+  Xvfb's X11. The owner looked at the pictures and ran the app, and
+  accepted the look as drawn: the soft fill of a chosen row, the toolbar
+  on NSGo's inset strip, NSGo's tinted danger button, an opaque panel
+  under a dialog, initials on a neutral avatar, the summary row of 3
+  lines, modules as tabs of an icon alone, and NSGo's corners and sizes.
+  He set the phase's bounds: it decides colors, controls and the inside of
+  a part; where parts go in a window, and how one moves between them, is
+  each app's later phase.
+- **Round 2 (2026-11-24).** The accepted parts are in the kit with layout
+  tests (`NavLabel`, `SummaryRow`, `SoftRows`, `Banner`, `EmptyState`,
+  `DialogPanel`, `ConnectionItem`), the gallery draws them from the kit
+  with its pictures unchanged, the control map is in
+  [the spec](../specs/workspaceui.md#the-control-map), and the gallery is
+  a module of the repository's gates.
+- **Left:** the controls of the map the gallery does not draw yet (a
+  tree, a popover and a hover card, a toast, paging, a disclosure, NSGo's
+  settings, the command palette, a search field's icon and key hint);
+  draft windows for a calendar, people, tasks, compose and settings;
+  pictures from the web target; and the rest of the standard (frostmail's
+  plan 0016: the rules for every app) in the spec.
 
 ## Phase 3 — NSGo's gaps (small, alongside)
 
