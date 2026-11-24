@@ -36,6 +36,9 @@ its accessible name and tooltip; dimensions, activation, focus and `Disabled`
 chain as on MyGo's button. See the
 [building blocks](docs/design/frostui.md#building-blocks-rows-and-visualizations).
 
+Use `Icon(c, "cpu")` for a processor glyph. The [embedded icon set](docs/design/frostui.md#the-kits-icon-set)
+provides `cpu` and `cpu-symbolic` when neither the app nor the desktop theme does.
+
 It builds without CGO for Linux, Windows and macOS on amd64 and arm64, and for js/wasm. The freedesktop parts (app ID, icon theme, launching desktop apps, whether a panel hosts the tray icon) work on Linux and fall back elsewhere.
 
 ## Requirements

@@ -121,6 +121,7 @@ var kitIconNames = map[string]string{
 	// The app and the system.
 	"application-exit":   "log-out",
 	"changes-allow":      "lock-open",
+	"cpu":                "cpu",
 	"dialog-information": "info",
 	"dialog-question":    "circle-question-mark",
 	"drive-harddisk":     "hard-drive",
