@@ -49,9 +49,10 @@ no window controls and resizes no window under a hidden one (ADR-0014).
   its one direct requirement. The root's guards (`internal/repocheck`)
   skip a directory with a go.mod of its own, so they do not read this
   module, and the root's pinned API list does not cover it.
-- **Releases.** Tags are `workspaceui/vX.Y.Z`. The maintainer runs `make
-  bump-workspaceui`; the first tag is named (`VERSION=workspaceui/v0.1.0`),
-  since svu has no tag to count from. `make bump` reads `v*` tags only.
+- **Releases.** Tags are `workspaceui/vX.Y.Z`; the first is
+  `workspaceui/v0.1.0`. The maintainer runs `make bump-workspaceui`, which
+  takes the next version from svu, or the one `VERSION` names. `make bump`
+  reads `v*` tags only.
 - **After an NSGo bump**, read its release notes for `ui.SidebarShell`,
   the title bar on Linux and the theme's roles before merging.
 
