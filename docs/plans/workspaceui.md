@@ -90,7 +90,7 @@ window, the rules for every app, the parts). The
   `background` (`#f4f9fc` for `#f5f9fc` on Linux); a settings dialog's
   sidebar is a neutral gray, not `inset`.
 
-## Phase 2 — The parts and the gallery (large, in progress)
+## Phase 2 — The parts and the gallery (large, done 2026-11-24)
 
 - The parts the standard names, each with a layout test: the toolbar's
   segments and buttons, the navigation row with its count, the summary row
@@ -124,14 +124,28 @@ window, the rules for every app, the parts). The
   command palette and NSGo's settings view, and a prototype of a search
   field with its icon and key hint. The palette, the popover and the
   toasts had NSGo's translucent ground, as dialogs had, and take
-  `DialogPanel`. 26 pictures in both themes. Not yet looked at by the
-  owner.
+  `DialogPanel`. 30 pictures in both themes (the round's first record
+  said 26, which missed the 2 new pages). The owner looked at the round's
+  pictures and accepted it, the search field included (2026-11-24).
 - **Not part of this phase,** by the bounds the owner set: draft windows
   for a calendar, people, tasks, compose and settings. They are layout,
   and each app's own phase draws them from these controls.
-- **Left:** the owner's look at round 3; the search field into the kit if
-  he accepts it; pictures from the web target; and the rest of the
-  standard (frostmail's plan 0016: the rules for every app) in the spec.
+- **Round 4 (2026-11-24).** `SearchField` is in the kit with its test, and
+  gains a button that clears it, which the owner has not looked at. The
+  standard's rules for an app are in
+  [the spec](../specs/workspaceui.md#the-standard-for-an-app). The gallery's
+  narrow window folds its toolbar into one row: its header had overlapped.
+- **In a browser (2026-11-24).** `make gallery-pictures-web`, in a headless
+  Chromium: the 10 tours pass and write 30 pictures, each view in both
+  themes. The agent looked at 1, the standard window in Frostyard: the
+  themes' colors, the text in Inter, and the app's name at the navigation's
+  head, as no system title bar shows it there. 1 fault seen: the list's
+  scroll bar is drawn light in the dark theme. The pictures are not kept
+  (6.9 MB), and the owner has not looked at them.
+- **Done (2026-11-24).** The gallery shows every part in both themes on
+  Linux and in a browser, by its tours on the 2 targets. The owner accepted
+  the look in 3 rounds, from the Linux pictures and the app run on his
+  desktop.
 
 ## Phase 3 — NSGo's gaps (small, alongside)
 
@@ -140,7 +154,8 @@ window, the rules for every app, the parts). The
   scale in `ui`; a `Style` on `IconButton`, `Badge`, `SidebarItem` and
   `Menu`; row hover, and sticky headers with selection, in `ui.List`; the
   floating panels' translucent ground where no blur is drawn (Linux); a
-  search field. The owner files
+  search field; a scroll bar that follows the theme on the web; pictures
+  from every app a test process starts on the web target. The owner files
   them, or approves the text an agent drafts.
 - **Done when:** each gap has an issue whose link is in the kit's spec,
   beside the workaround to remove when it lands.

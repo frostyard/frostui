@@ -36,7 +36,9 @@ again in that module's directory.
   gallery-live` runs its picture tours in a real GTK 4 window under Xvfb,
   and `make gallery-pictures` takes the kept pictures again
   (`workspaceui/gallery/comparison/linux`). A change of the kit's look runs
-  `make gallery-pictures` and commits the changed PNGs. A real-window run
+  `make gallery-pictures` and commits the changed PNGs. `make
+  gallery-pictures-web` takes the same pictures in a headless Chromium,
+  to look at; git ignores them. A real-window run
   goes through these targets, which set `GDK_BACKEND=x11`: `xvfb-run` alone
   opens GTK's windows on a Wayland desktop.
 
