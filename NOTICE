@@ -11,4 +11,5 @@ icons/LICENSE holds both, as Lucide publishes them.
 The fonts in fonts/ are Inter (https://rsms.me/inter/), version 4.001,
 copyright 2016 The Inter Project Authors, taken unchanged from Debian's
 fonts-inter-variable 4.1+ds-1. Inter is under the SIL Open Font License,
-Version 1.1, which fonts/OFL.txt holds.
+Version 1.1, which fonts/OFL.txt holds. workspaceui/fonts/ holds a copy of
+InterVariable.ttf, unchanged, with the license in workspaceui/fonts/OFL.txt.

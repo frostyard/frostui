@@ -34,7 +34,7 @@ window, the rules for every app, the parts). The
   source files being byte-identical to the ones they ran before, which the
   owner accepts by merging this record.
 
-## Phase 1 — The themes and the type (medium)
+## Phase 1 — The themes and the type (medium, the kit's part built)
 
 - The Frostyard and Frostyard light themes as an NSGo theme, from
   [the themes' spec](../specs/frostyard-theme.md): the color roles, and
@@ -48,6 +48,20 @@ window, the rules for every app, the parts). The
 - **Done when:** a picture of each app's main window in each theme shows
   Frostyard's colors and Inter with one title row, and the contrast test
   passes.
+- **The kit's part (2026-11-24).** `Theme`, `Apply`, `Frame`, `ColorsOf`
+  and `AppearanceChoice` are built, with the contrast test (69 pairs in
+  each theme, each at 4.5:1 or over), and `Shell` leaves the app's name to
+  the system's title bar ([spec](../specs/workspaceui.md#the-themes)).
+  The compact shell paints its ground, which Frostnotes' pictures showed
+  missing in a dark narrow window (frostyard/frostnotes#277).
+  FrostMail's picture tours, run against this code in a GTK window on
+  Xvfb's X11 in both appearances, drew Frostyard's colors in the shell, the
+  list, a menu and a dialog, and their text in the bundled Inter, where the
+  same tours without `Apply` drew Xvfb's own sans-serif face. The first
+  trial named the family "Inter" and drew that fallback face: the variable
+  file names "Inter Variable". Left: a tag of the module, the three apps
+  calling `Apply` and keeping their pictures, and a look at Inter in the
+  web build and on Windows.
 
 ## Phase 2 — The parts and the gallery (large)
 
@@ -75,6 +89,10 @@ window, the rules for every app, the parts). The
 
 ## Later / ideas
 
+- The high-contrast values of the themes' spec, when NSGo reports the
+  desktop's high contrast to an app.
+- Inter's italic file, if a view needs italics that the platform does not
+  slant well.
 - A pinned list of the module's exported API, as the root's `api.txt`,
   when the parts of Phase 2 have settled.
 - A selected fill in the accent while a list holds the focus.

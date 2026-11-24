@@ -188,13 +188,19 @@ func (s Shell) Render(cx *core.Scope) core.Node {
 			navContent := append([]core.Node{}, s.SidebarHeader...)
 			navContent = append(navContent, nav)
 			navContent = append(navContent, s.SidebarFooter...)
-			return core.View{Style: ui.FillRest, Children: []core.Node{core.View{Style: core.Style{Direction: core.Row, Gap: 4, AlignItems: core.AlignCenter}, Children: buttons}, core.Show{When: open.Get, Then: func(*core.Scope) core.Node { return core.Scroll{Style: ui.FillRest, Children: navContent} }, Else: func(*core.Scope) core.Node { return content }}}}
+			// The one pane paints its own ground: NSGo's shell does it in a wide
+			// window, and without one a dark appearance shows its light text on
+			// the window's white.
+			colors := ui.ColorsOf(cx)
+			return core.View{TestID: "compact-shell", Style: ui.FillRest, StyleFunc: func() core.Style {
+				return core.Style{Background: colors.Background(), Color: colors.Text()}
+			}, Children: []core.Node{core.View{Style: core.Style{Direction: core.Row, Gap: 4, AlignItems: core.AlignCenter}, Children: buttons}, core.Show{When: open.Get, Then: func(*core.Scope) core.Node { return core.Scroll{Style: ui.FillRest, Children: navContent} }, Else: func(*core.Scope) core.Node { return content }}}}
 		}
 		shell := ui.SidebarShell{
 			Variant: ui.SidebarShellInset, DefaultWidth: 246, MinWidth: 180, MaxWidth: 420,
 			Open: open.Get, OnOpenChange: open.Set, Width: width.Get, OnWidthChange: resize(width),
 			ToggleLabel: "Navigation", ResizeLabel: "Resize navigation",
-			SidebarActions: []core.Node{core.Text{Content: s.Brand, Style: ui.TypeTitle}},
+			SidebarActions: s.brand(cx),
 			Sidebar:        append(append([]core.Node{}, s.SidebarHeader...), nav), SidebarFooter: s.SidebarFooter,
 			Header: s.Header, Actions: actions, Content: []core.Node{content},
 		}
@@ -210,11 +216,26 @@ func (s Shell) Render(cx *core.Scope) core.Node {
 		// GTK drops its resize borders along with a hidden title bar.
 		// Render the standard shell, then restore system decorations on Linux.
 		node := shell.Render(cx)
-		if runtime.GOOS == "linux" && desktop.IsAvailable(cx) {
+		if systemTitleBar(cx) {
 			desktop.SetTitleBar(cx, desktop.TitleBarDefault, 0)
 		}
 		return node
 	})
+}
+
+// systemTitleBar reports whether the window keeps the system's title bar,
+// which names the app: on Linux, in a desktop window (ADR-0014).
+func systemTitleBar(cx *core.Scope) bool {
+	return runtime.GOOS == "linux" && desktop.IsAvailable(cx)
+}
+
+// brand is the app's name at the head of the navigation, where no system
+// title bar shows it.
+func (s Shell) brand(cx *core.Scope) []core.Node {
+	if s.Brand == "" || systemTitleBar(cx) {
+		return nil
+	}
+	return []core.Node{core.Text{Content: s.Brand, Style: ui.TypeTitle}}
 }
 
 // Page gives settings, forms and detail screens a readable measure on a wide window.

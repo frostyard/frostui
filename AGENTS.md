@@ -195,7 +195,9 @@ by hand (`make verify` checks their hashes).
   `NOTICE`, and add only MIT, ISC or Apache-2.0 icons, never GPL, LGPL or
   CC-BY-SA ([ADR-0007](docs/adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md)).
   The fonts in `fonts/` are Inter, under the SIL Open Font License 1.1:
-  keep `fonts/OFL.txt` and `NOTICE`, and add only OFL-1.1 fonts
+  keep `fonts/OFL.txt` and `NOTICE`, and add only OFL-1.1 fonts.
+  `workspaceui/fonts/` holds a copy of the upright file with its own
+  `OFL.txt`, since a module embeds only files under its own directory
   ([ADR-0011](docs/adr/0011-draw-the-frostyard-brand-in-a-dark-and-a-light-theme.md)).
 - No secrets, credentials or personal data anywhere in the repository.
 
