@@ -114,7 +114,7 @@ The owner accepted these as the gallery draws them (2026-11-24,
 | `SoftRows` | the style of a list's rows: corners 8, the theme's hover fill, and `frost-selected` when chosen, with no change of the text's color |
 | `Banner` | role status; padding 8 by 12, corners 8, a 1-point line: the tone's `Fill` and `Line`, an icon 16 in the tone's color (muted for `Neutral`), the sentence, and a small secondary button when `Action` is set |
 | `EmptyState` | centred in its pane: an icon 32 in `faint`, the title in NSGo's title style, the hint as a muted caption |
-| `DialogPanel` | a dialog's ground: `frost-panel`, opaque |
+| `DialogPanel` | the ground of a panel that floats over the window (a dialog, an alert, the command palette, a popover, a toast): `frost-panel`, opaque |
 | `ConnectionItem` | a dot 8 in the tone's color and 1 line of muted caption |
 
 ### The control map
@@ -135,6 +135,13 @@ draws each row of this table in both themes.
 | A count or a state | `ui.Badge` | rows |
 | Loading | `ui.Skeleton` | rows |
 | A confirmation | `ui.AlertDialog` with `DialogPanel`: Cancel secondary and first, a destroying action in the danger variant | dialogs |
+| The command palette | `ui.CommandDialog` with `DialogPanel`'s color | search, trees and popovers |
+| Detail beside the content | `ui.Popover` and `ui.HoverCard` (a sender's card), the popover with `DialogPanel`'s color | search, trees and popovers |
+| What was done, with a way back | `ui.Toaster` and `ui.Toasts` with `DialogPanel`; a toast's action is Undo | search, trees and popovers |
+| A tree of folders or notes | `ui.Tree` | search, trees and popovers |
+| A disclosure | `ui.Collapsible` | search, trees and popovers |
+| Paging | `ui.Pagination` | search, trees and popovers |
+| A settings view | `ui.Settings`: categories, groups of rows, its own search | settings |
 | A form in a dialog | `ui.Dialog` with `DialogPanel`; Cancel secondary, the confirming button primary | dialogs |
 | A menu | `ui.Menu` with icons, shortcuts, `ui.MenuSeparator` and the danger variant | dialogs |
 | Settings rows | `ui.FormSection` and `ui.FormRow` | fields |
@@ -145,9 +152,14 @@ draws each row of this table in both themes.
 | A notice about a pane's content | `Banner` (NSGo has none) | dialogs; the window |
 | A pane with nothing in it | `EmptyState` (NSGo has none) | rows; the window |
 
-Not in the gallery yet, and so not accepted: `ui.Tree`, `ui.Popover` and
-`ui.HoverCard`, `ui.Toaster`, `ui.Pagination`, `ui.Collapsible`,
-`ui.Settings`, `ui.CommandDialog`, and a search field's icon and key hint.
+Drawn in the gallery and not yet accepted by the owner: the rows from the
+command palette down (the gallery's third round, 2026-11-24), and a search
+field with its icon and key hint, which is a prototype in the gallery
+since NSGo has none.
+
+What NSGo draws that the theme cannot reach: a menu's ground is NSGo's
+translucent one, since `ui.Menu` takes no style; and the side of
+`ui.Settings` is a neutral gray, not `inset`.
 
 ## Rules
 

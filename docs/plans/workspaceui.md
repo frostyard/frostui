@@ -119,19 +119,28 @@ window, the rules for every app, the parts). The
   with its pictures unchanged, the control map is in
   [the spec](../specs/workspaceui.md#the-control-map), and the gallery is
   a module of the repository's gates.
-- **Left:** the controls of the map the gallery does not draw yet (a
-  tree, a popover and a hover card, a toast, paging, a disclosure, NSGo's
-  settings, the command palette, a search field's icon and key hint);
-  draft windows for a calendar, people, tasks, compose and settings;
-  pictures from the web target; and the rest of the standard (frostmail's
-  plan 0016: the rules for every app) in the spec.
+- **Round 3 (2026-11-24).** The gallery draws the rest of the control
+  map: a tree, a disclosure, paging, a popover, a hover card, toasts, the
+  command palette and NSGo's settings view, and a prototype of a search
+  field with its icon and key hint. The palette, the popover and the
+  toasts had NSGo's translucent ground, as dialogs had, and take
+  `DialogPanel`. 26 pictures in both themes. Not yet looked at by the
+  owner.
+- **Not part of this phase,** by the bounds the owner set: draft windows
+  for a calendar, people, tasks, compose and settings. They are layout,
+  and each app's own phase draws them from these controls.
+- **Left:** the owner's look at round 3; the search field into the kit if
+  he accepts it; pictures from the web target; and the rest of the
+  standard (frostmail's plan 0016: the rules for every app) in the spec.
 
 ## Phase 3 — NSGo's gaps (small, alongside)
 
 - An issue upstream for each gap the kit works around: edge resize and
   window controls for an undecorated GTK window; themable corners and type
-  scale in `ui`; a `Style` on `IconButton`, `Badge` and `SidebarItem`; row
-  hover, and sticky headers with selection, in `ui.List`. The owner files
+  scale in `ui`; a `Style` on `IconButton`, `Badge`, `SidebarItem` and
+  `Menu`; row hover, and sticky headers with selection, in `ui.List`; the
+  floating panels' translucent ground where no blur is drawn (Linux); a
+  search field. The owner files
   them, or approves the text an agent drafts.
 - **Done when:** each gap has an issue whose link is in the kit's spec,
   beside the workaround to remove when it lands.
