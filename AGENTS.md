@@ -206,11 +206,12 @@ The facts that recurring repository checks read. The release rules are the
 not repeated here.
 
 - Tag format: 2 series. `vMAJOR.MINOR.PATCH` (for example `v0.6.0`) is the
-  root module's. `workspaceui/vMAJOR.MINOR.PATCH` is the `workspaceui`
-  module's (ADR-0014); it has no tag yet.
+  root module's. `workspaceui/vMAJOR.MINOR.PATCH` (for example
+  `workspaceui/v0.1.0`) is the `workspaceui` module's (ADR-0014).
 - How a release starts: `make bump` tags the root's next version and pushes
-  the tag; `make bump-workspaceui` does the same for `workspaceui` (name the
-  first one: `VERSION=workspaceui/v0.1.0`). No release workflow runs and no
+  the tag; `make bump-workspaceui` does the same for `workspaceui`
+  (`VERSION=workspaceui/vX.Y.Z` names a version; without it, svu derives
+  the next one). No release workflow runs and no
   GitHub release is made: each module is a library, and the Go module proxy
   serves the tag.
 - Who tags: the maintainer. Agents never tag, push a tag or release.
@@ -226,9 +227,9 @@ not repeated here.
   (`github.com/nsgo-dev/nsgo` v0.3.0), which frostyard does not own.
 - Who uses this repository: frostyard/chairlift, frostyard/frostmail,
   frostyard/frostnotes, frostyard/firn (`gui/`) and frostyard/pocket, each
-  through its `go.mod`. `workspaceui`: no app yet; frostyard/frostmail,
-  frostyard/frostnotes and frostyard/pocketgo take it after its first tag
-  ([plan](docs/plans/workspaceui.md), Phase 0).
+  through its `go.mod`. `workspaceui`: frostyard/frostmail
+  (`cmd/frostmail-nsgo`), frostyard/frostnotes (`cmd/frostnotes-nsgo`) and
+  frostyard/pocketgo (`desktop`), each through its NSGo client's `go.mod`.
 
 ## Documentation rules (enforced)
 

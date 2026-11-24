@@ -9,7 +9,7 @@ each app's phases and, until Phase 2 here turns it into
 window, the rules for every app, the parts). The
 [roadmap](roadmap.md) stays the MyGo kit's.
 
-## Phase 0 — The module moves here (small)
+## Phase 0 — The module moves here (small, done 2026-11-24)
 
 - `workspaceui/` holds the 6 files of frostyard/pocketgo's
   `desktop/workspaceui/v0.1.0-rc.1` under the new module path, with the
@@ -21,6 +21,18 @@ window, the rules for every app, the parts). The
   PocketGo then take the new import path, and PocketGo removes its copy.
 - **Done when:** the three apps build and pass their gates on
   `workspaceui/v0.1.0`, with no change in what they draw.
+- **Done (2026-11-24).** The maintainer tagged `workspaceui/v0.1.0` on
+  the merge commit of frostyard/frostui#70. Each app requires that
+  version, and each change merged with every check of its pull request
+  passing: frostyard/frostmail#387, frostyard/frostnotes#275 and
+  frostyard/pocketgo#167, which also removed PocketGo's copy. For what
+  PocketGo draws, its pull request records a run of both real targets on
+  one host: 12 of 13 pictures byte-identical to `main`'s on each target,
+  and the 13th differing between runs of the same tree. No picture
+  compares what FrostMail or Frostnotes drew before and after: their
+  suites keep none yet. For those two the phase closes on the module's 6
+  source files being byte-identical to the ones they ran before, which the
+  owner accepts by merging this record.
 
 ## Phase 1 — The themes and the type (medium)
 
