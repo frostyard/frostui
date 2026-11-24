@@ -65,7 +65,11 @@ type look struct {
 	chrome, panel, code                           core.Color
 	selectedFill, selectedText, label, knob       core.Color
 	fill, line                                    [toneCount]core.Color
+	flag                                          [FlagCount]core.Color
 }
+
+// page is the ground of a page that is not the app's own, in both themes.
+var page = core.RGB(0xffffff)
 
 var frostyard = look{
 	background: core.RGB(0x06111d), surface: core.RGB(0x0d2a41),
@@ -84,6 +88,7 @@ var frostyard = look{
 		Neutral: core.RGBA(0xa6dffa, 0.22), Accent: core.RGBA(0x47b8ef, 0.3),
 		Success: core.RGBA(0x47b8ef, 0.3), Warning: core.RGBA(0xe0b15c, 0.33), Danger: core.RGBA(0xe07a72, 0.33),
 	},
+	flag: [FlagCount]core.Color{core.RGB(0xff453a), core.RGB(0xff9f0a), core.RGB(0xffd60a), core.RGB(0x30d158), core.RGB(0x0a84ff), core.RGB(0xbf5af2), core.RGB(0x98989d)},
 }
 
 var frostyardLight = look{
@@ -103,6 +108,7 @@ var frostyardLight = look{
 		Neutral: core.RGBA(0x06111d, 0.22), Accent: core.RGBA(0x0b6ea6, 0.4),
 		Success: core.RGBA(0x076377, 0.4), Warning: core.RGBA(0x8a5300, 0.4), Danger: core.RGBA(0xb0322b, 0.4),
 	},
+	flag: [FlagCount]core.Color{core.RGB(0xff3b30), core.RGB(0xff9500), core.RGB(0xffcc00), core.RGB(0x34c759), core.RGB(0x007aff), core.RGB(0xaf52de), core.RGB(0x8e8e93)},
 }
 
 // palette lays l over p, NSGo's default palette of the same appearance:
@@ -134,6 +140,10 @@ func palette(p core.Palette, l look) core.Palette {
 		"sidebar-accent": l.selectedFill, "sidebar-accent-foreground": l.text, "sidebar-border": l.border, "sidebar-ring": l.accent,
 		// The kit's roles.
 		roleChrome: l.chrome, rolePanel: l.panel, roleSelected: l.selectedFill, roleSelectedText: l.selectedText, roleLabel: l.label,
+		rolePage: page,
+	}
+	for n, name := range flagNames {
+		roles[roleFlag+name] = l.flag[n]
 	}
 	for tone := range toneCount {
 		roles[roleFill+toneNames[tone]] = l.fill[tone]

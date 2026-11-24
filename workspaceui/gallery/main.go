@@ -25,6 +25,7 @@ type page struct {
 
 var pages = []page{
 	{"colors", "Colors and type", lucide.Palette, colorsPage},
+	{"tokens", "Flags, a page, sizes", lucide.Flag, tokensPage},
 	{"buttons", "Buttons and toolbars", lucide.MousePointerClick, buttonsPage},
 	{"fields", "Fields and forms", lucide.TextCursorInput, fieldsPage},
 	{"rows", "Rows and marks", lucide.List, rowsPage},

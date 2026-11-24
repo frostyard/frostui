@@ -5,6 +5,7 @@ import (
 
 	"github.com/frostyard/frostui/workspaceui"
 	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/icons/lucide"
 	"github.com/nsgo-dev/nsgo/ui"
 )
 
@@ -48,4 +49,53 @@ func colorsPage(cx *core.Scope) core.Node {
 			core.Text{Content: "Caption 12 / 16. Yesterday at 6:30 AM", Style: ui.TypeCaption, StyleFunc: ui.Colored(c.Muted)},
 			core.Text{Content: "Code 12 / 18  workspaceui.Apply(cx)", Style: ui.TypeCode}),
 	)
+}
+
+// tokensPage shows what an app takes from the kit that is not a part: the
+// flags' colors, the ground and the frame of a page that is not the app's
+// own, and the spacing steps.
+func tokensPage(cx *core.Scope) core.Node {
+	k := workspaceui.ColorsOf(cx)
+	return workspaceui.Stack(
+		section("Flags: 7 colors, each a little lighter in the dark theme",
+			workspaceui.Row(flagSwatches(k)...)),
+		section("A page that is not the app's own",
+			workspaceui.Row(swatch("page", k.Page)),
+			core.View{Style: core.Style{Height: core.Pt(96)}, Children: []core.Node{workspaceui.PageFrame{Size: ui.FillRest, Page: core.View{
+				Style:    ui.FillRest.Merge(core.Style{Padding: core.All(workspaceui.SpaceL)}),
+				Children: []core.Node{core.Text{Content: "A message's page keeps its sender's colors, inside a hairline, in both themes.", Style: ui.TypeBody, StyleFunc: ui.Colored(func() core.Color { return frostText })}}}}}}),
+		section("A row at an app's largest text size: its text is 1.3 times the usual, and the avatar keeps its size",
+			core.View{TestID: "scaled-row", Style: core.Style{Width: core.Pt(390)}, Children: []core.Node{workspaceui.SummaryRow{Unread: true, Name: "David King", Title: "David King", When: "8:41 AM",
+				Subject: "Re: Aurora launch checklist", Preview: "The load test finished overnight: 50,000 accounts, no errors.", PreviewLines: 2, Scale: 1.3}}}),
+		section("Spacing: the steps a padding or a gap takes",
+			workspaceui.Row(step("SpaceXS 4", workspaceui.SpaceXS), step("SpaceS 8", workspaceui.SpaceS), step("SpaceM 12", workspaceui.SpaceM), step("SpaceL 16", workspaceui.SpaceL), step("SpaceXL 24", workspaceui.SpaceXL))),
+	)
+}
+
+// frostText is the ink of the gallery's sample page: a page is its
+// sender's, so its text is not the theme's.
+var frostText = core.RGB(0x06111d)
+
+// flagSwatches are the 7 flags as a flag in its color over its name.
+func flagSwatches(k workspaceui.Colors) []core.Node {
+	names := []string{"Red", "Orange", "Yellow", "Green", "Blue", "Purple", "Gray"}
+	var out []core.Node
+	for n, name := range names {
+		out = append(out, core.View{TestID: "flag-" + name, Style: core.Style{Width: core.Pt(84), Gap: workspaceui.SpaceXS, AlignItems: core.AlignCenter}, Children: []core.Node{
+			ui.Icon(lucide.Flag, 20, func() core.Color { return k.Flag(n + 1) }),
+			core.Text{Content: name, Style: ui.TypeCaption},
+		}})
+	}
+	return out
+}
+
+// step is a spacing step drawn as a bar of its width.
+func step(name string, w core.Points) core.Node {
+	return core.Dynamic(func(cx *core.Scope) core.Node {
+		colors := ui.ColorsOf(cx)
+		return core.View{Style: core.Style{Width: core.Pt(120), Gap: workspaceui.SpaceXS}, Children: []core.Node{
+			core.View{Style: core.Style{Width: core.Pt(w), Height: core.Pt(16), CornerRadius: ui.RadiusSmall}, StyleFunc: ui.Filled(colors.Accent)},
+			core.Text{Content: name, Style: ui.TypeCaption},
+		}}
+	})
 }

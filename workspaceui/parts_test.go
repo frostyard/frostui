@@ -228,3 +228,38 @@ func TestSearchFieldShowsItsKeysOrAClearButton(t *testing.T) {
 		t.Errorf("the field ends at %v in a box of 300", got)
 	}
 }
+
+// TestSummaryRowScalesItsText checks Scale: the row's text is larger by it,
+// and its dot and its avatar are not.
+func TestSummaryRowScalesItsText(t *testing.T) {
+	row := func(scale float32) *nsgotest.App {
+		return themed(t, false, 390, func(*core.Scope) core.Node {
+			return SummaryRow{Unread: true, Name: "A", Title: "A", When: "9:41", Subject: "S", Preview: "P", PreviewLines: 1, Scale: scale}
+		})
+	}
+	plain, large := row(0), row(1.5)
+	if a, b := plain.Find("summary-when").TextStyle.Font.Size, large.Find("summary-when").TextStyle.Font.Size; b != a*1.5 {
+		t.Errorf("the date is %v at scale 1.5 and %v at none: want 1.5 times", b, a)
+	}
+	if a, b := plain.Find("summary-preview").TextStyle.Font.Size, large.Find("summary-preview").TextStyle.Font.Size; b != a*1.5 {
+		t.Errorf("the preview is %v at scale 1.5 and %v at none: want 1.5 times", b, a)
+	}
+	if a, b := plain.Find("summary-dot").Bounds().Size, large.Find("summary-dot").Bounds().Size; a != b {
+		t.Errorf("the dot is %v at scale 1.5 and %v at none", b, a)
+	}
+}
+
+// TestPageFrameIsWhiteInsideAHairline checks the frame of a page that is
+// not the app's own, in both themes.
+func TestPageFrameIsWhiteInsideAHairline(t *testing.T) {
+	for _, dark := range []bool{true, false} {
+		app := themed(t, dark, 300, func(*core.Scope) core.Node {
+			return PageFrame{Size: core.Style{Height: core.Pt(80)}, Page: core.Text{Content: "a page"}}
+		})
+		frame := app.Find("page-frame").Style
+		if frame.Background != page || frame.BorderWidth != 1 {
+			t.Errorf("dark=%v: the frame's ground is %#08x with a line of %v, want white and 1", dark, uint32(frame.Background), frame.BorderWidth)
+		}
+		app.Find("page-frame >> text:a page")
+	}
+}

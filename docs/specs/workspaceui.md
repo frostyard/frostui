@@ -59,6 +59,35 @@ shown:
 | `Label()` | `frost-label` | `Label` |
 | `Fill(tone)` | `frost-fill-neutral`, `-accent`, `-success`, `-warning`, `-danger` | `Fill(tone)` |
 | `Line(tone)` | `frost-line-` and the same 5 | `Line(tone)` |
+| `Page()` | `frost-page` | none: white, `#ffffff`, in both themes |
+| `Flag(n)`, 1 to 7 | `frost-flag-red`, `-orange`, `-yellow`, `-green`, `-blue`, `-purple`, `-gray` | none |
+
+The 7 flags are these in the dark theme and in the light one. A number
+outside 1 to 7 is the first.
+
+| Flag | Frostyard | Frostyard light |
+| --- | --- | --- |
+| 1, red | `#ff453a` | `#ff3b30` |
+| 2, orange | `#ff9f0a` | `#ff9500` |
+| 3, yellow | `#ffd60a` | `#ffcc00` |
+| 4, green | `#30d158` | `#34c759` |
+| 5, blue | `#0a84ff` | `#007aff` |
+| 6, purple | `#bf5af2` | `#af52de` |
+| 7, gray | `#98989d` | `#8e8e93` |
+
+### Spacing
+
+The steps a padding or a gap takes in an app, so that an app writes none
+as a number (the standard for an app, rule 2).
+
+| Name | Points | For |
+| --- | --- | --- |
+| `SpaceXS` | 4 | between a mark and what it marks; inside a small cell |
+| `SpaceS` | 8 | a pane's inset from its edges; between a bar's controls |
+| `SpaceM` | 12 | between a pane's blocks |
+| `SpaceL` | 16 | a reading pane's inset |
+| `SpaceXL` | 24 | a page's inset |
+| `Indent(depth)` | 12 for each level | the leading inset of a row inside a tree; 0 at the top and for a depth under 0 |
 
 | Item | Value |
 | --- | --- |
@@ -116,6 +145,7 @@ The owner accepted these as the gallery draws them (2026-11-24,
 | `EmptyState` | centred in its pane: an icon 32 in `faint`, the title in NSGo's title style, the hint as a muted caption |
 | `DialogPanel` | the ground of a panel that floats over the window (a dialog, an alert, the command palette, a popover, a toast): `frost-panel`, opaque |
 | `ConnectionItem` | a dot 8 in the tone's color and 1 line of muted caption |
+| `PageFrame` | a page that is not the app's own, such as a message: `Page` on the `frost-page` ground inside a 1-point line in the border's color, corners 12, clipped; `Size` is the frame's size in its parent |
 | `SearchField` | NSGo's control height, corners 8, the field's ground and line, the accent's line while focused: a search icon 14, the platform's text field at 13, and at its end the keys of `Keys` while empty, or a "Clear search" button while it holds text |
 
 ### The control map
@@ -248,6 +278,16 @@ them. That is each app's.
   accent when unread and unpainted when read, in both themes, and a row
   with `PreviewLines` 0 has no preview
   (`TestSummaryRowMarksUnreadAndFollowsPreviewLines`).
+- `SummaryRow.Scale` multiplies the row's 4 text sizes and the preview's
+  line height, 1 when 0, and leaves the dot and the avatar
+  (`TestSummaryRowScalesItsText`).
+- `PageFrame`'s ground is white inside a 1-point line in both themes
+  (`TestPageFrameIsWhiteInsideAHairline`).
+- The 7 flags differ from each other in a theme and between the themes,
+  and a number outside them is the first
+  (`TestFlagsAreSevenColorsInBothThemes`).
+- `Indent` is 0 at depth 0 and under, and steps evenly
+  (`TestIndentStepsByDepth`).
 - A chosen row's fill is `frost-selected` and its text's color is not set
   (`TestSoftRowsFillAChosenRowSoftly`).
 - A `Banner` has its tone's fill and line, its button calls `OnAction`,
