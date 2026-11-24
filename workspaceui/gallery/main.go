@@ -60,7 +60,7 @@ func root(cx *core.Scope) core.Node {
 				return ""
 			}, Style: ui.TypeTitle}},
 			Actions:       []core.Node{workspaceui.AppearanceChoice{Value: appearance.Get, OnChange: appearance.Set}},
-			SidebarFooter: []core.Node{connection("Local")},
+			SidebarFooter: []core.Node{workspaceui.ConnectionItem{Tone: workspaceui.Success, Text: func() string { return "Local" }}},
 			Content: []core.Node{core.Dynamic(func(cx *core.Scope) core.Node {
 				for _, p := range pages {
 					if p.id == current.Get() {
@@ -71,18 +71,6 @@ func root(cx *core.Scope) core.Node {
 			})},
 		}
 	}))
-}
-
-// connection is the item at the foot of a navigation: a dot and where the
-// app is connected.
-func connection(where string) core.Node {
-	return core.Dynamic(func(cx *core.Scope) core.Node {
-		colors := ui.ColorsOf(cx)
-		return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Padding: core.Symmetric(8, 12)}, Children: []core.Node{
-			core.View{Style: core.Style{Width: core.Pt(8), Height: core.Pt(8), CornerRadius: 4}, StyleFunc: ui.Filled(colors.Up)},
-			core.Text{Content: where, Style: ui.TypeCaption, StyleFunc: ui.Colored(colors.Muted)},
-		}}
-	})
 }
 
 // section is a titled group of a page.

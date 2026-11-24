@@ -27,9 +27,18 @@ the canonical paths; keep content tool-agnostic.
 
 ## Build, test, lint
 
-The Makefile's `MODULES` lists the root and `workspaceui`, and every `go`
-and lint step below runs in each. A `go` command you run yourself at the
-root stops at `workspaceui/go.mod`: run it again in `workspaceui/`.
+The Makefile's `MODULES` lists the root, `workspaceui` and
+`workspaceui/gallery`, and every `go` and lint step below runs in each. A
+`go` command you run yourself at the root stops at a nested go.mod: run it
+again in that module's directory.
+
+- `make gallery` opens the NSGo kit's gallery in a window; `make
+  gallery-live` runs its picture tours in a real GTK 4 window under Xvfb,
+  and `make gallery-pictures` takes the kept pictures again
+  (`workspaceui/gallery/comparison/linux`). A change of the kit's look runs
+  `make gallery-pictures` and commits the changed PNGs. A real-window run
+  goes through these targets, which set `GDK_BACKEND=x11`: `xvfb-run` alone
+  opens GTK's windows on a Wayland desktop.
 
 - `mise install` — the pinned golangci-lint and Node (`mise.toml`,
   checksums in `mise.lock`). Go comes from go.mod's `go` line, the only Go
@@ -81,6 +90,11 @@ its skills there (core ADR-0026); start a repo-local one from
 - **`workspaceui`'s tests** run headless on NSGo's `nsgotest`, by test id,
   label and frame. A measure in its spec changes with the test that holds
   it.
+- **The right control.** A need takes NSGo's control for it, by the
+  [control map](docs/specs/workspaceui.md#the-control-map); the kit adds a
+  part only where NSGo's `ui` has none. A new part is drawn in the gallery
+  (`workspaceui/gallery`, a module of its own that imports the kit and
+  NSGo only) and accepted there before it enters the kit.
 - **Cross-platform builds.** The module builds and vets with
   `CGO_ENABLED=0` for linux, windows and darwin on amd64 and arm64, and for
   js/wasm ([ADR-0005](docs/adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md)).

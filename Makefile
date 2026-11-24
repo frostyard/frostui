@@ -1,4 +1,4 @@
-.PHONY: verify verify-static verify-template check ci fmt lint lint-version-check test test-wasm race cross snapshot tidy corrections-base bump bump-workspaceui
+.PHONY: verify verify-static verify-template check ci fmt lint lint-version-check test test-wasm race cross snapshot tidy corrections-base bump bump-workspaceui gallery gallery-live gallery-pictures
 
 GOCMD ?= go
 
@@ -6,10 +6,11 @@ GOCMD ?= go
 # platform's libraries at run time with purego.
 CGO_ENABLED = 0
 
-# The Go modules of the repository: the MyGo kit at the root, and
-# workspaceui, the NSGo kit (ADR-0014), with a go.mod of its own. The go
-# command stops at a nested go.mod, so every gate below runs once in each.
-MODULES := . workspaceui
+# The Go modules of the repository: the MyGo kit at the root, workspaceui,
+# the NSGo kit (ADR-0014), and its gallery, an app that shows the kit, each
+# with a go.mod of its own. The go command stops at a nested go.mod, so
+# every gate below runs once in each.
+MODULES := . workspaceui workspaceui/gallery
 
 # Pinned golangci-lint release, read from mise.toml, the single source of
 # every tool pin: `mise install` provisions it locally and CI installs it with
@@ -69,13 +70,14 @@ race:
 	done
 
 # Build and vet every package of every module, tests included, for each
-# target.
+# target. The build writes nothing: a module of one main package, as the
+# gallery, would otherwise leave its binary in its directory.
 cross:
 	@for target in $(CROSS_TARGETS); do \
 		goos=$${target%/*}; goarch=$${target#*/}; \
 		for module in $(MODULES); do \
 			echo "==> cross: $$goos/$$goarch $$module"; \
-			(cd $$module && GOOS=$$goos GOARCH=$$goarch CGO_ENABLED=0 $(GOCMD) build ./...) || exit 1; \
+			(cd $$module && GOOS=$$goos GOARCH=$$goarch CGO_ENABLED=0 $(GOCMD) build -o /dev/null ./...) || exit 1; \
 			(cd $$module && GOOS=$$goos GOARCH=$$goarch CGO_ENABLED=0 $(GOCMD) vet ./...) || exit 1; \
 		done; \
 	done
@@ -174,6 +176,30 @@ corrections-base:
 		exit 1; \
 	fi; \
 	node scripts/check-corrections.mjs --base "$(BASE)"
+
+# The gallery of the NSGo kit (docs/design/workspaceui.md). gallery opens it
+# in a window. gallery-live runs its picture tours in a real GTK 4 window
+# under Xvfb, and gallery-pictures takes the kept pictures again
+# (workspaceui/gallery/comparison/linux). GDK_BACKEND=x11 is what keeps the
+# windows on Xvfb: without it GTK tries Wayland first, and with
+# WAYLAND_DISPLAY unset it still finds a desktop's compositor at the default
+# socket. GTK reads testdata/xdg's settings last of the system's: they stop
+# the caret's blinking.
+GALLERY := workspaceui/gallery
+GALLERY_LIVE = env -u WAYLAND_DISPLAY GDK_BACKEND=x11 XDG_SESSION_TYPE=x11 \
+	XDG_CONFIG_DIRS=/etc/xdg:$(CURDIR)/$(GALLERY)/testdata/xdg \
+	xvfb-run -a -s "-screen 0 1600x1200x24" $(GOCMD) tool nsgo test -target linux
+
+gallery:
+	cd $(GALLERY) && $(GOCMD) run .
+
+gallery-live:
+	@command -v xvfb-run >/dev/null 2>&1 || { echo "make gallery-live needs xvfb-run (the xvfb package)"; exit 1; }
+	cd $(GALLERY) && $(GALLERY_LIVE) .
+
+gallery-pictures:
+	@command -v xvfb-run >/dev/null 2>&1 || { echo "make gallery-pictures needs xvfb-run (the xvfb package)"; exit 1; }
+	cd $(GALLERY) && $(GALLERY_LIVE) -screenshots comparison/linux .
 
 # Tag the next version of the MyGo kit (svu, .svu.yml) and push the tag. The
 # maintainer runs it; agents never tag or push a tag. The pattern keeps svu

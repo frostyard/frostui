@@ -25,7 +25,7 @@ func rowsPage(cx *core.Scope) core.Node {
 				n := lines.Get()
 				return ui.List{Label: "Messages", Style: ui.FillRest, EstimatedSize: 84, Gap: 2, Selection: selection, TapSelects: true,
 					Count:        func() int { return len(inbox) },
-					RowStyleFunc: softRows(cx),
+					RowStyleFunc: workspaceui.SoftRows(cx),
 					Row:          func(_ *core.Scope, row core.ListRow) core.Node { return summaryRow(inbox[row.Index()], n) }}
 			})}}),
 		section("Marks: avatars, badges and a loading row",
@@ -35,6 +35,6 @@ func rowsPage(cx *core.Scope) core.Node {
 		section("An empty pane",
 			core.View{Style: core.Style{Height: core.Pt(180), CornerRadius: ui.RadiusCard, BorderWidth: 1}, StyleFunc: func() core.Style {
 				return core.Style{BorderColor: ui.ColorsOf(cx).Border()}
-			}, Children: []core.Node{emptyState(lucide.MailOpen, "No message selected", "Choose a message to read it here.")}}),
+			}, Children: []core.Node{workspaceui.EmptyState{Icon: lucide.MailOpen, Title: "No message selected", Hint: "Choose a message to read it here."}}}),
 	)
 }

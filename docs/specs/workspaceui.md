@@ -102,6 +102,53 @@ Accessible names the shell sets: "Navigation", "Resize navigation",
 | `FileExplorer` | compact under 620; the tree between 110 and 440, the preview at least 170 |
 | `Conversation` | content 810 wide |
 
+### The parts of a list and a pane
+
+The owner accepted these as the gallery draws them (2026-11-24,
+[plan](../plans/workspaceui.md), Phase 2).
+
+| Part | What it draws |
+| --- | --- |
+| `NavLabel` | the content of a row of NSGo's sidebar: an icon 16 in the accent, the name at 13 on 1 line, and `Count` at the row's end at 12 in figures of one width. A count of 0 is not shown; an `Unread` count is semibold in the text's color, any other is muted |
+| `SummaryRow` | padding 8, gap 8: a gutter 8 wide whose dot (8, the accent) shows when `Unread`; NSGo's avatar at 32; then the title at 13 semibold with `When` at 12 muted at the row's end, the subject at 13 (semibold when `Unread`) with `Marks` at its end, and `Preview` at 12 muted on up to `PreviewLines` lines of 16 |
+| `SoftRows` | the style of a list's rows: corners 8, the theme's hover fill, and `frost-selected` when chosen, with no change of the text's color |
+| `Banner` | role status; padding 8 by 12, corners 8, a 1-point line: the tone's `Fill` and `Line`, an icon 16 in the tone's color (muted for `Neutral`), the sentence, and a small secondary button when `Action` is set |
+| `EmptyState` | centred in its pane: an icon 32 in `faint`, the title in NSGo's title style, the hint as a muted caption |
+| `DialogPanel` | a dialog's ground: `frost-panel`, opaque |
+| `ConnectionItem` | a dot 8 in the tone's color and 1 line of muted caption |
+
+### The control map
+
+A need takes NSGo's control for it, used as NSGo's docs and gallery show;
+the kit adds a part only where NSGo's `ui` package has none. The gallery
+draws each row of this table in both themes.
+
+| Need | The control | In the gallery |
+| --- | --- | --- |
+| The window and its navigation | `Shell` (NSGo's `ui.SidebarShell`), `ui.Sidebar` with `NavLabel` as an item's content | the standard window |
+| A choice among a few views | `ui.Tabs`, segmented; with an icon alone and a `ui.Tooltip` where there is no room for words | buttons; the window's modules and filter |
+| A toolbar | `ui.Toolbar`, `ui.ToolbarGroup`, `ui.ToolbarSeparator`, `ui.IconButton` (its label is its tooltip), `ui.ToggleButton` for a panel's toggle | buttons; the window |
+| The one main action of a region | `ui.Button`, primary; every other is secondary, outline or ghost | buttons; the window's Compose |
+| The palette's field | `ui.SidebarButton`, its field variant, with its shortcut | the window |
+| A list and its selection | `ui.List` with a multiple `ui.Selection` and `SoftRows`; `SummaryRow` as a row's content | rows; the window |
+| A person's picture | `ui.Avatar` | rows |
+| A count or a state | `ui.Badge` | rows |
+| Loading | `ui.Skeleton` | rows |
+| A confirmation | `ui.AlertDialog` with `DialogPanel`: Cancel secondary and first, a destroying action in the danger variant | dialogs |
+| A form in a dialog | `ui.Dialog` with `DialogPanel`; Cancel secondary, the confirming button primary | dialogs |
+| A menu | `ui.Menu` with icons, shortcuts, `ui.MenuSeparator` and the danger variant | dialogs |
+| Settings rows | `ui.FormSection` and `ui.FormRow` | fields |
+| An on/off setting | `ui.Switch`; `ui.Checkbox` for an item of a list and a task's done mark | fields |
+| A choice from a list | `ui.Select` | fields |
+| A date and a time | `ui.DatePicker`, `ui.TimeField` | fields |
+| Recipients | `ui.TagInput` | fields |
+| A notice about a pane's content | `Banner` (NSGo has none) | dialogs; the window |
+| A pane with nothing in it | `EmptyState` (NSGo has none) | rows; the window |
+
+Not in the gallery yet, and so not accepted: `ui.Tree`, `ui.Popover` and
+`ui.HoverCard`, `ui.Toaster`, `ui.Pagination`, `ui.Collapsible`,
+`ui.Settings`, `ui.CommandDialog`, and a search field's icon and key hint.
+
 ## Rules
 
 - Every file of the module, tests included, imports only the standard
@@ -139,8 +186,29 @@ Accessible names the shell sets: "Navigation", "Resize navigation",
 - While the module is v0, a minor version may change its API. A change of
   a measure in this spec is made with the code and the test that hold it.
 
-No test holds the other measures of the tables yet; the plan's Phase 2
-adds them with the parts it builds. No headless test shows a pixel or a
+- `NavLabel`'s count ends where its row ends, for a short name and for one
+  longer than the row, and a count of 0 is not shown
+  (`TestNavLabelKeepsItsCountAtTheRowsEnd`,
+  `TestNavLabelShowsNoCountOfZero`).
+- `SummaryRow` keeps `When` and its marks whole and inside a row narrower
+  than its text, takes the box's width, and limits the preview to
+  `PreviewLines` (`TestSummaryRowKeepsItsTextInside`); its dot is the
+  accent when unread and unpainted when read, in both themes, and a row
+  with `PreviewLines` 0 has no preview
+  (`TestSummaryRowMarksUnreadAndFollowsPreviewLines`).
+- A chosen row's fill is `frost-selected` and its text's color is not set
+  (`TestSoftRowsFillAChosenRowSoftly`).
+- A `Banner` has its tone's fill and line, its button calls `OnAction`,
+  and it has no button without `Action`
+  (`TestBannerShowsItsToneAndAtMostOneButton`).
+- `DialogPanel` is the theme's panel with no transparency, in both themes
+  (`TestDialogPanelIsOpaque`).
+- In the gallery, the filter is found by `role:tab`, the toolbar by
+  `role:toolbar` and the confirmation by `role:alertdialog`, so a control
+  of another kind fails its tour (`workspaceui/gallery/gallery_test.go`).
+
+No test holds the other measures of the tables yet (the type sizes, the
+paddings, the Shell's other widths). No headless test shows a pixel or a
 loaded font: the themes, the bundled Inter and the compact shell's ground
 were looked at through FrostMail's picture tours, in both appearances, in
 a GTK window on Xvfb's X11, whose own sans-serif face is not Inter

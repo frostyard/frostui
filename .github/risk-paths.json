@@ -78,6 +78,16 @@
       "why": "supply chain: the checksums of the NSGo kit's requirements"
     },
     {
+      "glob": "workspaceui/gallery/go.mod",
+      "level": "L2",
+      "why": "supply chain: the gallery's requirements and the NSGo tool it runs"
+    },
+    {
+      "glob": "workspaceui/gallery/go.sum",
+      "level": "L2",
+      "why": "supply chain: the checksums of the gallery's requirements"
+    },
+    {
       "glob": "workspaceui/imports_test.go",
       "level": "L2",
       "why": "governance: the guard of the NSGo kit's imports and its one direct requirement"

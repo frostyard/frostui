@@ -33,16 +33,16 @@ func overlaysPage(cx *core.Scope) core.Node {
 				ui.MenuItem{Text: "Delete message", Icon: lucide.Trash, Variant: ui.MenuItemDanger, Shortcut: "Delete", OnSelect: nothing},
 			}})),
 		section("Banners: a tone's fill and line, an icon, a sentence, at most one button",
-			banner(workspaceui.Neutral, lucide.ImageOff, "1 remote image is not shown.", "Load"),
-			banner(workspaceui.Warning, lucide.TriangleAlert, "This message may not be from skyline-travel.example.", "Details"),
-			banner(workspaceui.Accent, lucide.Clock, "Reminder tomorrow at 8:00 AM.", "Remove"),
-			banner(workspaceui.Danger, lucide.CircleAlert, "Sending failed: the server refused the message.", "Retry"),
-			banner(workspaceui.Success, lucide.Check, "You accepted this invitation.", "")),
-		ui.AlertDialog{Open: confirm.Get, OnOpenChange: closes(confirm), Title: "Delete message?", Description: "Your trip to Lisbon: itinerary", StyleFunc: panel(cx),
+			workspaceui.Banner{Tone: workspaceui.Neutral, Icon: lucide.ImageOff, Text: "1 remote image is not shown.", Action: "Load", OnAction: nothing},
+			workspaceui.Banner{Tone: workspaceui.Warning, Icon: lucide.TriangleAlert, Text: "This message may not be from skyline-travel.example.", Action: "Details", OnAction: nothing},
+			workspaceui.Banner{Tone: workspaceui.Accent, Icon: lucide.Clock, Text: "Reminder tomorrow at 8:00 AM.", Action: "Remove", OnAction: nothing},
+			workspaceui.Banner{Tone: workspaceui.Danger, Icon: lucide.CircleAlert, Text: "Sending failed: the server refused the message.", Action: "Retry", OnAction: nothing},
+			workspaceui.Banner{Tone: workspaceui.Success, Icon: lucide.Check, Text: "You accepted this invitation."}),
+		ui.AlertDialog{Open: confirm.Get, OnOpenChange: closes(confirm), Title: "Delete message?", Description: "Your trip to Lisbon: itinerary", StyleFunc: workspaceui.DialogPanel(cx),
 			Actions: []ui.AlertAction{
 				{Text: "Cancel", Variant: ui.ButtonSecondary, Role: core.AlertCancel},
 				{Text: "Delete", Variant: ui.ButtonDanger, Default: true}}},
-		ui.Dialog{Open: form.Get, OnOpenChange: closes(form), Title: "New mailbox", StyleFunc: panel(cx),
+		ui.Dialog{Open: form.Get, OnOpenChange: closes(form), Title: "New mailbox", StyleFunc: workspaceui.DialogPanel(cx),
 			Children: []core.Node{
 				workspaceui.Stack(core.Text{Content: "Name", Style: ui.TypeCaption}, ui.Input{Label: "Name", Value: name.Get, OnChange: name.Set}),
 				workspaceui.Stack(core.Text{Content: "Inside", Style: ui.TypeCaption}, ui.Select[string]{Label: "Inside", Value: func() string { return "top" }, OnChange: func(string) {}, Options: []ui.Option[string]{{Value: "top", Label: "ann.lee@example.com"}, {Value: "archive", Label: "Archive"}}}),
@@ -51,28 +51,4 @@ func overlaysPage(cx *core.Scope) core.Node {
 				ui.Button{Text: "Cancel", Variant: ui.ButtonSecondary, OnPress: func() { form.Set(false) }},
 				ui.Button{Text: "Create", OnPress: func() { form.Set(false) }}}},
 	)
-}
-
-// panel is the ground of a dialog: Frostyard's panel, opaque. NSGo's own is
-// the page's color at 92%, over a blur that Linux does not draw, so the view
-// under a dialog shows through it there.
-func panel(cx *core.Scope) func() core.Style {
-	kit := workspaceui.ColorsOf(cx)
-	return func() core.Style { return core.Style{Background: kit.Panel()} }
-}
-
-// banner is a notice inside a pane: a tone's fill and line, an icon, a
-// sentence and at most one button at its end. A prototype of the kit's part.
-func banner(tone workspaceui.Tone, icon func() *core.SVG, text, action string) core.Node {
-	return core.Dynamic(func(cx *core.Scope) core.Node {
-		colors, kit := ui.ColorsOf(cx), workspaceui.ColorsOf(cx)
-		ink := map[workspaceui.Tone]func() core.Color{workspaceui.Neutral: colors.Muted, workspaceui.Accent: colors.Accent, workspaceui.Success: colors.Up, workspaceui.Warning: colors.Warn, workspaceui.Danger: colors.Danger}[tone]
-		children := []core.Node{ui.Icon(icon, 16, ink), core.Text{Content: text, Style: ui.TypeBody.Merge(core.Style{FlexGrow: 1, FlexShrink: 1})}}
-		if action != "" {
-			children = append(children, ui.Button{Text: action, Variant: ui.ButtonSecondary, Size: ui.SizeSmall, OnPress: func() {}})
-		}
-		return core.View{Role: core.RoleStatus, Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10, Padding: core.Symmetric(8, 12), CornerRadius: ui.RadiusControl, BorderWidth: 1}, StyleFunc: func() core.Style {
-			return core.Style{Background: kit.Fill(tone), BorderColor: kit.Line(tone)}
-		}, Children: children}
-	})
 }

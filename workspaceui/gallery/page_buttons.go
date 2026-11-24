@@ -9,7 +9,6 @@ import (
 
 func buttonsPage(cx *core.Scope) core.Node {
 	nothing := func() {}
-	busy := func() bool { return true }
 	off := func() bool { return true }
 	filter := core.NewSignal(cx, "all")
 	view := core.NewSignal(cx, "week")
@@ -24,10 +23,9 @@ func buttonsPage(cx *core.Scope) core.Node {
 				ui.Button{Text: "Tinted", Variant: ui.ButtonTinted, OnPress: nothing},
 				ui.Button{Text: "Danger", Variant: ui.ButtonDanger, OnPress: nothing}),
 			caption("Rule 3: one filled button for a window region; Cancel is secondary; a destroying action is danger.")),
-		section("With an icon, busy, disabled, and the three sizes",
+		section("With an icon, disabled, and the three sizes",
 			workspaceui.Row(
 				ui.Button{Text: "Compose", Icon: lucide.SquarePen, OnPress: nothing},
-				ui.Button{Text: "Sending", Busy: busy, OnPress: nothing},
 				ui.Button{Text: "Disabled", Disabled: off, OnPress: nothing},
 				ui.Button{Text: "Disabled", Variant: ui.ButtonSecondary, Disabled: off, OnPress: nothing},
 				ui.Button{Text: "Small", Size: ui.SizeSmall, Variant: ui.ButtonSecondary, OnPress: nothing},

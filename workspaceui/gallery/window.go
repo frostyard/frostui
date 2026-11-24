@@ -50,16 +50,16 @@ func standardWindow(cx *core.Scope, gallery func()) core.Node {
 		ui.List{Label: "Messages", TestID: "messages", Style: ui.FillRest, EstimatedSize: 84, Gap: 2, Selection: selection, TapSelects: true,
 			Count:        func() int { return len(inbox) },
 			RowLabel:     func(i int) string { return inbox[i].subject },
-			RowStyleFunc: softRows(cx),
+			RowStyleFunc: workspaceui.SoftRows(cx),
 			Row:          func(_ *core.Scope, row core.ListRow) core.Node { return summaryRow(inbox[row.Index()], 2) }},
 	}}
 	reader := core.Dynamic(func(cx *core.Scope) core.Node {
 		m := opened()
 		if m == nil {
 			if selection.Len() > 1 {
-				return emptyState(lucide.Mails, "Several messages selected", "Archive, delete or move them from the toolbar.")
+				return workspaceui.EmptyState{Icon: lucide.Mails, Title: "Several messages selected", Hint: "Archive, delete or move them from the toolbar."}
 			}
-			return emptyState(lucide.MailOpen, "No message selected", "Choose a message to read it here.")
+			return workspaceui.EmptyState{Icon: lucide.MailOpen, Title: "No message selected", Hint: "Choose a message to read it here."}
 		}
 		return core.Scroll{Style: ui.FillRest, Children: []core.Node{core.View{Style: core.Style{Padding: core.All(16), Gap: 12}, Children: []core.Node{
 			core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignStart, Gap: 12}, Children: []core.Node{
@@ -69,7 +69,7 @@ func standardWindow(cx *core.Scope, gallery func()) core.Node {
 					core.Text{Content: "To: Ann Lee", Style: ui.TypeCaption, StyleFunc: ui.Colored(colors.Muted)}}},
 				ui.Tabular(ui.Text("Tue, Nov 24, 2026 at "+m.when, 12, ui.Regular, colors.Muted))}},
 			core.Text{Content: m.subject, Style: ui.TypeHeading},
-			banner(workspaceui.Neutral, lucide.ImageOff, "1 remote image is not shown.", "Load"),
+			workspaceui.Banner{Tone: workspaceui.Neutral, Icon: lucide.ImageOff, Text: "1 remote image is not shown.", Action: "Load", OnAction: nothing},
 			core.View{Style: core.Style{Padding: core.All(24), CornerRadius: ui.RadiusInset, BorderWidth: 1, Gap: 10}, StyleFunc: func() core.Style {
 				return core.Style{Background: core.RGB(0xffffff), BorderColor: colors.Border(), Color: core.RGB(0x1f2933)}
 			}, Children: []core.Node{
@@ -105,7 +105,7 @@ func standardWindow(cx *core.Scope, gallery func()) core.Node {
 				moduleTab("mail", "Mail", lucide.Mail), moduleTab("calendar", "Calendar", lucide.Calendar),
 				moduleTab("people", "People", lucide.Users), moduleTab("tasks", "Tasks", lucide.ListChecks)}}}}},
 		SidebarFooter: []core.Node{core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Width: core.Pct(100), Padding: core.Edges{Right: 6}}, Children: []core.Node{
-			connection("Local"), ui.Spacer{}, ui.IconButton{Label: "Settings", Icon: lucide.Settings, OnPress: nothing}}}},
+			workspaceui.ConnectionItem{Tone: workspaceui.Success, Text: func() string { return "Local" }}, ui.Spacer{}, ui.IconButton{Label: "Settings", Icon: lucide.Settings, OnPress: nothing}}}},
 		Header: []core.Node{core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10, Width: core.Pt(378)}, Children: []core.Node{
 			core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1}, Children: []core.Node{
 				core.Text{Content: "All Inboxes", Style: ui.TypeTitle},
