@@ -34,7 +34,7 @@ window, the rules for every app, the parts). The
   source files being byte-identical to the ones they ran before, which the
   owner accepts by merging this record.
 
-## Phase 1 — The themes and the type (medium, the kit's part built)
+## Phase 1 — The themes and the type (medium, built; 1 check left)
 
 - The Frostyard and Frostyard light themes as an NSGo theme, from
   [the themes' spec](../specs/frostyard-theme.md): the color roles, and
@@ -59,9 +59,27 @@ window, the rules for every app, the parts). The
   list, a menu and a dialog, and their text in the bundled Inter, where the
   same tours without `Apply` drew Xvfb's own sans-serif face. The first
   trial named the family "Inter" and drew that fallback face: the variable
-  file names "Inter Variable". Left: a tag of the module, the three apps
-  calling `Apply` and keeping their pictures, and a look at Inter in the
-  web build and on Windows.
+  file names "Inter Variable".
+- **The apps (2026-11-24).** The maintainer's tag is `workspaceui/v0.2.0`,
+  on the merge commit of frostyard/frostui#72. FrostMail
+  (frostyard/frostmail#395), Frostnotes (frostyard/frostnotes#278) and
+  PocketGo (frostyard/pocketgo#168) call `Apply`, sit in a `Frame` and
+  show the choice of appearance, and each made its kept pictures again in
+  both themes: they show Frostyard's colors and Inter. In Frostnotes and
+  in PocketGo the bundled file was told from the host's own Inter: with
+  the host's hidden the pictures did not change, and in Frostnotes with
+  the registration also removed the text was Noto Sans.
+- **Left of "Done when": one title row.** No picture shows it, since a
+  capture holds the window's content and not the system's title bar; the
+  pictures show the navigation's head without the app's name on Linux.
+  The phase closes when the owner sees it on a desktop, or accepts closing
+  without it. Not looked at, and not part of "Done when": the web build's
+  font and Windows.
+- **Seen in the apps' pictures, for Phase 2:** a dialog's and a palette's
+  panel let the view under them show through and take `background`, not
+  `raised`; in a wide window the content's ground is 1 step of 255 off
+  `background` (`#f4f9fc` for `#f5f9fc` on Linux); a settings dialog's
+  sidebar is a neutral gray, not `inset`.
 
 ## Phase 2 — The parts and the gallery (large)
 
