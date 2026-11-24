@@ -146,10 +146,12 @@ func (e EmptyState) Render(cx *core.Scope) core.Node {
 	return core.View{TestID: "empty-state", Style: ui.FillRest.Merge(core.Style{AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 8, Padding: core.All(24)}), Children: children}
 }
 
-// DialogPanel is the ground of a dialog (Dialog.StyleFunc and
-// AlertDialog.StyleFunc): Frostyard's panel, opaque. NSGo's own is the
-// page's color at 92% over a blur, and a platform that draws no blur, as
-// Linux, shows the view under the dialog through it.
+// DialogPanel is the ground of a panel that floats over the window: a
+// dialog, an alert, the command palette, a popover and a toast (their
+// StyleFunc). It is Frostyard's panel, opaque. NSGo's own is the page's
+// color at 92% over a blur, and a platform that draws no blur, as Linux,
+// shows the view under the panel through it. NSGo's menu takes no style,
+// so a menu keeps NSGo's ground.
 func DialogPanel(cx *core.Scope) func() core.Style {
 	kit := ColorsOf(cx)
 	return func() core.Style { return core.Style{Background: kit.Panel()} }

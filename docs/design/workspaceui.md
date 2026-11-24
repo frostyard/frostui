@@ -39,8 +39,9 @@ The module is one package:
 `workspaceui/gallery/` is a third module, an app: the standard window on
 fixture mail, and a page for each family of controls (colors and type,
 buttons and toolbars, fields and forms, rows and marks, dialogs and
-menus). It is where a change of the look is drawn and accepted before an
-app takes it. Its picture tours keep 20 pictures in
+menus, search and trees and popovers, settings). It is where a change of
+the look is drawn and accepted before an app takes it. Its picture tours
+keep 26 pictures in
 `workspaceui/gallery/comparison/linux`, each view in both themes.
 
 Every part reads its colors from the current theme, so it follows the
