@@ -209,7 +209,7 @@ not repeated here.
 
 - Tag format: 2 series. `vMAJOR.MINOR.PATCH` (for example `v0.6.0`) is the
   root module's. `workspaceui/vMAJOR.MINOR.PATCH` (for example
-  `workspaceui/v0.1.0`) is the `workspaceui` module's (ADR-0014).
+  `workspaceui/v0.2.0`) is the `workspaceui` module's (ADR-0014).
 - How a release starts: `make bump` tags the root's next version and pushes
   the tag; `make bump-workspaceui` does the same for `workspaceui`
   (`VERSION=workspaceui/vX.Y.Z` names a version; without it, svu derives
