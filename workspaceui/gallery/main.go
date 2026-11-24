@@ -29,6 +29,8 @@ var pages = []page{
 	{"fields", "Fields and forms", lucide.TextCursorInput, fieldsPage},
 	{"rows", "Rows and marks", lucide.List, rowsPage},
 	{"overlays", "Dialogs and menus", lucide.PanelTop, overlaysPage},
+	{"more", "Search, trees and popovers", lucide.Layers, morePage},
+	{"settings", "Settings", lucide.Settings, settingsPage},
 }
 
 func root(cx *core.Scope) core.Node {

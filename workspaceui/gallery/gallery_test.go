@@ -87,4 +87,25 @@ func TestPicturesOfTheOverlays(t *testing.T) {
 	}
 }
 
+// More open states: a toast with its way back, a popover, and the palette.
+func TestPicturesOfMoreOverlays(t *testing.T) {
+	for _, dark := range []bool{false, dark} {
+		t.Run(look(dark), func(t *testing.T) {
+			a := start(t, dark, 1280, 820)
+			a.Press("text:Controls and colors")
+			a.Press("sidebar-panel >> text:Search, trees and popovers")
+			a.Press("role:button Archive a message")
+			a.WaitFor("text:Message archived", 5*time.Second)
+			a.Screenshot("overlay-toast-" + look(dark))
+			a.Press("role:button Remind me")
+			a.WaitFor("text:Tomorrow at 8:00 AM", 5*time.Second)
+			a.Screenshot("overlay-popover-" + look(dark))
+			a.Key("Escape")
+			a.Press("role:button Open the palette")
+			a.WaitFor("text:Go to Calendar", 5*time.Second)
+			a.Screenshot("overlay-palette-" + look(dark))
+		})
+	}
+}
+
 const dark = true
