@@ -34,7 +34,7 @@ window, the rules for every app, the parts). The
   source files being byte-identical to the ones they ran before, which the
   owner accepts by merging this record.
 
-## Phase 1 — The themes and the type (medium, built; 1 check left)
+## Phase 1 — The themes and the type (medium, done 2026-11-24)
 
 - The Frostyard and Frostyard light themes as an NSGo theme, from
   [the themes' spec](../specs/frostyard-theme.md): the color roles, and
@@ -81,6 +81,9 @@ window, the rules for every app, the parts). The
   toggle and no name: the name once. It shows PocketGo only; FrostMail's
   and Frostnotes' windows were not looked at on a desktop, and the same
   `Shell` draws their heads.
+- **Closed (2026-11-24).** The owner accepted closing the phase on that
+  picture. The missing piece of "Done when": a desktop picture with one
+  title row for FrostMail and for Frostnotes.
 - **Seen in the apps' pictures, for Phase 2:** a dialog's and a palette's
   panel let the view under them show through and take `background`, not
   `raised`; in a wide window the content's ground is 1 step of 255 off
