@@ -17,29 +17,6 @@ var folders = map[any][]any{
 	"Projects": {"Aurora", "Onboarding"},
 }
 
-// searchField is a search box: NSGo's input with a search icon before it
-// and, while it is empty, the keys that focus it at its end. A prototype of
-// the kit's part: NSGo has no search field.
-func searchField(placeholder, keys string, value *core.Signal[string]) core.Node {
-	return core.Dynamic(func(cx *core.Scope) core.Node {
-		colors := ui.ColorsOf(cx)
-		hint := core.Show{When: func() bool { return value.Get() == "" }, Then: func(*core.Scope) core.Node {
-			return core.View{Style: core.Style{Padding: core.Symmetric(1, 5), CornerRadius: ui.RadiusSmall, BorderWidth: 1}, StyleFunc: func() core.Style {
-				return core.Style{Background: colors.Hover(), BorderColor: colors.Border()}
-			}, Children: []core.Node{ui.Text(cx.KeyLabel(keys), 11, ui.Medium, colors.Muted)}}
-		}}
-		return core.View{TestID: "search-field", Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6, Padding: core.Edges{Left: 8, Right: 6}, Height: core.Pt(ui.ButtonHeight), CornerRadius: ui.RadiusControl, BorderWidth: 1}, StyleFunc: func() core.Style {
-			return core.Style{Background: colors.Field(), BorderColor: colors.FieldBorder(), FocusWithin: &core.Style{BorderColor: colors.Accent()}}
-		}, Children: []core.Node{
-			ui.Icon(lucide.Search, 14, colors.Muted),
-			base.Input{Label: placeholder, Placeholder: placeholder, Value: value.Get, OnChange: value.Set, Style: core.Style{FlexGrow: 1, FlexShrink: 1, MinWidth: core.Pt(0), FontSize: 13, BorderWidth: 0}, StyleFunc: func() core.Style {
-				return core.Style{Background: core.Transparent, Color: colors.Text(), PlaceholderColor: colors.Muted()}
-			}},
-			hint,
-		}}
-	})
-}
-
 func morePage(cx *core.Scope) core.Node {
 	open := core.NewSignalFunc(cx, []string{"Archive"}, func(_, _ []string) bool { return false })
 	selection := ui.NewSelection(cx, false)
@@ -51,10 +28,10 @@ func morePage(cx *core.Scope) core.Node {
 	colors := ui.ColorsOf(cx)
 	nothing := func() {}
 	return workspaceui.Stack(
-		section("A search field: an icon, and the keys that focus it while it is empty",
+		section("A search field: an icon, the keys that focus it while it is empty, and a clear button while it holds text",
 			workspaceui.Row(
-				core.View{Style: core.Style{Width: core.Pt(280)}, Children: []core.Node{searchField("Search All Inboxes", "mod+f", query)}},
-				core.View{Style: core.Style{Width: core.Pt(280)}, Children: []core.Node{searchField("Search All Inboxes", "mod+f", typed)}})),
+				core.View{Style: core.Style{Width: core.Pt(280)}, Children: []core.Node{workspaceui.SearchField{Placeholder: "Search All Inboxes", Keys: "mod+f", Value: query.Get, OnChange: query.Set}}},
+				core.View{Style: core.Style{Width: core.Pt(280)}, Children: []core.Node{workspaceui.SearchField{Placeholder: "Search All Inboxes", Keys: "mod+f", Value: typed.Get, OnChange: typed.Set}}})),
 		section("A tree of folders",
 			core.View{Style: core.Style{Width: core.Pt(260), Height: core.Pt(210), CornerRadius: ui.RadiusCard, Padding: core.All(6)}, StyleFunc: ui.Filled(workspaceui.ColorsOf(cx).Chrome), Children: []core.Node{
 				ui.Tree{Label: "Folders", Selection: selection, ToggleLabel: "Expand", Style: ui.FillRest,

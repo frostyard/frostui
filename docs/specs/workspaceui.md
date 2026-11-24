@@ -116,6 +116,7 @@ The owner accepted these as the gallery draws them (2026-11-24,
 | `EmptyState` | centred in its pane: an icon 32 in `faint`, the title in NSGo's title style, the hint as a muted caption |
 | `DialogPanel` | the ground of a panel that floats over the window (a dialog, an alert, the command palette, a popover, a toast): `frost-panel`, opaque |
 | `ConnectionItem` | a dot 8 in the tone's color and 1 line of muted caption |
+| `SearchField` | NSGo's control height, corners 8, the field's ground and line, the accent's line while focused: a search icon 14, the platform's text field at 13, and at its end the keys of `Keys` while empty, or a "Clear search" button while it holds text |
 
 ### The control map
 
@@ -152,14 +153,53 @@ draws each row of this table in both themes.
 | A notice about a pane's content | `Banner` (NSGo has none) | dialogs; the window |
 | A pane with nothing in it | `EmptyState` (NSGo has none) | rows; the window |
 
-Drawn in the gallery and not yet accepted by the owner: the rows from the
-command palette down (the gallery's third round, 2026-11-24), and a search
-field with its icon and key hint, which is a prototype in the gallery
-since NSGo has none.
+| A search field | `SearchField` (NSGo has none) | search, trees and popovers; the window |
+
+The owner accepted every row as the gallery draws it (2026-11-24), in 3
+rounds. The search field's clear button was added after he accepted the
+field: it is in the gallery's pictures, and he has not looked at it.
 
 What NSGo draws that the theme cannot reach: a menu's ground is NSGo's
 translucent one, since `ui.Menu` takes no style; and the side of
 `ui.Settings` is a neutral gray, not `inset`.
+
+### The standard for an app
+
+What an app on the kit keeps to, so that the apps look and behave alike
+(the owner's choices of 2026-11-24; frostyard/frostmail's plan 0016 orders
+the work in each app).
+
+1. **Theme.** `Apply` at the root and the views in a `Frame`. A choice of
+   System, Light or Dark in the app's settings, kept on the device.
+2. **No literal looks in app code.** No color, text size, corner or padding
+   number outside the kit: an app takes a kit part, an NSGo control or a
+   token, and a test in the app holds it.
+3. **Buttons.** One filled button for each region of a window. Toolbar
+   actions are icon buttons, whose labels are their tooltips. In a dialog,
+   Cancel is secondary and comes before the confirming button; a
+   destroying action is the danger variant.
+4. **Dialogs.** A confirmation is `ui.AlertDialog`, and a form is
+   `ui.Dialog`, both on `DialogPanel`. Settings is `ui.Settings`.
+5. **Notices.** A notice takes its real tone. An action that can be undone
+   answers with a toast whose action is Undo. What a pane has to say about
+   its content is a `Banner`.
+6. **States.** Every list and pane has an empty state (`EmptyState`), a
+   loading state (`ui.Skeleton`) and an error state.
+7. **Keys.** mod+K the palette (mod+Shift+P inside an editor), mod+, the
+   settings, mod+N the app's new item, mod+F the search of what is shown.
+8. **Window.** The size, the place and the panes' widths are kept, held so
+   that the main pane never falls under its least width.
+9. **Names.** Labels and test ids are the tests' handles: a change of the
+   look keeps them, or changes the test in the same change.
+10. **Live tests.** One suite on NSGo's `nsgotest`, on fixture data, that
+    runs headless in the app's verify gate and in a real Linux window, and
+    names a picture at each main view; the repository keeps the pictures,
+    and a change of the look changes them in the same pull request.
+11. **The right control.** The control map above. No view stands in for a
+    control, and no control does another's job.
+
+Not decided here: where the parts go in a window and how one moves between
+them. That is each app's.
 
 ## Rules
 
@@ -215,6 +255,9 @@ translucent one, since `ui.Menu` takes no style; and the side of
   (`TestBannerShowsItsToneAndAtMostOneButton`).
 - `DialogPanel` is the theme's panel with no transparency, in both themes
   (`TestDialogPanelIsOpaque`).
+- `SearchField` shows its keys while empty and a clear button while it
+  holds text, reports what is typed and submitted, clears on its button,
+  and takes its box's width (`TestSearchFieldShowsItsKeysOrAClearButton`).
 - In the gallery, the filter is found by `role:tab`, the toolbar by
   `role:toolbar` and the confirmation by `role:alertdialog`, so a control
   of another kind fails its tour (`workspaceui/gallery/gallery_test.go`).

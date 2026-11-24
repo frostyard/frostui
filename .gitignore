@@ -6,3 +6,5 @@
 # The gallery's binary, when built in place
 /workspaceui/gallery/gallery
 /workspaceui/gallery/gallery.exe
+# The gallery's web pictures: taken to be looked at, too large to keep
+/workspaceui/gallery/comparison/web/

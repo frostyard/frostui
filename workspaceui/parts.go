@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/icons/lucide"
 	"github.com/nsgo-dev/nsgo/ui"
 )
 
@@ -176,5 +177,52 @@ func (c ConnectionItem) Render(cx *core.Scope) core.Node {
 	return core.View{TestID: "connection", Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Padding: core.Symmetric(8, 12), FlexShrink: 1, MinWidth: core.Pt(0)}, Children: []core.Node{
 		core.View{Style: core.Style{Width: core.Pt(8), Height: core.Pt(8), CornerRadius: 4}, StyleFunc: ui.Filled(ink[tone])},
 		text,
+	}}
+}
+
+// SearchField is a search box, which NSGo has none of: a search icon, the
+// platform's text field, and at its end the keys that focus it while it is
+// empty, or a button that clears it while it holds text. The app binds
+// Keys itself and focuses Ref.
+type SearchField struct {
+	// Placeholder is also what assistive technology reads.
+	Placeholder string
+	// Keys is the shortcut shown while the field is empty, such as "mod+f";
+	// empty shows none.
+	Keys     string
+	Value    func() string
+	OnChange func(string)
+	OnSubmit func(string)
+	Ref      *core.Ref
+}
+
+func (f SearchField) Render(cx *core.Scope) core.Node {
+	colors := ui.ColorsOf(cx)
+	empty := func() bool { return f.Value == nil || f.Value() == "" }
+	change := func(s string) {
+		if f.OnChange != nil {
+			f.OnChange(s)
+		}
+	}
+	end := core.Dynamic(func(cx *core.Scope) core.Node {
+		if !empty() {
+			return ui.IconButton{Label: "Clear search", Icon: lucide.X, Size: 20, IconSize: 12, OnPress: func() { change("") }}
+		}
+		if f.Keys == "" {
+			return nil
+		}
+		return core.View{TestID: "search-keys", Style: core.Style{Padding: core.Symmetric(1, 5), CornerRadius: ui.RadiusSmall, BorderWidth: 1}, StyleFunc: func() core.Style {
+			return core.Style{Background: colors.Hover(), BorderColor: colors.Border()}
+		}, Children: []core.Node{ui.Text(cx.KeyLabel(f.Keys), 11, ui.Medium, colors.Muted)}}
+	})
+	return core.View{TestID: "search-field", Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6, Padding: core.Edges{Left: 8, Right: 4}, Height: core.Pt(ui.ButtonHeight), CornerRadius: ui.RadiusControl, BorderWidth: 1}, StyleFunc: func() core.Style {
+		return core.Style{Background: colors.Field(), BorderColor: colors.FieldBorder(), FocusWithin: &core.Style{BorderColor: colors.Accent()}}
+	}, Children: []core.Node{
+		ui.Icon(lucide.Search, 14, colors.Muted),
+		core.Input{Ref: f.Ref, Label: f.Placeholder, Placeholder: f.Placeholder, Value: f.Value, OnChange: change, OnSubmit: f.OnSubmit,
+			Style: core.Style{FlexGrow: 1, FlexShrink: 1, MinWidth: core.Pt(0), FontSize: 13, BorderWidth: 0}, StyleFunc: func() core.Style {
+				return core.Style{Background: core.Transparent, Color: colors.Text(), PlaceholderColor: colors.Muted()}
+			}},
+		end,
 	}}
 }

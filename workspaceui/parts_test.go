@@ -195,3 +195,36 @@ func TestConnectionItemShowsItsText(t *testing.T) {
 	})
 	app.Find("connection >> text:Local")
 }
+
+// TestSearchFieldShowsItsKeysOrAClearButton checks the field's end: the
+// keys while it is empty, a button that clears it while it holds text, and
+// what typing reports.
+func TestSearchFieldShowsItsKeysOrAClearButton(t *testing.T) {
+	var submitted []string
+	app := themed(t, false, 300, func(cx *core.Scope) core.Node {
+		query := core.NewSignal(cx, "")
+		return SearchField{Placeholder: "Search All Inboxes", Keys: "mod+f", Value: query.Get, OnChange: query.Set,
+			OnSubmit: func(s string) { submitted = append(submitted, s) }}
+	})
+	if !app.Exists("search-keys") || app.Exists("role:button Clear search") {
+		t.Fatal("an empty field does not show its keys alone")
+	}
+	app.Type("label:Search All Inboxes", "aurora")
+	if app.Exists("search-keys") || !app.Exists("role:button Clear search") {
+		t.Fatal("a field with text shows its keys, or no clear button")
+	}
+	if got := app.Find("label:Search All Inboxes").Text; got != "aurora" {
+		t.Fatalf("the field holds %q", got)
+	}
+	app.Submit("label:Search All Inboxes")
+	if len(submitted) != 1 || submitted[0] != "aurora" {
+		t.Errorf("OnSubmit heard %q, want aurora", submitted)
+	}
+	app.Press("role:button Clear search")
+	if got := app.Find("label:Search All Inboxes").Text; got != "" || !app.Exists("search-keys") {
+		t.Errorf("after Clear the field holds %q and shows its keys: %v", got, app.Exists("search-keys"))
+	}
+	if got := right(app.Find("search-field")); got != 300 {
+		t.Errorf("the field ends at %v in a box of 300", got)
+	}
+}
