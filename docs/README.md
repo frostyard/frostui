@@ -26,6 +26,7 @@ Docs are split by the question they answer:
 - [0011 — Draw the frostyard brand, in a dark and a light theme](adr/0011-draw-the-frostyard-brand-in-a-dark-and-a-light-theme.md)
 - [0012 — One tray component, with a close-to-tray check the app switches](adr/0012-one-tray-component-with-a-close-to-tray-check-the-app-switches.md)
 - [0013 — Hold text to 7:1 under the desktop's high contrast](adr/0013-hold-text-to-7-to-1-under-high-contrast.md)
+- [0014 — Hold the NSGo kit as a second module, and give it the Frostyard look](adr/0014-hold-the-nsgo-kit-as-a-second-module.md)
 
 ### Org-wide decisions
 
@@ -38,17 +39,20 @@ Docs are split by the question they answer:
 ### Design
 
 - [frostui: frostyard's desktop UI kit](design/frostui.md): start here
+- [workspaceui: the kit for NSGo apps](design/workspaceui.md): the second module
 - [Agent-ready repository](design/agent-ready-repository.md)
 
 ### Specs
 
 - [API stability and versions](specs/api-stability.md)
 - [The Frostyard themes](specs/frostyard-theme.md)
+- [The workspaceui module](specs/workspaceui.md)
 
 ### Plans
 
 - [Roadmap](plans/roadmap.md)
 - [The Frostyard look](plans/frostyard-look.md)
+- [The NSGo kit and its look](plans/workspaceui.md)
 
 ## Conventions
 

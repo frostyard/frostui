@@ -2,7 +2,9 @@
 #
 # https://github.com/caarlos0/svu
 verbose: false
-tag.pattern: ""
+# The MyGo kit's series only: workspaceui, the NSGo kit, has its own tags
+# (workspaceui/vX.Y.Z, make bump-workspaceui).
+tag.pattern: "v*"
 tag.prefix: "v"
 tag.mode: all
 log.directory:

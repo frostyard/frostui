@@ -1,10 +1,15 @@
-.PHONY: verify verify-static verify-template check ci fmt lint lint-version-check test test-wasm race cross snapshot tidy corrections-base bump
+.PHONY: verify verify-static verify-template check ci fmt lint lint-version-check test test-wasm race cross snapshot tidy corrections-base bump bump-workspaceui
 
 GOCMD ?= go
 
 # The kit builds without CGO everywhere: MyGo loads GTK, OpenGL and the
 # platform's libraries at run time with purego.
 CGO_ENABLED = 0
+
+# The Go modules of the repository: the MyGo kit at the root, and
+# workspaceui, the NSGo kit (ADR-0014), with a go.mod of its own. The go
+# command stops at a nested go.mod, so every gate below runs once in each.
+MODULES := . workspaceui
 
 # Pinned golangci-lint release, read from mise.toml, the single source of
 # every tool pin: `mise install` provisions it locally and CI installs it with
@@ -36,28 +41,43 @@ fmt:
 	gofmt -s -w .
 
 tidy:
-	$(GOCMD) mod tidy
+	@for module in $(MODULES); do \
+		echo "==> tidy: $$module"; \
+		(cd $$module && $(GOCMD) mod tidy) || exit 1; \
+	done
 
 test:
-	$(HEADLESS) CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) test ./...
+	@for module in $(MODULES); do \
+		echo "==> test: $$module"; \
+		(cd $$module && $(HEADLESS) CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) test ./...) || exit 1; \
+	done
 
 # The tests again as js/wasm under Node: the only off-Linux platform this
 # host can run, so the _other.go fallbacks run too.
 test-wasm:
 	@if ! command -v node >/dev/null 2>&1; then echo "FAIL: test-wasm requires Node.js (run: mise install)"; exit 1; fi
-	GOOS=js GOARCH=wasm CGO_ENABLED=0 $(GOCMD) test -exec="$$($(GOCMD) env GOROOT)/lib/wasm/go_js_wasm_exec" ./...
+	@for module in $(MODULES); do \
+		echo "==> test-wasm: $$module"; \
+		(cd $$module && GOOS=js GOARCH=wasm CGO_ENABLED=0 $(GOCMD) test -exec="$$($(GOCMD) env GOROOT)/lib/wasm/go_js_wasm_exec" ./...) || exit 1; \
+	done
 
 # The race detector needs CGO and a C compiler.
 race:
-	$(HEADLESS) CGO_ENABLED=1 $(GOCMD) test -race -short ./...
+	@for module in $(MODULES); do \
+		echo "==> race: $$module"; \
+		(cd $$module && $(HEADLESS) CGO_ENABLED=1 $(GOCMD) test -race -short ./...) || exit 1; \
+	done
 
-# Build and vet every package, tests included, for each target.
+# Build and vet every package of every module, tests included, for each
+# target.
 cross:
 	@for target in $(CROSS_TARGETS); do \
 		goos=$${target%/*}; goarch=$${target#*/}; \
-		echo "==> cross: $$goos/$$goarch"; \
-		GOOS=$$goos GOARCH=$$goarch CGO_ENABLED=0 $(GOCMD) build ./... || exit 1; \
-		GOOS=$$goos GOARCH=$$goarch CGO_ENABLED=0 $(GOCMD) vet ./... || exit 1; \
+		for module in $(MODULES); do \
+			echo "==> cross: $$goos/$$goarch $$module"; \
+			(cd $$module && GOOS=$$goos GOARCH=$$goarch CGO_ENABLED=0 $(GOCMD) build ./...) || exit 1; \
+			(cd $$module && GOOS=$$goos GOARCH=$$goarch CGO_ENABLED=0 $(GOCMD) vet ./...) || exit 1; \
+		done; \
 	done
 
 # Write the examples' frames, light and dark, as PNGs. Copy
@@ -72,10 +92,14 @@ snapshot:
 # platform files (_linux.go, _other.go) are linted too
 lint:
 	$(MAKE) --no-print-directory lint-version-check
-	CGO_ENABLED=$(CGO_ENABLED) golangci-lint run
-	GOOS=windows GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) golangci-lint run
-	GOOS=darwin GOARCH=arm64 CGO_ENABLED=$(CGO_ENABLED) golangci-lint run
-	GOOS=js GOARCH=wasm CGO_ENABLED=$(CGO_ENABLED) golangci-lint run
+	@for module in $(MODULES); do \
+		for target in host windows/amd64 darwin/arm64 js/wasm; do \
+			echo "==> lint: $$module $$target"; \
+			(cd $$module && \
+				if [ "$$target" != host ]; then export GOOS=$${target%/*} GOARCH=$${target#*/}; fi && \
+				CGO_ENABLED=$(CGO_ENABLED) golangci-lint run) || exit 1; \
+		done; \
+	done
 
 # Fail unless the installed golangci-lint is the mise.toml pin and was built
 # with a Go no older than go.mod's go line
@@ -104,10 +128,12 @@ verify-template:
 # The non-mutating static checks: tidy diff, vet, gofmt, the pinned lint and
 # the template gate
 verify-static:
-	@echo "==> verify: go.mod is tidy"
-	$(GOCMD) mod tidy -diff
-	@echo "==> verify: go vet"
-	CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) vet ./...
+	@for module in $(MODULES); do \
+		echo "==> verify: go.mod is tidy ($$module)"; \
+		(cd $$module && $(GOCMD) mod tidy -diff) || exit 1; \
+		echo "==> verify: go vet ($$module)"; \
+		(cd $$module && CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) vet ./...) || exit 1; \
+	done
 	@echo "==> verify: gofmt"
 	test -z "$$(gofmt -s -l .)"
 	@echo "==> verify: lint"
@@ -149,15 +175,45 @@ corrections-base:
 	fi; \
 	node scripts/check-corrections.mjs --base "$(BASE)"
 
-# Tag the next version (svu, .svu.yml) and push the tag. The maintainer runs
-# it; agents never tag or push a tag.
+# Tag the next version of the MyGo kit (svu, .svu.yml) and push the tag. The
+# maintainer runs it; agents never tag or push a tag. The pattern keeps svu
+# to the root's series: without it, svu reads a workspaceui/v* tag as the
+# newest one and stops.
 bump:
 	$(MAKE) --no-print-directory verify
 	@if [ -n "$$(git status --porcelain)" ]; then \
 		echo "Working directory is not clean. Please commit or stash changes before bumping version."; \
 		exit 1; \
 	fi
-	@version=$$(svu next); \
+	@version=$$(svu next --pattern 'v*') || exit 1; \
+		git tag -a $$version -m "Version $$version"; \
+		echo "Tagged version $$version"; \
+		echo "Pushing tag $$version to origin..."; \
+		git push origin $$version
+
+# Tag the next version of workspaceui, the NSGo kit, and push the tag. Go
+# reads a nested module's versions from tags named <directory>/vX.Y.Z. svu
+# derives the next one from the Conventional Commits that touched
+# workspaceui/ since its last tag. The first tag has none before it: name it,
+# make bump-workspaceui VERSION=workspaceui/v0.1.0. The maintainer runs it;
+# agents never tag or push a tag.
+bump-workspaceui:
+	$(MAKE) --no-print-directory verify
+	@if [ -n "$$(git status --porcelain)" ]; then \
+		echo "Working directory is not clean. Please commit or stash changes before bumping version."; \
+		exit 1; \
+	fi
+	@version="$(VERSION)"; \
+		if [ -z "$$version" ]; then \
+			version=$$(svu next --prefix workspaceui/v --pattern 'workspaceui/v*' --directory workspaceui) || { \
+				echo "svu found no version (no workspaceui/v* tag yet?): name it, make bump-workspaceui VERSION=workspaceui/v0.1.0"; exit 1; }; \
+		fi; \
+		if ! printf '%s\n' "$$version" | grep -Eq '^workspaceui/v[0-9]+\.[0-9]+\.[0-9]+$$'; then \
+			echo "$$version is not workspaceui/vMAJOR.MINOR.PATCH"; exit 1; \
+		fi; \
+		if git rev-parse --verify --quiet "refs/tags/$$version" >/dev/null; then \
+			echo "tag $$version exists"; exit 1; \
+		fi; \
 		git tag -a $$version -m "Version $$version"; \
 		echo "Tagged version $$version"; \
 		echo "Pushing tag $$version to origin..."; \
