@@ -33,6 +33,33 @@ func TestKitIconSetParses(t *testing.T) {
 	}
 }
 
+func TestCPUEmbeddedFallback(t *testing.T) {
+	// No app icons or theme search roots, even on a desktop that has a CPU icon.
+	ic := &Icons{cache: map[string]*ui.SVG{}}
+	for _, name := range []string{"cpu", "cpu-symbolic"} {
+		t.Run(name, func(t *testing.T) {
+			svg := ic.Get(name)
+			if svg == nil {
+				t.Fatalf("Get(%q) returned no embedded CPU glyph", name)
+			}
+			// Sample the rendered pin, package outline, and inner die, plus
+			// gaps between the pins and inside the die. Use 4x to avoid edges.
+			img := svg.Image(96, 96, nil)
+			for _, p := range []struct {
+				x, y int
+				ink  bool
+			}{
+				{10, 48, true}, {16, 36, true}, {32, 48, true},
+				{10, 36, false}, {48, 48, false},
+			} {
+				if got := img.RGBAAt(p.x, p.y).A > 127; got != p.ink {
+					t.Errorf("Get(%q): CPU glyph ink at (%d, %d) = %t, want %t", name, p.x, p.y, got, p.ink)
+				}
+			}
+		})
+	}
+}
+
 // TestKitIconSetHoldsOnlyMappedIcons keeps the binary to what is named: an
 // embedded file nothing maps is size for nothing.
 func TestKitIconSetHoldsOnlyMappedIcons(t *testing.T) {

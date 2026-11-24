@@ -730,11 +730,16 @@ empty box of the text size, so layouts do not move.
 
 `iconset.go`, `icons/`
 ([ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md)):
-symbolic icons of [Lucide](https://lucide.dev), ISC-licensed, taken from
-lucide-react 1.52.0's data. `icons/LICENSE` is Lucide's license, with
-Feather's MIT notice, and `NOTICE` attributes them. `kitIconNames` maps the
-freedesktop names the kit and its apps draw to Lucide's names; it is the only
-set off Linux, and on Linux it fills what the themes lack.
+symbolic icons of [Lucide](https://lucide.dev), ISC-licensed, from the
+Lucide 1.52.0 source or the corresponding lucide-react icon data.
+`icons/LICENSE` is Lucide's license, with Feather's MIT notice, and `NOTICE`
+attributes them. `kitIconNames` maps the names the kit and its apps draw to
+Lucide's names. The kit's set fills names that neither the app nor the desktop
+theme provides (off Linux, there is no desktop theme lookup).
+
+Use `Icon(c, "cpu")` or `IconSVG("cpu")` for a processor glyph. Both `cpu`
+and `cpu-symbolic` fall back to the same embedded Lucide CPU icon; app icons
+still win, followed by the desktop theme, then the kit.
 
 To add a name:
 
@@ -867,6 +872,11 @@ ChairLift's examples (Homebrew taps, firmware, bootc deployments); and
 `Pipeline`'s list is named "Pipeline" instead of "Update run".
 
 ## API changes
+
+2026-11-24: the embedded icon set supports `cpu` and its `cpu-symbolic`
+form, with no Go signature or lookup order change. See
+[The kit's icon set](#the-kits-icon-set) and
+[issue #63](https://github.com/frostyard/frostui/issues/63).
 
 2026-11-23: additive `func PrimaryIconButton(c *ui.Context, icon, label string) ui.Element`.
 An icon-only primary action using `PrimaryButton`'s gradient and on-gradient
