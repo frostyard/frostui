@@ -68,6 +68,21 @@
       "why": "supply chain: the checksums of the module's requirements"
     },
     {
+      "glob": "workspaceui/go.mod",
+      "level": "L2",
+      "why": "supply chain: the NSGo kit's requirements, which every app that imports it inherits"
+    },
+    {
+      "glob": "workspaceui/go.sum",
+      "level": "L2",
+      "why": "supply chain: the checksums of the NSGo kit's requirements"
+    },
+    {
+      "glob": "workspaceui/imports_test.go",
+      "level": "L2",
+      "why": "governance: the guard of the NSGo kit's imports and its one direct requirement"
+    },
+    {
       "glob": "appid_linux.go",
       "level": "L2",
       "why": "auth: the program identity (app ID) that the desktop sees; native code that loads GLib with purego and calls it by symbol"

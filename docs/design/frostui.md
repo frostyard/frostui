@@ -989,4 +989,6 @@ nothing; an app that filtered mailto links itself can drop its copy.
 
 - Rationale: [ADR-0004](../adr/0004-extract-the-ui-kit-into-its-own-module.md), [ADR-0005](../adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md), [ADR-0006](../adr/0006-a-frame-without-the-rail.md), [ADR-0007](../adr/0007-embed-a-lucide-icon-set-as-the-last-fallback.md), [ADR-0008](../adr/0008-open-behind-allow-lists-and-let-editors-keep-their-keys.md), [ADR-0009](../adr/0009-the-top-bars-end-belongs-to-the-window.md), [ADR-0010](../adr/0010-keep-only-a-mailto-links-addressees-subject-and-body.md), [ADR-0012](../adr/0012-one-tray-component-with-a-close-to-tray-check-the-app-switches.md), [ADR-0013](../adr/0013-hold-text-to-7-to-1-under-high-contrast.md)
 - Contracts: [spec: API stability](../specs/api-stability.md)
+- Beside it: [workspaceui](workspaceui.md), the kit for NSGo apps, a module
+  of its own ([ADR-0014](../adr/0014-hold-the-nsgo-kit-as-a-second-module.md))
 - Built in: [roadmap — Phase 1](../plans/roadmap.md#phase-1--extract-the-kit-done), [Phase 5](../plans/roadmap.md#phase-5--the-frame-and-the-layout-done), [Phase 6](../plans/roadmap.md#phase-6--commands-navigation-and-settings-for-v020-medium-done), [Phase 7](../plans/roadmap.md#phase-7--native-diff-viewer), [Phase 8](../plans/roadmap.md#phase-8--tray-icon-small)

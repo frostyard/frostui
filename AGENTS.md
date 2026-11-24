@@ -10,6 +10,15 @@ windows from it. It came out of ChairLift's `internal/frostui`
 at [docs/design/frostui.md](docs/design/frostui.md), then
 [docs/README.md](docs/README.md).
 
+The repository holds a second Go module, `workspaceui/`
+(`github.com/frostyard/frostui/workspaceui`): the kit for frostyard's apps
+on [NSGo](https://github.com/nsgo-dev/nsgo)
+([ADR-0014](docs/adr/0014-hold-the-nsgo-kit-as-a-second-module.md),
+[design](docs/design/workspaceui.md), [spec](docs/specs/workspaceui.md),
+[plan](docs/plans/workspaceui.md)). The two modules share no code. In this
+file "the kit" is the MyGo kit at the root, and a rule is the root
+module's unless it names `workspaceui`.
+
 This file (`AGENTS.md`) is the CANONICAL agent instructions — `CLAUDE.md`,
 `GEMINI.md`, `.cursorrules`, and `.github/copilot-instructions.md` are symlinks
 to it, and `.claude/skills` symlinks to `.agents/skills/`
@@ -17,6 +26,10 @@ to it, and `.claude/skills` symlinks to `.agents/skills/`
 the canonical paths; keep content tool-agnostic.
 
 ## Build, test, lint
+
+The Makefile's `MODULES` lists the root and `workspaceui`, and every `go`
+and lint step below runs in each. A `go` command you run yourself at the
+root stops at `workspaceui/go.mod`: run it again in `workspaceui/`.
 
 - `mise install` — the pinned golangci-lint and Node (`mise.toml`,
   checksums in `mise.lock`). Go comes from go.mod's `go` line, the only Go
@@ -57,6 +70,17 @@ its skills there (core ADR-0026); start a repo-local one from
   `examples/`. go.mod requires MyGo and purego directly and nothing else.
   Guards: `internal/repocheck.TestKitImportsOnlyMyGoAndPurego` (with
   fixtures) and `TestModuleRequiresOnlyMyGoAndPurego`.
+- **`workspaceui`'s imports.** Every file of `workspaceui/`, tests
+  included, imports only the standard library and NSGo
+  (`github.com/nsgo-dev/nsgo/...`), and its go.mod requires NSGo directly
+  and nothing else: never MyGo, never the root module. The root module
+  never imports `workspaceui`. Guards: `workspaceui/imports_test.go`
+  (`TestKitImportsOnlyNSGo`, `TestModuleRequiresOnlyNSGo`). The root's
+  guards skip a directory with its own go.mod, and `api.txt` does not pin
+  `workspaceui`'s API ([spec](docs/specs/workspaceui.md)).
+- **`workspaceui`'s tests** run headless on NSGo's `nsgotest`, by test id,
+  label and frame. A measure in its spec changes with the test that holds
+  it.
 - **Cross-platform builds.** The module builds and vets with
   `CGO_ENABLED=0` for linux, windows and darwin on amd64 and arm64, and for
   js/wasm ([ADR-0005](docs/adr/0005-build-everywhere-with-freedesktop-parts-behind-build-tags.md)).
@@ -136,7 +160,8 @@ and the review; `promoted_to`: the test or the rule). See `.memory/README.md`.
 every glob carries a level, and a PR that touches one gets that level label from
 `.github/workflows/risk-paths.yml` (`level:L1` read every line, `level:L2` read
 the diff, `level:L3` skim, `level:L4` title and CI), plus `risk:high` at L1 and
-L2, which declares tier 3. Here go.mod, go.sum, the guards
+L2, which declares tier 3. Here go.mod, go.sum, `workspaceui`'s go.mod,
+go.sum and `imports_test.go`, the guards
 (`internal/repocheck/**`, with `api.txt`), `.golangci.yml`,
 `appid_linux.go`, `launch_linux.go` and `tray_linux.go` are L2, and `.svu.yml` and the tool pins are L1. Add a path
 when you add a file of that kind (signing, auth, publish, secrets,
@@ -155,9 +180,11 @@ by hand (`make verify` checks their hashes).
 
 - **Releases.** Tags are `vMAJOR.MINOR.PATCH`; svu derives the next one from
   the Conventional Commits since the last tag (`.svu.yml`: prefix `v`, `v0:
-  true`). The maintainer (Brian) runs `make bump`. Agents never run it,
-  create or push a tag, or cut a release; an agent that finds a release due
-  proposes `svu next` and asks.
+  true`). The maintainer (Brian) runs `make bump`. `workspaceui` has tags of
+  its own, `workspaceui/vMAJOR.MINOR.PATCH`, and the maintainer runs `make
+  bump-workspaceui`. Agents never run either, create or push a tag, or cut
+  a release; an agent that finds a release due proposes `svu next` and
+  asks.
 - **A library, not a product.** No binaries are published: no GoReleaser,
   no packages, no `dev` prerelease. `examples/` holds programs that show
   the kit, never an app.
@@ -178,20 +205,30 @@ The facts that recurring repository checks read. The release rules are the
 **Releases** bullet of [Repository boundary](#repository-boundary); they are
 not repeated here.
 
-- Tag format: `vMAJOR.MINOR.PATCH` (for example `v0.6.0`), 1 series at the
-  repository root.
-- How a release starts: `make bump` tags the next version and pushes the
-  tag. No release workflow runs and no GitHub release is made: the module is
-  a library, and the Go module proxy serves the tag.
+- Tag format: 2 series. `vMAJOR.MINOR.PATCH` (for example `v0.6.0`) is the
+  root module's. `workspaceui/vMAJOR.MINOR.PATCH` is the `workspaceui`
+  module's (ADR-0014); it has no tag yet.
+- How a release starts: `make bump` tags the root's next version and pushes
+  the tag; `make bump-workspaceui` does the same for `workspaceui` (name the
+  first one: `VERSION=workspaceui/v0.1.0`). No release workflow runs and no
+  GitHub release is made: each module is a library, and the Go module proxy
+  serves the tag.
 - Who tags: the maintainer. Agents never tag, push a tag or release.
 - Version rule: `svu next` from the Conventional Commits since the last tag
-  (`.svu.yml`).
+  (`.svu.yml`). `make bump` passes `--pattern 'v*'`, since svu stops on a
+  `workspaceui/v*` tag otherwise; `make bump-workspaceui` counts only the
+  commits that touched `workspaceui/`. A commit under `workspaceui/` also
+  counts toward the root's next version.
 - Internal dependencies: none. go.mod directly requires only MyGo
   (`github.com/egoist/mygo`) and purego, which frostyard does not own; after
   a MyGo bump, follow **MyGo's rules** under Code conventions.
+  `workspaceui/go.mod` directly requires only NSGo
+  (`github.com/nsgo-dev/nsgo` v0.3.0), which frostyard does not own.
 - Who uses this repository: frostyard/chairlift, frostyard/frostmail,
   frostyard/frostnotes, frostyard/firn (`gui/`) and frostyard/pocket, each
-  through its `go.mod`.
+  through its `go.mod`. `workspaceui`: no app yet; frostyard/frostmail,
+  frostyard/frostnotes and frostyard/pocketgo take it after its first tag
+  ([plan](docs/plans/workspaceui.md), Phase 0).
 
 ## Documentation rules (enforced)
 
@@ -204,7 +241,8 @@ category's `TEMPLATE.md`** and follows its structure:
   A new org-wide rule goes in a core ADR listed in `docs/org-adrs.md`; a new
   project rule goes in a new ADR.
 - `docs/design/` — how it fits together. Living; updated in place to match
-  reality. `docs/design/frostui.md` is the entry point.
+  reality. `docs/design/frostui.md` is the entry point, and
+  `docs/design/workspaceui.md` is `workspaceui`'s.
 - `docs/specs/` — exact contracts. Change only alongside implementing code.
 - `docs/plans/` — order of work. Phases with "Done when" outcomes.
 

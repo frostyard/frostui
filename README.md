@@ -18,6 +18,12 @@ frostui is a Go module that gives desktop apps on [MyGo](https://github.com/egoi
 | `frostui` | The shell (top bar with a command palette, rail, console and status bar), a frame without the rail for apps made of panes, a serial job queue, a command table behind keys, menus and the palette, a source list, a settings layout, an allow-listed opener, a tray icon with a close-to-tray check, dialogs, cards, rows, charts, a native unified diff viewer, the desktop's icons (with an embedded set), and frostyard's look: the Frostyard and Frostyard light themes, set in Inter. |
 | `frostuitest` | A stand-in for the UI thread, so tests run what workers post without a window. |
 
+The repository also holds [`workspaceui`](docs/design/workspaceui.md), a
+module of its own (`github.com/frostyard/frostui/workspaceui`) for apps on
+[NSGo](https://github.com/nsgo-dev/nsgo): a shell with a navigation sidebar
+and side panels, a file explorer, a conversation view and a notice. It
+shares no code with `frostui` and does not require MyGo.
+
 [`Info` dialogs](docs/design/frostui.md#dialogs), including About and
 keyboard shortcuts, stack their body content vertically. The body takes
 its natural height when it fits and scrolls when it overflows. Close stays

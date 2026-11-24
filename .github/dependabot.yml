@@ -1,4 +1,4 @@
-# Dependabot (frostyard/core ADR-0071 row B13): go.mod and the actions the
+# Dependabot (frostyard/core ADR-0071 row B13): each go.mod and the actions the
 # workflows pin. Each entry has 1 group with `patterns: ["*"]`, so each entry
 # opens at most 1 version-update PR for each run (ADR-0075). The group has no
 # `applies-to`, so security updates stay 1 PR each. A MyGo bump needs a read of
@@ -15,6 +15,20 @@ updates:
       include: "scope"
     groups:
       gomod:
+        patterns: ["*"]
+
+  # workspaceui, the NSGo kit, is a module of its own (ADR-0014). An NSGo bump
+  # needs a read of its release notes first (docs/design/workspaceui.md).
+  - package-ecosystem: "gomod"
+    directory: "/workspaceui"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "build"
+      include: "scope"
+    groups:
+      gomod-workspaceui:
         patterns: ["*"]
 
   - package-ecosystem: "github-actions"
