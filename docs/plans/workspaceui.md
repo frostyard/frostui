@@ -75,6 +75,12 @@ window, the rules for every app, the parts). The
   The phase closes when the owner sees it on a desktop, or accepts closing
   without it. Not looked at, and not part of "Done when": the web build's
   font and Windows.
+- **The owner's picture (2026-11-24).** The owner's screenshot of
+  PocketGo's window on his desktop, in Frostyard, shows the system's title
+  bar with the app's name and, under it, the navigation's head with its
+  toggle and no name: the name once. It shows PocketGo only; FrostMail's
+  and Frostnotes' windows were not looked at on a desktop, and the same
+  `Shell` draws their heads.
 - **Seen in the apps' pictures, for Phase 2:** a dialog's and a palette's
   panel let the view under them show through and take `background`, not
   `raised`; in a wide window the content's ground is 1 step of 255 off
