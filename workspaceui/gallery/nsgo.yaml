@@ -1,0 +1,7 @@
+name: Frostyard Gallery
+id: org.frostyard.WorkspaceGallery
+version: 0.0.0
+dev:
+  target: native
+build:
+  targets: [linux_x64, web]
