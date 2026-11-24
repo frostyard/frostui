@@ -65,6 +65,48 @@ func TestShellNavigates(t *testing.T) {
 	}
 }
 
+// TestCompactShellPaintsItsGround holds the one-pane layout to the theme's
+// ground and text color in both appearances. Without a ground of its own a
+// dark appearance drew its light text on the window's white.
+func TestCompactShellPaintsItsGround(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		appearance core.Appearance
+		look       look
+	}{{"dark", core.AppearanceDark, frostyard}, {"light", core.AppearanceLight, frostyardLight}} {
+		t.Run(tc.name, func(t *testing.T) {
+			var navigated []string
+			shell := testShell(PaneWidths{}, &navigated)
+			app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+				if err := Apply(cx); err != nil {
+					t.Errorf("Apply: %v", err)
+				}
+				cx.SetAppearance(tc.appearance)
+				return shell(cx)
+			}, nsgotest.Size(600, 800))
+			style := app.Find("compact-shell").Style
+			if style.Background != tc.look.background {
+				t.Errorf("the compact shell's ground is %#08x, want %#08x", uint32(style.Background), uint32(tc.look.background))
+			}
+			if got := app.Find("body").TextStyle.Color; got != tc.look.text {
+				t.Errorf("a text in the compact shell is %#08x, want %#08x", uint32(got), uint32(tc.look.text))
+			}
+		})
+	}
+}
+
+// TestShellNamesTheAppWhereNoTitleBarDoes checks the brand at the head of
+// the navigation. A headless window has no system title bar; a Linux
+// desktop window has one, and the shell leaves the name to it, which only a
+// run on that target shows.
+func TestShellNamesTheAppWhereNoTitleBarDoes(t *testing.T) {
+	var navigated []string
+	app := nsgotest.Start(t, testShell(PaneWidths{}, &navigated), nsgotest.Size(1200, 800))
+	if !app.Exists("sidebar-panel >> text:Example") {
+		t.Error("the navigation's head does not name the app in a window with no system title bar")
+	}
+}
+
 // TestCompactShellClosesNavigationAfterAChoice checks the narrow layout:
 // the content alone, the navigation on its button, and the content again
 // once a destination is chosen.
