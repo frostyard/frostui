@@ -56,6 +56,9 @@ type SummaryRow struct {
 	// Preview shows on up to PreviewLines lines; 0 leaves it out.
 	Preview      string
 	PreviewLines int
+	// Scale multiplies the row's text sizes, for an app's own text size
+	// setting; 0 is 1. The dot and the avatar keep their sizes.
+	Scale float32
 }
 
 func (r SummaryRow) Render(cx *core.Scope) core.Node {
@@ -66,20 +69,24 @@ func (r SummaryRow) Render(cx *core.Scope) core.Node {
 		dot.StyleFunc = ui.Filled(colors.Accent)
 		weight = ui.Semibold
 	}
+	scale := core.Points(r.Scale)
+	if scale <= 0 {
+		scale = 1
+	}
 	cut := func(t core.Text) core.Text {
 		t.MaxLines, t.Style.FlexGrow, t.Style.FlexShrink, t.Style.MinWidth = 1, 1, 1, core.Pt(0)
 		return t
 	}
-	when := ui.Tabular(ui.Text(r.When, 12, ui.Regular, colors.Muted))
+	when := ui.Tabular(ui.Text(r.When, 12*scale, ui.Regular, colors.Muted))
 	when.TestID = "summary-when"
 	line := core.Style{Direction: core.Row, AlignItems: core.AlignCenter}
 	lines := []core.Node{
-		core.View{Style: line.Merge(core.Style{Gap: 8}), Children: []core.Node{cut(ui.Text(r.Title, 13, ui.Semibold, colors.Text)), when}},
-		core.View{Style: line.Merge(core.Style{Gap: 6}), Children: append([]core.Node{cut(ui.Text(r.Subject, 13, weight, colors.Text))}, r.Marks...)},
+		core.View{Style: line.Merge(core.Style{Gap: 8}), Children: []core.Node{cut(ui.Text(r.Title, 13*scale, ui.Semibold, colors.Text)), when}},
+		core.View{Style: line.Merge(core.Style{Gap: 6}), Children: append([]core.Node{cut(ui.Text(r.Subject, 13*scale, weight, colors.Text))}, r.Marks...)},
 	}
 	if r.PreviewLines > 0 && r.Preview != "" {
-		preview := ui.Text(r.Preview, 12, ui.Regular, colors.Muted)
-		preview.MaxLines, preview.Style.LineHeight, preview.TestID = r.PreviewLines, 16, "summary-preview"
+		preview := ui.Text(r.Preview, 12*scale, ui.Regular, colors.Muted)
+		preview.MaxLines, preview.Style.LineHeight, preview.TestID = r.PreviewLines, 16*scale, "summary-preview"
 		lines = append(lines, preview)
 	}
 	return core.View{TestID: "summary-row", Style: core.Style{Direction: core.Row, AlignItems: core.AlignStart, Gap: 8, Padding: core.All(8), Width: core.Pct(100)}, Children: []core.Node{
@@ -156,6 +163,22 @@ func (e EmptyState) Render(cx *core.Scope) core.Node {
 func DialogPanel(cx *core.Scope) func() core.Style {
 	kit := ColorsOf(cx)
 	return func() core.Style { return core.Style{Background: kit.Panel()} }
+}
+
+// PageFrame sets a page that is not the app's own, such as a message from
+// its sender, inside a hairline with rounded corners on the kit's page
+// ground: in the dark theme it reads as a page placed in the window. Size
+// is the frame's own size in its parent, as a style: ui.FillRest, or a
+// height.
+type PageFrame struct {
+	Page core.Node
+	Size core.Style
+}
+
+func (f PageFrame) Render(cx *core.Scope) core.Node {
+	colors, kit := ui.ColorsOf(cx), ColorsOf(cx)
+	return core.View{TestID: "page-frame", Style: f.Size.Merge(core.Style{BorderWidth: 1, CornerRadius: ui.RadiusInset, Overflow: core.Hidden}),
+		StyleFunc: func() core.Style { return core.Style{Background: kit.Page(), BorderColor: colors.Border()} }, Children: []core.Node{f.Page}}
 }
 
 // ConnectionItem is the item at the foot of a navigation that says where

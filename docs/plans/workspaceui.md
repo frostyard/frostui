@@ -147,6 +147,32 @@ window, the rules for every app, the parts). The
   the look in 3 rounds, from the Linux pictures and the app run on his
   desktop.
 
+## Phase 2.5 — What the first app asked for (small)
+
+FrostMail's main window, built on the kit (frostyard/frostmail's plan
+0016, Phases 3 and 4), asked the kit for 4 things it did not have.
+
+- **Spacing.** `SpaceXS` to `SpaceXL` and `Indent`: the standard's rule 2
+  keeps a padding written as a number out of an app, and the kit had no
+  step to take in its place. FrostMail's style test counts 13 such
+  paddings.
+- **Flags.** `ColorsOf(cx).Flag(n)`: 7 colors in each theme, the values
+  FrostMail's other desktop client draws its flags in. Without them a
+  flag drew in a tone, with yellow as orange and purple as the accent
+  (frostyard/frostmail#401).
+- **A page.** `ColorsOf(cx).Page()`, white in both themes, and
+  `PageFrame`, which sets a page that is not the app's own on it inside
+  a hairline: so that a part of a message's page not yet painted is not
+  the dark window showing through.
+- **A row's text size.** `SummaryRow.Scale`, for an app's own text size
+  setting (frostyard/frostmail#400).
+- **Built (2026-11-24).** The 4 are in the kit with their tests, and the
+  gallery has a page that draws them, "Flags, a page, sizes": 32
+  pictures, 2 of them new. The flags' values are the agent's choice,
+  taken from that client, and are drawn for the owner to judge.
+- **Done when:** the owner accepts the page's pictures, the kit is
+  tagged, and FrostMail's style test lists no padding.
+
 ## Phase 3 — NSGo's gaps (small, alongside)
 
 - An issue upstream for each gap the kit works around: edge resize and

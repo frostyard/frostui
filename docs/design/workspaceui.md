@@ -34,14 +34,15 @@ The module is one package:
 | `theme.go` | `Theme`, the Frostyard look as an NSGo theme with a dark and a light palette; `Apply`, which sets it and registers Inter; `Frame`, the window's root view, which sets the font family. `fonts/` holds Inter's upright variable file. |
 | `colors.go` | `ColorsOf` and `Tone`: the Frostyard colors NSGo has no role for (the chrome, the panel, the chosen row's fill, the label, each tone's fill and line). |
 | `appearance.go` | `AppearanceChoice`: the System, Light or Dark setting, as a segmented control. |
+| `space.go` | The spacing steps (`SpaceXS` to `SpaceXL`) and `Indent`, a tree row's inset by its depth. |
 | `parts.go` | The parts NSGo has no control for, and the content of its rows: `NavLabel` (a sidebar row's icon, name and count), `SummaryRow` (a list row of a sender, a subject and a preview), `SoftRows` (the rows' hover and chosen fills), `Banner`, `EmptyState`, `DialogPanel` (a floating panel's opaque ground), `ConnectionItem` and `SearchField`. |
 
 `workspaceui/gallery/` is a third module, an app: the standard window on
 fixture mail, and a page for each family of controls (colors and type,
-buttons and toolbars, fields and forms, rows and marks, dialogs and
-menus, search and trees and popovers, settings). It is where a change of
-the look is drawn and accepted before an app takes it. Its picture tours
-keep 30 pictures in
+flags and a page and sizes, buttons and toolbars, fields and forms, rows
+and marks, dialogs and menus, search and trees and popovers, settings). It
+is where a change of the look is drawn and accepted before an app takes
+it. Its picture tours keep 32 pictures in
 `workspaceui/gallery/comparison/linux`, each view in both themes.
 
 Every part reads its colors from the current theme, so it follows the
