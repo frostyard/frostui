@@ -157,7 +157,8 @@ draws each row of this table in both themes.
 
 The owner accepted every row as the gallery draws it (2026-11-24), in 3
 rounds. The search field's clear button was added after he accepted the
-field: it is in the gallery's pictures, and he has not looked at it.
+field: it is in the gallery's pictures, and he has looked at every one of
+them.
 
 What NSGo draws that the theme cannot reach: a menu's ground is NSGo's
 translucent one, since `ui.Menu` takes no style; and the side of

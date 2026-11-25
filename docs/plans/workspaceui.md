@@ -131,8 +131,8 @@ window, the rules for every app, the parts). The
   for a calendar, people, tasks, compose and settings. They are layout,
   and each app's own phase draws them from these controls.
 - **Round 4 (2026-11-24).** `SearchField` is in the kit with its test, and
-  gains a button that clears it, which the owner has not looked at. The
-  standard's rules for an app are in
+  gains a button that clears it, which is in the gallery's kept pictures;
+  the owner has looked at every one of them. The standard's rules for an app are in
   [the spec](../specs/workspaceui.md#the-standard-for-an-app). The gallery's
   narrow window folds its toolbar into one row: its header had overlapped.
 - **In a browser (2026-11-24).** `make gallery-pictures-web`, in a headless
@@ -141,7 +141,7 @@ window, the rules for every app, the parts). The
   themes' colors, the text in Inter, and the app's name at the navigation's
   head, as no system title bar shows it there. 1 fault seen: the list's
   scroll bar is drawn light in the dark theme. The pictures are not kept
-  (6.9 MB), and the owner has not looked at them.
+  (6.9 MB), and were not given to the owner.
 - **Done (2026-11-24).** The gallery shows every part in both themes on
   Linux and in a browser, by its tours on the 2 targets. The owner accepted
   the look in 3 rounds, from the Linux pictures and the app run on his
