@@ -25,16 +25,17 @@ The module is one package:
 
 | File | Parts |
 | --- | --- |
-| `shell.go` | `Shell`, the window: a resizable navigation sidebar (NSGo's `ui.SidebarShell`), the content, an optional `Inspector` at the right and an auxiliary panel beside the content, with a one-pane layout for narrow windows. `PaneWidths` and `OnWidthsChange` let an app keep the panes' widths. `Page`, `Row` and `Stack` lay content out. |
+| `shell.go` | `Shell`, the window: a resizable navigation sidebar (NSGo's `ui.SidebarShell`), the content, an optional `Inspector` at the right and an auxiliary panel beside the content, with a one-pane layout for narrow windows. `PaneWidths` and `OnWidthsChange` let an app keep the panes' widths, and `Inspector.Open` and `OnOpenChange` the right panel's state. `Page`, `Row` and `Stack` lay content out. |
 | `sidebar.go` | `BranchLabel` and `ChildLabel`, the content of a group row and of its indented children in the navigation. |
 | `sections.go` | `Section` (a disclosure with a count), `Card`, `InspectorGroup` and `InspectorRow`. |
 | `conversation.go` | `Conversation`, `Message` and `ConversationEntries`, over NSGo's chat view. |
-| `explorer.go` | `FileExplorer`: a tree beside its preview. |
+| `explorer.go` | `FileExplorer`: a tree beside its preview, whose width an app keeps with `OnTreeWidthChange`. |
+| `window.go` | `KeepWindow`: the window's size and place, kept in the app's storage. |
 | `notice.go` | `Notice`: one dismissible message over the window. |
 | `theme.go` | `Theme`, the Frostyard look as an NSGo theme with a dark and a light palette; `Apply`, which sets it and registers Inter; `Frame`, the window's root view, which sets the font family. `fonts/` holds Inter's upright variable file. |
 | `colors.go` | `ColorsOf` and `Tone`: the Frostyard colors NSGo has no role for (the chrome, the panel, the chosen row's fill, the label, each tone's fill and line). |
 | `appearance.go` | `AppearanceChoice`: the System, Light or Dark setting, as a segmented control. |
-| `space.go` | The spacing steps (`SpaceXS` to `SpaceXL`) and `Indent`, a tree row's inset by its depth. |
+| `space.go` | The spacing steps (`SpaceXS` to `SpaceXL`) and `Indent`, a tree row's inset by its depth; `Heading`, the type of a document's headings by level. |
 | `parts.go` | The parts NSGo has no control for, and the content of its rows: `NavLabel` (a sidebar row's icon, name and count), `SummaryRow` (a list row of a sender, a subject and a preview), `SoftRows` (the rows' hover and chosen fills), `Banner`, `EmptyState`, `DialogPanel` (a floating panel's opaque ground), `ConnectionItem` and `SearchField`. |
 
 `workspaceui/gallery/` is a third module, an app: the standard window on

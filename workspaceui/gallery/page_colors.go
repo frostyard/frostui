@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/frostyard/frostui/workspaceui"
 	"github.com/nsgo-dev/nsgo/core"
@@ -59,6 +60,11 @@ func tokensPage(cx *core.Scope) core.Node {
 	return workspaceui.Stack(
 		section("Flags: 7 colors, each a little lighter in the dark theme",
 			workspaceui.Row(flagSwatches(k)...)),
+		section("Flags in the navigation: a row's icon takes its flag's color",
+			core.View{Style: core.Style{Width: core.Pt(246), CornerRadius: ui.RadiusCard, Padding: core.All(workspaceui.SpaceXS)}, StyleFunc: ui.Filled(k.Chrome), Children: []core.Node{
+				ui.Sidebar{Selected: func() string { return "" }, OnSelect: func(string) {}, Sections: []ui.SidebarSection{{Title: "Flagged", Items: flagRows(k)}}}}}),
+		section("A document's headings: 6 levels, 2 points apart",
+			headings()...),
 		section("A page that is not the app's own",
 			workspaceui.Row(swatch("page", k.Page)),
 			core.View{Style: core.Style{Height: core.Pt(96)}, Children: []core.Node{workspaceui.PageFrame{Size: ui.FillRest, Page: core.View{
@@ -85,6 +91,26 @@ func flagSwatches(k workspaceui.Colors) []core.Node {
 			ui.Icon(lucide.Flag, 20, func() core.Color { return k.Flag(n + 1) }),
 			core.Text{Content: name, Style: ui.TypeCaption},
 		}})
+	}
+	return out
+}
+
+// flagRows are 3 flags as rows of the navigation, each with its count.
+func flagRows(k workspaceui.Colors) []ui.SidebarItem {
+	var items []ui.SidebarItem
+	for n, name := range []string{"Red", "Orange", "Yellow"} {
+		items = append(items, ui.SidebarItem{ID: "flag-row-" + name, TestID: "flag-row-" + name,
+			Content: workspaceui.NavLabel{Icon: lucide.Flag, Text: name, Count: 3 - n, Tint: func() core.Color { return k.Flag(n + 1) }}})
+	}
+	return items
+}
+
+// headings are the 6 levels of a document's headings, each naming its size.
+func headings() []core.Node {
+	var out []core.Node
+	for level := 1; level <= 6; level++ {
+		style := workspaceui.Heading(level)
+		out = append(out, core.Text{Content: "Heading " + strconv.Itoa(level) + ", " + strconv.Itoa(int(style.FontSize)) + " points", Style: style})
 	}
 	return out
 }

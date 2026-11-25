@@ -173,6 +173,31 @@ FrostMail's main window, built on the kit (frostyard/frostmail's plan
 - **Done when:** the owner accepts the page's pictures, the kit is
   tagged, and FrostMail's style test lists no padding.
 
+## Phase 2.6 — What the apps asked for next (small)
+
+FrostMail and Frostnotes, on `workspaceui/v0.4.0`, each held something
+the kit should (frostyard/frostmail's plan 0017, Phase 1).
+
+- **A flag's row.** `NavLabel.Tint`: FrostMail's navigation drew every
+  flag's row in the accent (frostyard/frostmail#401).
+- **An empty pane's actions.** `EmptyState.Actions`: Frostnotes' pane
+  with no vault drew its own buttons under the kit's part.
+- **Headings.** `Heading(level)`: Frostnotes' style test had 1 exception,
+  a heading's size written as a number.
+- **The window.** `KeepWindow`: FrostMail and Frostnotes each kept the
+  window's size and place with the same code.
+- **The tree's width and the right panel's state.**
+  `FileExplorer.OnTreeWidthChange`, and `Inspector.Open` with
+  `OnOpenChange`: the kit held both and told no app, so neither was kept
+  between runs.
+- **Built (2026-11-24).** The 6 are in the kit with their tests. The
+  gallery draws the 3 that have a look: the flags' rows and the headings
+  on "Flags, a page, sizes", and an empty pane with 2 buttons on "Search,
+  trees and popovers". 10 of its 32 pictures changed: those 2 pages, and
+  the 3 overlays taken over the second, in both themes.
+- **Done when:** the owner accepts the changed pictures, the kit is
+  tagged, and the apps take the parts in place of their own.
+
 ## Phase 3 — NSGo's gaps (small, alongside)
 
 - An issue upstream for each gap the kit works around: edge resize and

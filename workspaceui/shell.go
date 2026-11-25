@@ -13,6 +13,10 @@ import (
 	"github.com/nsgo-dev/nsgo/ui"
 )
 
+// dockedWidth is the least width of a window that shows the right panel
+// beside the content; a narrower one shows it in the content's place.
+const dockedWidth core.Points = 1000
+
 // Shell shows a resizable navigation sidebar and a content pane. On compact
 // windows the navigation can take the full width and closes after a selection.
 type Shell struct {
@@ -36,6 +40,13 @@ type Inspector struct {
 	Title     string
 	Available func() bool
 	Content   func(*core.Scope) core.Node
+	// Open is whether the panel shows as the shell opens, in a window
+	// wide enough to dock it. OnOpenChange hears a person open and close
+	// it with its button: an app keeps the panel's state with them. What
+	// the shell closes by itself is not told: a panel no longer
+	// available, or one the auxiliary panel takes the room of.
+	Open         bool
+	OnOpenChange func(bool)
 }
 
 type PaneWidths struct{ Navigation, Inspector, Auxiliary core.Points }
@@ -83,9 +94,11 @@ func (s Shell) Render(cx *core.Scope) core.Node {
 		}
 	})
 	auxOpen := core.NewSignal(cx, false)
-	rightOpen := core.NewSignal(cx, false)
+	// A panel kept open opens only where it docks: in a narrower window
+	// it would open over the content.
+	rightOpen := core.NewSignal(cx, s.Inspector != nil && s.Inspector.Open && cx.Env().Window().Width >= dockedWidth)
 	available := core.NewMemo(cx, func() bool { return s.Inspector != nil && (s.Inspector.Available == nil || s.Inspector.Available()) })
-	sideBySide := core.NewMemo(cx, func() bool { return cx.Env().Window().Width >= 1000 })
+	sideBySide := core.NewMemo(cx, func() bool { return cx.Env().Window().Width >= dockedWidth })
 	bothRails := core.NewMemo(cx, func() bool { return cx.Env().Window().Width >= 1550 })
 	// When the window gets too narrow for both inspectors, keep the file
 	// preview open beside its conversation.
@@ -139,6 +152,9 @@ func (s Shell) Render(cx *core.Scope) core.Node {
 		setDetails := func(open bool) {
 			if open && !bothRails.GetUntracked() {
 				auxOpen.Set(false)
+			}
+			if open != rightOpen.GetUntracked() && s.Inspector != nil && s.Inspector.OnOpenChange != nil {
+				s.Inspector.OnOpenChange(open)
 			}
 			rightOpen.Set(open)
 		}

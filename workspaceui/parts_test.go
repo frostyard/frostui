@@ -263,3 +263,61 @@ func TestPageFrameIsWhiteInsideAHairline(t *testing.T) {
 		app.Find("page-frame >> text:a page")
 	}
 }
+
+// TestNavLabelTintsItsIcon checks the color a row's icon is given: the
+// accent with no tint, and the tint's with one. A headless run draws no
+// icon to read a color from; the gallery's pictures show the rows.
+func TestNavLabelTintsItsIcon(t *testing.T) {
+	accent := func() core.Color { return core.RGB(0x0b6ea6) }
+	red := func() core.Color { return core.RGB(0xff3b30) }
+	if got := (NavLabel{}).iconColor(accent)(); got != accent() {
+		t.Errorf("a row with no tint draws its icon in %#08x, want the accent %#08x", uint32(got), uint32(accent()))
+	}
+	if got := (NavLabel{Tint: red}).iconColor(accent)(); got != red() {
+		t.Errorf("a tinted row draws its icon in %#08x, want the tint %#08x", uint32(got), uint32(red()))
+	}
+	// A tinted row still draws under the theme.
+	app := themed(t, false, 240, func(cx *core.Scope) core.Node {
+		return NavLabel{Icon: lucide.Flag, Text: "Red", Count: 2, Tint: func() core.Color { return ColorsOf(cx).Flag(1) }}
+	})
+	app.Find("text:Red")
+	app.Find("nav-count")
+}
+
+// TestEmptyStateHoldsItsActions checks the buttons under an empty state's
+// hint: there with actions, in a row that wraps, and absent with none.
+func TestEmptyStateHoldsItsActions(t *testing.T) {
+	pressed := 0
+	app := themed(t, false, 360, func(*core.Scope) core.Node {
+		return core.View{Style: core.Style{Height: core.Pt(300)}, Children: []core.Node{EmptyState{Icon: lucide.Inbox, Title: "No vault", Hint: "Open one to start.",
+			Actions: []core.Node{ui.Button{Text: "Create", OnPress: func() { pressed++ }}, ui.Button{Text: "Open", Variant: ui.ButtonSecondary}}}}}
+	})
+	app.Find("id:empty-actions >> label:Open")
+	app.Press("id:empty-actions >> label:Create")
+	if pressed != 1 {
+		t.Errorf("the action was pressed %d times, want 1", pressed)
+	}
+	hint, actions := app.Find("text:Open one to start.").Bounds(), app.Find("id:empty-actions").Bounds()
+	if actions.Origin.Y < hint.Origin.Y+hint.Size.Height {
+		t.Errorf("the actions start at %v, over the hint, which ends at %v", actions.Origin.Y, hint.Origin.Y+hint.Size.Height)
+	}
+	bare := themed(t, false, 360, func(*core.Scope) core.Node {
+		return core.View{Style: core.Style{Height: core.Pt(300)}, Children: []core.Node{EmptyState{Icon: lucide.Inbox, Title: "No vault"}}}
+	})
+	if bare.Exists("id:empty-actions") {
+		t.Error("an empty state with no action has a row of actions")
+	}
+}
+
+// TestHeadingStepsByLevel checks a document's headings: 24 points at level
+// 1, 2 less a level, 14 at level 6, and the nearest level outside them.
+func TestHeadingStepsByLevel(t *testing.T) {
+	for level, want := range map[int]core.Points{1: 24, 2: 22, 3: 20, 6: 14, 0: 24, 9: 14} {
+		if got := Heading(level).FontSize; got != want {
+			t.Errorf("a heading of level %d is %v points, want %v", level, got, want)
+		}
+	}
+	if w := Heading(2).FontWeight; w != core.FontWeightSemibold {
+		t.Errorf("a heading's weight is %v, want semibold", w)
+	}
+}

@@ -89,6 +89,12 @@ as a number (the standard for an app, rule 2).
 | `SpaceXL` | 24 | a page's inset |
 | `Indent(depth)` | 12 for each level | the leading inset of a row inside a tree; 0 at the top and for a depth under 0 |
 
+`Heading(level)` is the type of a heading in a document an app draws,
+such as a note's: 24 points at level 1, then 2 less for each level to 14
+at level 6, each semibold on a line 6 taller than its size. A level
+outside 1 to 6 is the nearest of them. An app's own chrome takes NSGo's
+type styles, not these.
+
 | Item | Value |
 | --- | --- |
 | `Theme().Radius` | NSGo's default (8): the kit keeps NSGo's corners (ADR-0014) |
@@ -96,6 +102,7 @@ as a number (the standard for an app, rule 2).
 | `Apply(cx)` | sets `Theme()` on `cx` and registers Inter 4.001's upright variable file (`fonts/InterVariable.ttf`, embedded); the theme is set even when the font is refused |
 | `Frame(children...)` | a view that fills the window, paints `background`, and sets the text's color and `FontFamily`, which its texts inherit |
 | `AppearanceChoice` | a segmented `ui.Tabs` of System, Light and Dark; a press calls `SetAppearance`, then `OnChange` |
+| `KeepWindow(cx, minWidth, minHeight)` | in a desktop window: asks for the window the app's storage holds under `window` (its size, and its place where the platform reported one), then keeps the size and the place 300 ms after their last change. A size under the least one is neither asked for nor kept, and a maximized window's size is not kept. In a browser it does nothing |
 
 Not carried over from the MyGo kit: the high-contrast values of the
 themes' spec, the gradient colors, the italic file, and the text styles
@@ -114,6 +121,8 @@ themes' spec, the gradient colors, the italic file, and the text styles
 | `OnWidthsChange` | called 200 ms after the last resize, and once more when the shell goes away with a save pending |
 | Title bar | on Linux, in a desktop window, the system's (`desktop.TitleBarDefault`) |
 | `Brand` | at the head of the navigation, except where the system's title bar names the app (Linux, a desktop window) |
+| `Inspector.Open` | the right panel shows as the shell opens, in a window of 1000 or wider; a narrower one opens with it shut |
+| `Inspector.OnOpenChange` | called when a person opens or closes the right panel with its button; not when the shell closes it (a panel no longer available, or one the auxiliary panel takes the room of) |
 
 Accessible names the shell sets: "Navigation", "Resize navigation",
 "Resize right panel", and "Resize " with the auxiliary panel's title.
@@ -128,7 +137,7 @@ Accessible names the shell sets: "Navigation", "Resize navigation",
 | `Section` | a disclosure with its count as a badge; its content is built only while open |
 | `BranchLabel`, `ChildLabel` | text 13; a child below the first level indents `8 + 20 × Depth` beside a guide 32 high |
 | `Notice` | 380 wide (the window's width when narrower), 56 under the window's top; its icon and tone by `Kind` |
-| `FileExplorer` | compact under 620; the tree between 110 and 440, the preview at least 170 |
+| `FileExplorer` | compact under 620; the tree between 110 and 440, the preview at least 170. The tree opens `TreeWidth` wide, and `OnTreeWidthChange` is called with each width a drag of its edge gives it |
 | `Conversation` | content 810 wide |
 
 ### The parts of a list and a pane
@@ -138,11 +147,11 @@ The owner accepted these as the gallery draws them (2026-11-24,
 
 | Part | What it draws |
 | --- | --- |
-| `NavLabel` | the content of a row of NSGo's sidebar: an icon 16 in the accent, the name at 13 on 1 line, and `Count` at the row's end at 12 in figures of one width. A count of 0 is not shown; an `Unread` count is semibold in the text's color, any other is muted |
+| `NavLabel` | the content of a row of NSGo's sidebar: an icon 16 in the accent, the name at 13 on 1 line, and `Count` at the row's end at 12 in figures of one width. `Tint` colors the icon in place of the accent (a flag's row in its flag's color). A count of 0 is not shown; an `Unread` count is semibold in the text's color, any other is muted |
 | `SummaryRow` | padding 8, gap 8: a gutter 8 wide whose dot (8, the accent) shows when `Unread`; NSGo's avatar at 32; then the title at 13 semibold with `When` at 12 muted at the row's end, the subject at 13 (semibold when `Unread`) with `Marks` at its end, and `Preview` at 12 muted on up to `PreviewLines` lines of 16 |
 | `SoftRows` | the style of a list's rows: corners 8, the theme's hover fill, and `frost-selected` when chosen, with no change of the text's color |
 | `Banner` | role status; padding 8 by 12, corners 8, a 1-point line: the tone's `Fill` and `Line`, an icon 16 in the tone's color (muted for `Neutral`), the sentence, and a small secondary button when `Action` is set |
-| `EmptyState` | centred in its pane: an icon 32 in `faint`, the title in NSGo's title style, the hint as a muted caption |
+| `EmptyState` | centred in its pane: an icon 32 in `faint`, the title in NSGo's title style, the hint as a muted caption, and under it `Actions`, a centred row of buttons 8 apart that wraps in a narrow pane. The first action is the pane's one filled button (rule 3) |
 | `DialogPanel` | the ground of a panel that floats over the window (a dialog, an alert, the command palette, a popover, a toast): `frost-panel`, opaque |
 | `ConnectionItem` | a dot 8 in the tone's color and 1 line of muted caption |
 | `PageFrame` | a page that is not the app's own, such as a message: `Page` on the `frost-page` ground inside a 1-point line in the border's color, corners 12, clipped; `Size` is the frame's size in its parent |
@@ -219,7 +228,8 @@ the work in each app).
 7. **Keys.** mod+K the palette (mod+Shift+P inside an editor), mod+, the
    settings, mod+N the app's new item, mod+F the search of what is shown.
 8. **Window.** The size, the place and the panes' widths are kept, held so
-   that the main pane never falls under its least width.
+   that the main pane never falls under its least width. `KeepWindow`
+   keeps the size and the place.
 9. **Names.** Labels and test ids are the tests' handles: a change of the
    look keeps them, or changes the test in the same change.
 10. **Live tests.** One suite on NSGo's `nsgotest`, on fixture data, that
@@ -289,6 +299,25 @@ them. That is each app's.
   (`TestFlagsAreSevenColorsInBothThemes`).
 - `Indent` is 0 at depth 0 and under, and steps evenly
   (`TestIndentStepsByDepth`).
+- `Heading` is 24 points at level 1 and 14 at level 6, 2 apart, semibold,
+  and a level outside them is the nearest (`TestHeadingStepsByLevel`).
+- `NavLabel`'s icon takes `Tint`, and the accent with none
+  (`TestNavLabelTintsItsIcon`). The test reads the color the label asks
+  for: a headless run records no icon's color.
+- `EmptyState` shows its actions under its hint, and no row of them with
+  none (`TestEmptyStateHoldsItsActions`).
+- `KeepWindow` asks for the kept size as the app starts, keeps a changed
+  size 300 ms after the last change, and neither asks for nor keeps a
+  size under its least one (`TestKeepWindowKeepsAndShowsTheWindow`,
+  `TestKeepWindowLeavesASmallKeptSize`). No test holds the place, or a
+  maximized window, which a headless run does not report.
+- `FileExplorer`'s tree opens at `TreeWidth`, and a drag of its edge is
+  told to `OnTreeWidthChange` (`TestFileExplorerTellsItsTreesWidth`).
+- A right panel with `Open` shows as a window 1200 wide opens and not as
+  one 800 wide does, and its button's press is told to `OnOpenChange`,
+  which the first state is not
+  (`TestInspectorOpensAsKeptAndTellsItsChanges`,
+  `TestInspectorKeptOpenStaysShutInANarrowWindow`).
 - A chosen row's fill is `frost-selected` and its text's color is not set
   (`TestSoftRowsFillAChosenRowSoftly`).
 - A `Banner` has its tone's fill and line, its button calls `OnAction`,
