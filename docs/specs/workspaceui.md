@@ -102,7 +102,7 @@ type styles, not these.
 | `Apply(cx)` | sets `Theme()` on `cx` and registers Inter 4.001's upright variable file (`fonts/InterVariable.ttf`, embedded); the theme is set even when the font is refused |
 | `Frame(children...)` | a view that fills the window, paints `background`, and sets the text's color and `FontFamily`, which its texts inherit |
 | `AppearanceChoice` | a segmented `ui.Tabs` of System, Light and Dark; a press calls `SetAppearance`, then `OnChange` |
-| `KeepWindow(cx, minWidth, minHeight)` | in a desktop window: asks for the window the app's storage holds under `window` (its size, and its place where the platform reported one), then keeps the size and the place 300 ms after their last change. A size under the least one is neither asked for nor kept, and a maximized window's size is not kept. In a browser it does nothing |
+| `KeepWindow(cx, minWidth, minHeight)` | in a desktop window: asks for the window the app's storage holds under `window` (its size, and its place where the platform reported one), then keeps the size and the place 300 ms after their last change. The size kept is the window's own where the platform reports it (`desktop.Frame`), which is what a start asks for, and the content's elsewhere. A size under the least one is neither asked for nor kept, and a maximized window's size is not kept. In a browser it does nothing |
 
 Not carried over from the MyGo kit: the high-contrast values of the
 themes' spec, the gradient colors, the italic file, and the text styles
@@ -309,8 +309,14 @@ them. That is each app's.
 - `KeepWindow` asks for the kept size as the app starts, keeps a changed
   size 300 ms after the last change, and neither asks for nor keeps a
   size under its least one (`TestKeepWindowKeepsAndShowsTheWindow`,
-  `TestKeepWindowLeavesASmallKeptSize`). No test holds the place, or a
-  maximized window, which a headless run does not report.
+  `TestKeepWindowLeavesASmallKeptSize`), and keeps the window's own size
+  and place where the platform reports them
+  (`TestKeepWindowKeepsTheWindowsOwnSize`). `workspaceui/v0.5.0` kept the
+  content's size, and on Windows, where a window has a frame of its own,
+  each start's window came back 16 narrower and 9 shorter. Seen with the
+  fix in FrostMail's client in a Windows 11 window (2026-11-24): left
+  1040 by 660 at 80, 30, it came back 1040 by 660 at 80, 30. No test
+  holds a maximized window, which a headless run does not report.
 - `FileExplorer`'s tree opens at `TreeWidth`, and a drag of its edge is
   told to `OnTreeWidthChange` (`TestFileExplorerTellsItsTreesWidth`).
 - A right panel with `Open` shows as a window 1200 wide opens and not as

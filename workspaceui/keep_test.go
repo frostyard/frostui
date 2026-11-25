@@ -111,3 +111,26 @@ func TestInspectorKeptOpenStaysShutInANarrowWindow(t *testing.T) {
 		t.Errorf("a window 800 wide opened the panel over its content")
 	}
 }
+
+// TestKeepWindowKeepsTheWindowsOwnSize checks that the size kept is the
+// window's, which a start asks for, where the platform reports it: a
+// window with a frame of its own is larger than its content, and keeping
+// the content's size made each start's window smaller (seen on Windows:
+// 16 narrower and 9 shorter).
+func TestKeepWindowKeepsTheWindowsOwnSize(t *testing.T) {
+	framed := nsgotest.Environment(core.Environment{OS: "windows", Idiom: core.IdiomDesktop, PixelRatio: 1,
+		CanPlaceWindows: true, WindowFrame: core.WindowFrame{Width: 1016, Height: 709, X: 60, Y: 20, Move: true}})
+	app := nsgotest.Start(t, keepRoot, nsgotest.Size(1000, 700), framed)
+	app.Find("text:kept")
+	// The content changes, and the platform's frame says what the window is.
+	app.Resize(1001, 700)
+	app.Advance(time.Second)
+	var k keptWindow
+	app.WaitUntil(3*time.Second, func() bool {
+		text, ok := app.Storage().GetItem(windowKey)
+		return ok && json.Unmarshal([]byte(text), &k) == nil
+	})
+	if want := (keptWindow{Width: 1016, Height: 709, X: 60, Y: 20, Placed: true}); k != want {
+		t.Errorf("kept %+v, want the window's frame %+v, not its content's size", k, want)
+	}
+}

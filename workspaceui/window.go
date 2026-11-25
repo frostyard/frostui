@@ -21,7 +21,8 @@ type keptWindow struct {
 
 // KeepWindow shows the app's window as the device kept it, and keeps it
 // as it changes (the standard for an app, rule 8): its size, and its place
-// where the platform reports one. It is kept in the app's storage under
+// where the platform reports one. The size kept is the window's own where
+// the platform reports it, and the content's elsewhere. It is kept in the app's storage under
 // "window". A window under minWidth by minHeight is not kept, nor a
 // maximized one's size, which leaves the size it had before. A browser's
 // window is the browser's: there KeepWindow does nothing. Call it once,
@@ -49,6 +50,13 @@ func KeepWindow(cx *core.Scope, minWidth, minHeight core.Points) {
 			return
 		}
 		k := keptWindow{Width: size.Width, Height: size.Height, X: frame.X, Y: frame.Y, Placed: frame.Move}
+		// Where the platform says how large the window is, that is kept:
+		// SetWindowFrame takes the window's size, and a window with a
+		// frame of its own is larger than its content. Keeping the
+		// content's size there made each start's window smaller.
+		if frame.Width > 0 && frame.Height > 0 {
+			k.Width, k.Height = frame.Width, frame.Height
+		}
 		if pending != nil {
 			pending()
 		}
