@@ -17,6 +17,17 @@ type NavLabel struct {
 	Text   string
 	Count  int
 	Unread bool
+	// Tint colors the icon: a flag's row in its flag's color. Nil is the
+	// accent, as every other row's.
+	Tint func() core.Color
+}
+
+// iconColor is the color of the row's icon: its Tint, or accent with none.
+func (n NavLabel) iconColor(accent func() core.Color) func() core.Color {
+	if n.Tint != nil {
+		return n.Tint
+	}
+	return accent
 }
 
 func (n NavLabel) Render(cx *core.Scope) core.Node {
@@ -24,7 +35,7 @@ func (n NavLabel) Render(cx *core.Scope) core.Node {
 	name := ui.Text(n.Text, 13, ui.Regular, colors.Text)
 	name.MaxLines, name.Style.FlexGrow, name.Style.FlexShrink = 1, 1, 1
 	name.Style.MinWidth = core.Pt(0)
-	parts := []core.Node{ui.Icon(n.Icon, 16, colors.Accent), name}
+	parts := []core.Node{ui.Icon(n.Icon, 16, n.iconColor(colors.Accent)), name}
 	if n.Count > 0 {
 		ink, weight := colors.Muted, ui.Regular
 		if n.Unread {
@@ -143,6 +154,10 @@ func (b Banner) Render(cx *core.Scope) core.Node {
 type EmptyState struct {
 	Icon        func() *core.SVG
 	Title, Hint string
+	// Actions are the buttons under the hint: what to do about the pane
+	// being empty, the first of them the pane's one filled button. They
+	// wrap in a narrow pane.
+	Actions []core.Node
 }
 
 func (e EmptyState) Render(cx *core.Scope) core.Node {
@@ -150,6 +165,9 @@ func (e EmptyState) Render(cx *core.Scope) core.Node {
 	children := []core.Node{ui.Icon(e.Icon, 32, colors.Faint), core.Text{Content: e.Title, Style: ui.TypeTitle}}
 	if e.Hint != "" {
 		children = append(children, core.Text{Content: e.Hint, Style: ui.TypeCaption.Merge(core.Style{TextAlign: core.TextAlignCenter}), StyleFunc: ui.Colored(colors.Muted)})
+	}
+	if len(e.Actions) > 0 {
+		children = append(children, core.View{TestID: "empty-actions", Style: core.Style{Direction: core.Row, Wrap: core.Wrap, JustifyContent: core.JustifyCenter, Gap: SpaceS, Margin: core.Edges{Top: SpaceS}}, Children: e.Actions})
 	}
 	return core.View{TestID: "empty-state", Style: ui.FillRest.Merge(core.Style{AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 8, Padding: core.All(24)}), Children: children}
 }

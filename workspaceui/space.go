@@ -25,3 +25,13 @@ const indentStep core.Points = 12
 // Indent is the leading inset of a row depth levels inside a tree or an
 // outline: 0 at the top.
 func Indent(depth int) core.Points { return core.Points(max(depth, 0)) * indentStep }
+
+// Heading is the type of a heading in a document an app draws, such as a
+// note's: level 1 the largest, 24 points, then 2 less a level to level 6,
+// 14, each semibold. A level outside 1 to 6 is the nearest of them. An
+// app's own chrome takes NSGo's type styles, not these.
+func Heading(level int) core.Style {
+	level = max(1, min(6, level))
+	size := core.Points(26 - 2*level)
+	return core.Style{FontSize: size, LineHeight: size + 6, FontWeight: core.FontWeightSemibold}
+}

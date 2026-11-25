@@ -87,5 +87,10 @@ func morePage(cx *core.Scope) core.Node {
 					{ID: "settings", Label: "Settings", Group: "Go", Shortcut: "mod+,", Icon: lucide.Settings()},
 				}
 			}}},
+		section("An empty pane with what to do about it: the first action is its one filled button",
+			core.View{Style: core.Style{Height: core.Pt(200), CornerRadius: ui.RadiusCard, BorderWidth: 1}, StyleFunc: func() core.Style {
+				return core.Style{BorderColor: ui.ColorsOf(cx).Border()}
+			}, Children: []core.Node{workspaceui.EmptyState{Icon: lucide.FolderOpen, Title: "No vault yet", Hint: "A vault is a folder of notes.", Actions: []core.Node{
+				ui.Button{Text: "New vault", OnPress: func() {}}, ui.Button{Text: "Open a folder…", Variant: ui.ButtonSecondary, OnPress: func() {}}}}}}),
 	)
 }
