@@ -340,6 +340,13 @@ MyGo for the accessible name and tooltip. An empty string violates the caller
 contract but is passed through unchanged: the kit does not reject the call,
 substitute a fallback label or derive one from the icon name.
 
+`TopToasts` uses MyGo's toast close button directly, not one of these
+helpers. Pass a nonempty `closeLabel` for its accessible name and tooltip:
+`TopToasts` passes it through unchanged, while `PaneShell` defaults an
+empty `ToastCloseLabel` to `"Close"`. `LabeledButton` is a text-and-icon
+helper, not an icon-only variant. Its label supplies both the visible text
+and the accessible name; leaving it empty omits both.
+
 ### Command table
 
 `commandtable.go`: one `CommandTable` holds an app's commands and drives the
@@ -693,8 +700,9 @@ from `brand.go`'s helpers:
   a hairline, no face, and the hover text while the pointer is over them;
   `Selected` still gives a toggle the accent's face.
   `QuietIconButton(c, icon, label)` is an icon-only
-  MyGo button without a resting fill or border, unlike the ghost. All three
-  share the [icon-only label contract](#icon-only-button-labels). Hover uses
+  MyGo button without a resting fill or border, unlike the ghost.
+  `IconButton`, `QuietIconButton` and `PrimaryIconButton` share the
+  [icon-only label contract](#icon-only-button-labels). Quiet hover uses
   `SurfaceHover`, press takes precedence with `SurfacePressed`, and the
   icon stays in `Text`, preserving 7:1 under `Adapt` high contrast. Faces
   paint after MyGo's styling so chained `Disabled` is respected; MyGo
