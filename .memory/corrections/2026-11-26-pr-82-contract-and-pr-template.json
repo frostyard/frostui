@@ -1,0 +1,7 @@
+{
+  "date": "2026-11-26",
+  "scope": "documentation and pull requests",
+  "correction": "Name the helpers in a shared contract when nearby prose lists a different group. Before opening a PR, check its body against the template, including the risk tier and verification evidence.",
+  "evidence": "frostyard/frostui#82, independent pre-publication cross-review of ca5300180548af4702f58cc80db4333fc1ac5856, findings M1 and M2",
+  "promoted_to": "AGENTS.md"
+}
