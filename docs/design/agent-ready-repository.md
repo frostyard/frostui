@@ -51,7 +51,7 @@ The parts that the template brings are:
 | `docs/specs/` | Testable contracts; what; also `TEMPLATE.md` |
 | `docs/plans/` | Phased plans; when; also `TEMPLATE.md` |
 | `Makefile` | Verify, check and CI triad, and the Go targets |
-| `mise.toml`, `mise.lock` | Tool pins (golangci-lint, Node); `mise install` provisions them |
+| `mise.toml`, `mise.lock` | Pins and checksums for golangci-lint and Node; mise reads the Go version from `go.mod` |
 | `LICENSE` | GPL-3.0 license text, from ChairLift, where the code comes from |
 | `SECURITY.md` | Private vulnerability reporting |
 | `scripts/` | Template and corrections gates |
@@ -67,7 +67,7 @@ The parts that the template brings are:
 
 ## Operational notes
 
-`mise install` provisions the pinned golangci-lint and Node.js; Go comes from go.mod's `go` line. `make verify` needs Go, golangci-lint, Node.js 22 or later, `make`, and Pango and cairo for MyGo's Tester; the template gate itself uses no package manager, `package.json`, install step or third-party dependency. Symlinks require Linux or macOS, or `core.symlinks=true` on Windows. GitHub's web renderer shows a symlink as its target path; this is cosmetic only.
+Locally, `mise install` provisions Go from `go.mod`'s `go` line, plus the pinned golangci-lint and Node.js. CI uses `actions/setup-go` for Go and mise for golangci-lint and Node.js. `make verify` needs Go, golangci-lint, Node.js 22 or later, `make`, and Pango and cairo for MyGo's Tester; the template gate itself uses no package manager, `package.json`, install step or third-party dependency. Symlinks require Linux or macOS, or `core.symlinks=true` on Windows. GitHub's web renderer shows a symlink as its target path; this is cosmetic only.
 
 The verify gate checks canonical surfaces, the documentation index, risk paths, the corrections inbox and vendored copies. A pull request that touches `.github/risk-paths.json` gets 1 level label, and `risk:high` at L1 or L2; core takes the level from the matched globs, `default_level` and the org floors, and it never lowers a level label that the pull request already has. Blocking reviews become targeted tests or `AGENTS.md` rules with a corrections record file.
 
