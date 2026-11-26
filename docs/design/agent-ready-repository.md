@@ -51,7 +51,7 @@ The parts that the template brings are:
 | `docs/specs/` | Testable contracts; what; also `TEMPLATE.md` |
 | `docs/plans/` | Phased plans; when; also `TEMPLATE.md` |
 | `Makefile` | Verify, check and CI triad, and the Go targets |
-| `mise.toml`, `mise.lock` | Pins and checksums for golangci-lint and Node; mise reads the Go version from `go.mod` |
+| `mise.toml`, `mise.lock` | `mise.toml` pins golangci-lint and Node; `mise.lock` records resolved versions and checksums for both and for Go, whose version comes from `go.mod` |
 | `LICENSE` | GPL-3.0 license text, from ChairLift, where the code comes from |
 | `SECURITY.md` | Private vulnerability reporting |
 | `scripts/` | Template and corrections gates |

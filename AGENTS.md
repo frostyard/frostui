@@ -42,9 +42,10 @@ again in that module's directory.
   goes through these targets, which set `GDK_BACKEND=x11`: `xvfb-run` alone
   opens GTK's windows on a Wayland desktop.
 
-- `mise install` — installs Go from `go.mod`'s `go` line (the only Go pin)
-  and the pinned golangci-lint and Node (`mise.toml`, checksums in
-  `mise.lock`). Change a pin only with `mise lock`, in a commit of its own.
+- `mise install` — installs Go from `go.mod`'s `go` line and golangci-lint
+  and Node from `mise.toml`'s pins. `mise.lock` records the resolved versions
+  and checksums for all three. Change a pin only with `mise lock`, in a
+  commit of its own.
 - `make test` — every test, headless (`env -u DISPLAY -u WAYLAND_DISPLAY`,
   `CGO_ENABLED=0`). MyGo's Tester needs Pango and cairo, no display, no GTK.
 - `make verify` — the gate that leaves `git status` unchanged: `go mod tidy
