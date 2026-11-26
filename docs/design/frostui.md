@@ -332,6 +332,21 @@ of its own.
   text. The caller owns loading, empty and error states, file selection, and
   any file operations.
 
+#### Icon-only button labels
+
+Callers of `IconButton`, `QuietIconButton` and `PrimaryIconButton` must pass
+nonempty text describing the action. Each helper passes the same `label` to
+MyGo for the accessible name and tooltip. An empty string violates the caller
+contract but is passed through unchanged: the kit does not reject the call,
+substitute a fallback label or derive one from the icon name.
+
+`TopToasts` uses MyGo's toast close button directly, not one of these
+helpers. Pass a nonempty `closeLabel` for its accessible name and tooltip:
+`TopToasts` passes it through unchanged, while `PaneShell` defaults an
+empty `ToastCloseLabel` to `"Close"`. `LabeledButton` is a text-and-icon
+helper, not an icon-only variant. Its label supplies both the visible text
+and the accessible name; leaving it empty omits both.
+
 ### Command table
 
 `commandtable.go`: one `CommandTable` holds an app's commands and drives the
@@ -678,16 +693,16 @@ from `brand.go`'s helpers:
   `PrimaryIconButton`, `LabeledButton` with `primary`, the action of a
   confirmation and of `CodeDialog`, the brand tile, the About and hero
   logos) is the brand gradient with `OnGradient`. `PrimaryIconButton(c,
-  icon, label)` draws only an icon on that face. Its required nonempty
-  label supplies the accessible name and tooltip, and MyGo still handles
-  sizing, activation, focus and disabled semantics. Disabled primary
+  icon, label)` draws only an icon on that face. MyGo still handles sizing,
+  activation, focus and disabled semantics. Disabled primary
   buttons show their face and content at half opacity. `IconButton`,
   non-primary `LabeledButton` and the compact palette button are ghosts:
   a hairline, no face, and the hover text while the pointer is over them;
   `Selected` still gives a toggle the accent's face.
   `QuietIconButton(c, icon, label)` is an icon-only
-  MyGo button without a resting fill or border, unlike the ghost. Its
-  nonempty label supplies its accessible name and tooltip. Hover uses
+  MyGo button without a resting fill or border, unlike the ghost.
+  `IconButton`, `QuietIconButton` and `PrimaryIconButton` share the
+  [icon-only label contract](#icon-only-button-labels). Quiet hover uses
   `SurfaceHover`, press takes precedence with `SurfacePressed`, and the
   icon stays in `Text`, preserving 7:1 under `Adapt` high contrast. Faces
   paint after MyGo's styling so chained `Disabled` is respected; MyGo

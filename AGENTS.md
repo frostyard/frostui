@@ -287,6 +287,12 @@ anchors valid) and add the back-links on the targets. Use relative paths.
 
 ### Housekeeping
 
+- When documenting a shared contract, name the helpers it covers if nearby
+  prose lists a different group. Check each named helper against the source.
+- Before opening a PR, check its proposed body against
+  [the PR template](.github/pull_request_template.md): keep the section
+  headings, declare the risk tier, and include evidence for each applicable
+  verification item. Delete checklist rows that do not apply.
 - New doc ⇒ add a line to the index in [docs/README.md](docs/README.md).
 - New significant decision ⇒ new ADR *first*, then update the affected design
   docs/specs in the same change.
