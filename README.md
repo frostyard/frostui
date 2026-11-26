@@ -31,17 +31,17 @@ its natural height when it fits and scrolls when it overflows. Close stays
 fixed above the body, and a long wrapped title can scroll separately so it
 doesn't crowd out the body in a short window.
 
-`QuietIconButton(c, icon, label)` is an icon-only action with no resting
-fill or border, and visible hover, press and keyboard-focus treatments.
-Pass a nonempty label for its accessible name and tooltip; chain dimensions,
-`Disabled`, `Clicked` or `OnClick` as on `IconButton`. `IconButton` keeps
-its ghost hairline. See the [component design](docs/design/frostui.md#building-blocks-rows-and-visualizations).
+`IconButton`, `QuietIconButton` and `PrimaryIconButton` all require a
+nonempty action label for the accessible name and tooltip. The kit passes
+an empty label through unchanged, without validation or a fallback. See the
+[icon-only label contract](docs/design/frostui.md#icon-only-button-labels).
 
-`PrimaryIconButton(c, icon, label)` is an icon-only primary action on the
-same gradient and foreground as `PrimaryButton`. Pass a nonempty label for
-its accessible name and tooltip; dimensions, activation, focus and `Disabled`
-chain as on MyGo's button. See the
-[building blocks](docs/design/frostui.md#building-blocks-rows-and-visualizations).
+`QuietIconButton(c, icon, label)` has no resting fill or border, with visible
+hover, press and keyboard-focus treatments. Chain dimensions, `Disabled`,
+`Clicked` or `OnClick` as on `IconButton`, which keeps its ghost hairline.
+`PrimaryIconButton(c, icon, label)` uses `PrimaryButton`'s gradient and
+foreground; dimensions, activation, focus and `Disabled` chain as on MyGo's
+button.
 
 Use `Icon(c, "cpu")` for a processor glyph. The [embedded icon set](docs/design/frostui.md#the-kits-icon-set)
 provides `cpu` and `cpu-symbolic` when neither the app nor the desktop theme does.
