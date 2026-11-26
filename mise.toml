@@ -3,6 +3,7 @@
 # the same versions locally and in CI. Go comes from go.mod's go line, the only
 # Go pin; never pin it here.
 [settings]
+idiomatic_version_file_enable_tools = ["go"]
 lockfile = true
 
 [tools]
