@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/icons/lucide"
 	"github.com/nsgo-dev/nsgo/ui"
 )
 
@@ -16,6 +17,17 @@ type NavLabel struct {
 	Text   string
 	Count  int
 	Unread bool
+	// Tint colors the icon: a flag's row in its flag's color. Nil is the
+	// accent, as every other row's.
+	Tint func() core.Color
+}
+
+// iconColor is the color of the row's icon: its Tint, or accent with none.
+func (n NavLabel) iconColor(accent func() core.Color) func() core.Color {
+	if n.Tint != nil {
+		return n.Tint
+	}
+	return accent
 }
 
 func (n NavLabel) Render(cx *core.Scope) core.Node {
@@ -23,7 +35,7 @@ func (n NavLabel) Render(cx *core.Scope) core.Node {
 	name := ui.Text(n.Text, 13, ui.Regular, colors.Text)
 	name.MaxLines, name.Style.FlexGrow, name.Style.FlexShrink = 1, 1, 1
 	name.Style.MinWidth = core.Pt(0)
-	parts := []core.Node{ui.Icon(n.Icon, 16, colors.Accent), name}
+	parts := []core.Node{ui.Icon(n.Icon, 16, n.iconColor(colors.Accent)), name}
 	if n.Count > 0 {
 		ink, weight := colors.Muted, ui.Regular
 		if n.Unread {
@@ -55,6 +67,9 @@ type SummaryRow struct {
 	// Preview shows on up to PreviewLines lines; 0 leaves it out.
 	Preview      string
 	PreviewLines int
+	// Scale multiplies the row's text sizes, for an app's own text size
+	// setting; 0 is 1. The dot and the avatar keep their sizes.
+	Scale float32
 }
 
 func (r SummaryRow) Render(cx *core.Scope) core.Node {
@@ -65,20 +80,24 @@ func (r SummaryRow) Render(cx *core.Scope) core.Node {
 		dot.StyleFunc = ui.Filled(colors.Accent)
 		weight = ui.Semibold
 	}
+	scale := core.Points(r.Scale)
+	if scale <= 0 {
+		scale = 1
+	}
 	cut := func(t core.Text) core.Text {
 		t.MaxLines, t.Style.FlexGrow, t.Style.FlexShrink, t.Style.MinWidth = 1, 1, 1, core.Pt(0)
 		return t
 	}
-	when := ui.Tabular(ui.Text(r.When, 12, ui.Regular, colors.Muted))
+	when := ui.Tabular(ui.Text(r.When, 12*scale, ui.Regular, colors.Muted))
 	when.TestID = "summary-when"
 	line := core.Style{Direction: core.Row, AlignItems: core.AlignCenter}
 	lines := []core.Node{
-		core.View{Style: line.Merge(core.Style{Gap: 8}), Children: []core.Node{cut(ui.Text(r.Title, 13, ui.Semibold, colors.Text)), when}},
-		core.View{Style: line.Merge(core.Style{Gap: 6}), Children: append([]core.Node{cut(ui.Text(r.Subject, 13, weight, colors.Text))}, r.Marks...)},
+		core.View{Style: line.Merge(core.Style{Gap: 8}), Children: []core.Node{cut(ui.Text(r.Title, 13*scale, ui.Semibold, colors.Text)), when}},
+		core.View{Style: line.Merge(core.Style{Gap: 6}), Children: append([]core.Node{cut(ui.Text(r.Subject, 13*scale, weight, colors.Text))}, r.Marks...)},
 	}
 	if r.PreviewLines > 0 && r.Preview != "" {
-		preview := ui.Text(r.Preview, 12, ui.Regular, colors.Muted)
-		preview.MaxLines, preview.Style.LineHeight, preview.TestID = r.PreviewLines, 16, "summary-preview"
+		preview := ui.Text(r.Preview, 12*scale, ui.Regular, colors.Muted)
+		preview.MaxLines, preview.Style.LineHeight, preview.TestID = r.PreviewLines, 16*scale, "summary-preview"
 		lines = append(lines, preview)
 	}
 	return core.View{TestID: "summary-row", Style: core.Style{Direction: core.Row, AlignItems: core.AlignStart, Gap: 8, Padding: core.All(8), Width: core.Pct(100)}, Children: []core.Node{
@@ -135,6 +154,10 @@ func (b Banner) Render(cx *core.Scope) core.Node {
 type EmptyState struct {
 	Icon        func() *core.SVG
 	Title, Hint string
+	// Actions are the buttons under the hint: what to do about the pane
+	// being empty, the first of them the pane's one filled button. They
+	// wrap in a narrow pane.
+	Actions []core.Node
 }
 
 func (e EmptyState) Render(cx *core.Scope) core.Node {
@@ -143,16 +166,37 @@ func (e EmptyState) Render(cx *core.Scope) core.Node {
 	if e.Hint != "" {
 		children = append(children, core.Text{Content: e.Hint, Style: ui.TypeCaption.Merge(core.Style{TextAlign: core.TextAlignCenter}), StyleFunc: ui.Colored(colors.Muted)})
 	}
+	if len(e.Actions) > 0 {
+		children = append(children, core.View{TestID: "empty-actions", Style: core.Style{Direction: core.Row, Wrap: core.Wrap, JustifyContent: core.JustifyCenter, Gap: SpaceS, Margin: core.Edges{Top: SpaceS}}, Children: e.Actions})
+	}
 	return core.View{TestID: "empty-state", Style: ui.FillRest.Merge(core.Style{AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 8, Padding: core.All(24)}), Children: children}
 }
 
-// DialogPanel is the ground of a dialog (Dialog.StyleFunc and
-// AlertDialog.StyleFunc): Frostyard's panel, opaque. NSGo's own is the
-// page's color at 92% over a blur, and a platform that draws no blur, as
-// Linux, shows the view under the dialog through it.
+// DialogPanel is the ground of a panel that floats over the window: a
+// dialog, an alert, the command palette, a popover and a toast (their
+// StyleFunc). It is Frostyard's panel, opaque. NSGo's own is the page's
+// color at 92% over a blur, and a platform that draws no blur, as Linux,
+// shows the view under the panel through it. NSGo's menu takes no style,
+// so a menu keeps NSGo's ground.
 func DialogPanel(cx *core.Scope) func() core.Style {
 	kit := ColorsOf(cx)
 	return func() core.Style { return core.Style{Background: kit.Panel()} }
+}
+
+// PageFrame sets a page that is not the app's own, such as a message from
+// its sender, inside a hairline with rounded corners on the kit's page
+// ground: in the dark theme it reads as a page placed in the window. Size
+// is the frame's own size in its parent, as a style: ui.FillRest, or a
+// height.
+type PageFrame struct {
+	Page core.Node
+	Size core.Style
+}
+
+func (f PageFrame) Render(cx *core.Scope) core.Node {
+	colors, kit := ui.ColorsOf(cx), ColorsOf(cx)
+	return core.View{TestID: "page-frame", Style: f.Size.Merge(core.Style{BorderWidth: 1, CornerRadius: ui.RadiusInset, Overflow: core.Hidden}),
+		StyleFunc: func() core.Style { return core.Style{Background: kit.Page(), BorderColor: colors.Border()} }, Children: []core.Node{f.Page}}
 }
 
 // ConnectionItem is the item at the foot of a navigation that says where
@@ -174,5 +218,52 @@ func (c ConnectionItem) Render(cx *core.Scope) core.Node {
 	return core.View{TestID: "connection", Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Padding: core.Symmetric(8, 12), FlexShrink: 1, MinWidth: core.Pt(0)}, Children: []core.Node{
 		core.View{Style: core.Style{Width: core.Pt(8), Height: core.Pt(8), CornerRadius: 4}, StyleFunc: ui.Filled(ink[tone])},
 		text,
+	}}
+}
+
+// SearchField is a search box, which NSGo has none of: a search icon, the
+// platform's text field, and at its end the keys that focus it while it is
+// empty, or a button that clears it while it holds text. The app binds
+// Keys itself and focuses Ref.
+type SearchField struct {
+	// Placeholder is also what assistive technology reads.
+	Placeholder string
+	// Keys is the shortcut shown while the field is empty, such as "mod+f";
+	// empty shows none.
+	Keys     string
+	Value    func() string
+	OnChange func(string)
+	OnSubmit func(string)
+	Ref      *core.Ref
+}
+
+func (f SearchField) Render(cx *core.Scope) core.Node {
+	colors := ui.ColorsOf(cx)
+	empty := func() bool { return f.Value == nil || f.Value() == "" }
+	change := func(s string) {
+		if f.OnChange != nil {
+			f.OnChange(s)
+		}
+	}
+	end := core.Dynamic(func(cx *core.Scope) core.Node {
+		if !empty() {
+			return ui.IconButton{Label: "Clear search", Icon: lucide.X, Size: 20, IconSize: 12, OnPress: func() { change("") }}
+		}
+		if f.Keys == "" {
+			return nil
+		}
+		return core.View{TestID: "search-keys", Style: core.Style{Padding: core.Symmetric(1, 5), CornerRadius: ui.RadiusSmall, BorderWidth: 1}, StyleFunc: func() core.Style {
+			return core.Style{Background: colors.Hover(), BorderColor: colors.Border()}
+		}, Children: []core.Node{ui.Text(cx.KeyLabel(f.Keys), 11, ui.Medium, colors.Muted)}}
+	})
+	return core.View{TestID: "search-field", Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6, Padding: core.Edges{Left: 8, Right: 4}, Height: core.Pt(ui.ButtonHeight), CornerRadius: ui.RadiusControl, BorderWidth: 1}, StyleFunc: func() core.Style {
+		return core.Style{Background: colors.Field(), BorderColor: colors.FieldBorder(), FocusWithin: &core.Style{BorderColor: colors.Accent()}}
+	}, Children: []core.Node{
+		ui.Icon(lucide.Search, 14, colors.Muted),
+		core.Input{Ref: f.Ref, Label: f.Placeholder, Placeholder: f.Placeholder, Value: f.Value, OnChange: change, OnSubmit: f.OnSubmit,
+			Style: core.Style{FlexGrow: 1, FlexShrink: 1, MinWidth: core.Pt(0), FontSize: 13, BorderWidth: 0}, StyleFunc: func() core.Style {
+				return core.Style{Background: core.Transparent, Color: colors.Text(), PlaceholderColor: colors.Muted()}
+			}},
+		end,
 	}}
 }

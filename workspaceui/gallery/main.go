@@ -25,10 +25,13 @@ type page struct {
 
 var pages = []page{
 	{"colors", "Colors and type", lucide.Palette, colorsPage},
+	{"tokens", "Flags, a page, sizes", lucide.Flag, tokensPage},
 	{"buttons", "Buttons and toolbars", lucide.MousePointerClick, buttonsPage},
 	{"fields", "Fields and forms", lucide.TextCursorInput, fieldsPage},
 	{"rows", "Rows and marks", lucide.List, rowsPage},
 	{"overlays", "Dialogs and menus", lucide.PanelTop, overlaysPage},
+	{"more", "Search, trees and popovers", lucide.Layers, morePage},
+	{"settings", "Settings", lucide.Settings, settingsPage},
 }
 
 func root(cx *core.Scope) core.Node {

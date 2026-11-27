@@ -36,13 +36,16 @@ again in that module's directory.
   gallery-live` runs its picture tours in a real GTK 4 window under Xvfb,
   and `make gallery-pictures` takes the kept pictures again
   (`workspaceui/gallery/comparison/linux`). A change of the kit's look runs
-  `make gallery-pictures` and commits the changed PNGs. A real-window run
+  `make gallery-pictures` and commits the changed PNGs. `make
+  gallery-pictures-web` takes the same pictures in a headless Chromium,
+  to look at; git ignores them. A real-window run
   goes through these targets, which set `GDK_BACKEND=x11`: `xvfb-run` alone
   opens GTK's windows on a Wayland desktop.
 
-- `mise install` — the pinned golangci-lint and Node (`mise.toml`,
-  checksums in `mise.lock`). Go comes from go.mod's `go` line, the only Go
-  pin. Change a pin only with `mise lock`, in a commit of its own.
+- `mise install` — installs Go from `go.mod`'s `go` line and golangci-lint
+  and Node from `mise.toml`'s pins. `mise.lock` records the resolved versions
+  and checksums for all three. Change a pin only with `mise lock`, in a
+  commit of its own.
 - `make test` — every test, headless (`env -u DISPLAY -u WAYLAND_DISPLAY`,
   `CGO_ENABLED=0`). MyGo's Tester needs Pango and cairo, no display, no GTK.
 - `make verify` — the gate that leaves `git status` unchanged: `go mod tidy
@@ -285,6 +288,12 @@ anchors valid) and add the back-links on the targets. Use relative paths.
 
 ### Housekeeping
 
+- When documenting a shared contract, name the helpers it covers if nearby
+  prose lists a different group. Check each named helper against the source.
+- Before opening a PR, check its proposed body against
+  [the PR template](.github/pull_request_template.md): keep the section
+  headings, declare the risk tier, and include evidence for each applicable
+  verification item. Delete checklist rows that do not apply.
 - New doc ⇒ add a line to the index in [docs/README.md](docs/README.md).
 - New significant decision ⇒ new ADR *first*, then update the affected design
   docs/specs in the same change.

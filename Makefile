@@ -1,4 +1,4 @@
-.PHONY: verify verify-static verify-template check ci fmt lint lint-version-check test test-wasm race cross snapshot tidy corrections-base bump bump-workspaceui gallery gallery-live gallery-pictures
+.PHONY: verify verify-static verify-template check ci fmt lint lint-version-check test test-wasm race cross snapshot tidy corrections-base bump bump-workspaceui gallery gallery-live gallery-pictures gallery-pictures-web
 
 GOCMD ?= go
 
@@ -12,8 +12,8 @@ CGO_ENABLED = 0
 # every gate below runs once in each.
 MODULES := . workspaceui workspaceui/gallery
 
-# Pinned golangci-lint release, read from mise.toml, the single source of
-# every tool pin: `mise install` provisions it locally and CI installs it with
+# Pinned golangci-lint release, read from mise.toml:
+# `mise install` provisions it locally and CI installs it with
 # jdx/mise-action, verified against mise.lock. Compared with `golangci-lint
 # version --short`, which prints the bare "MAJOR.MINOR.PATCH".
 GOLANGCI_LINT_VERSION := $(strip $(shell sed -n 's/^golangci-lint = "\(.*\)"/\1/p' mise.toml))
@@ -200,6 +200,11 @@ gallery-live:
 gallery-pictures:
 	@command -v xvfb-run >/dev/null 2>&1 || { echo "make gallery-pictures needs xvfb-run (the xvfb package)"; exit 1; }
 	cd $(GALLERY) && $(GALLERY_LIVE) -screenshots comparison/linux .
+
+# The same tours in a headless Chromium, for workspaceui/gallery/comparison/web.
+# NSGo finds Chrome, Chromium or Edge, or takes the one NSGO_BROWSER names.
+gallery-pictures-web:
+	cd $(GALLERY) && $(GOCMD) tool nsgo test -target web -screenshots comparison/web .
 
 # Tag the next version of the MyGo kit (svu, .svu.yml) and push the tag. The
 # maintainer runs it; agents never tag or push a tag. The pattern keeps svu

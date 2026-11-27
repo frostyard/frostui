@@ -24,6 +24,7 @@ func standardWindow(cx *core.Scope, gallery func()) core.Node {
 	module := core.NewSignal(cx, "mail")
 	filter := core.NewSignal(cx, "all")
 	todo := core.NewSignal(cx, false)
+	query := core.NewSignal(cx, "")
 	selection := ui.NewSelection(cx, true)
 	selection.Set(3)
 	opened := func() *message {
@@ -39,7 +40,7 @@ func standardWindow(cx *core.Scope, gallery func()) core.Node {
 	}
 	colors := ui.ColorsOf(cx)
 	list := core.View{Style: ui.FillRest.Merge(core.Style{Gap: 8, Padding: core.Edges{Top: 8, Left: 8, Right: 8}}), Children: []core.Node{
-		ui.Input{Label: "Search All Inboxes", Placeholder: "Search All Inboxes"},
+		workspaceui.SearchField{Placeholder: "Search All Inboxes", Keys: "mod+f", Value: query.Get, OnChange: query.Set},
 		core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8}, Children: []core.Node{
 			ui.Tabs[string]{Variant: ui.TabsSegmented, Size: ui.SizeSmall, Label: "Filter", Value: filter.Get, OnChange: filter.Set, Options: []ui.Option[string]{
 				{Value: "all", Label: "All"}, {Value: "unread", Label: "Unread"}, {Value: "flagged", Label: "Flagged"}}},
@@ -106,22 +107,37 @@ func standardWindow(cx *core.Scope, gallery func()) core.Node {
 				moduleTab("people", "People", lucide.Users), moduleTab("tasks", "Tasks", lucide.ListChecks)}}}}},
 		SidebarFooter: []core.Node{core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Width: core.Pct(100), Padding: core.Edges{Right: 6}}, Children: []core.Node{
 			workspaceui.ConnectionItem{Tone: workspaceui.Success, Text: func() string { return "Local" }}, ui.Spacer{}, ui.IconButton{Label: "Settings", Icon: lucide.Settings, OnPress: nothing}}}},
-		Header: []core.Node{core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10, Width: core.Pt(378)}, Children: []core.Node{
-			core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1}, Children: []core.Node{
-				core.Text{Content: "All Inboxes", Style: ui.TypeTitle},
-				core.Text{Content: "3 unread", Style: ui.TypeCaption, StyleFunc: ui.Colored(colors.Muted)}}},
-			ui.Button{Text: "Compose", Icon: lucide.SquarePen, OnPress: nothing}}}},
-		Actions: []core.Node{
-			ui.Toolbar{Label: "Message", Children: []core.Node{
-				ui.ToolbarGroup{Label: "File", Children: []core.Node{action("Archive", lucide.Archive), action("Delete", lucide.Trash), action("Junk", lucide.ShieldAlert)}},
-				ui.ToolbarSeparator{},
-				ui.ToolbarGroup{Label: "Answer", Children: []core.Node{action("Reply", lucide.Reply), action("Reply all", lucide.ReplyAll), action("Forward", lucide.Forward)}},
-				ui.ToolbarSeparator{},
-				ui.ToolbarGroup{Label: "Mark", Children: []core.Node{action("Flag", lucide.Flag), action("Move", lucide.FolderInput), action("More", lucide.Ellipsis)}},
-			}},
-			ui.SidebarButton{Text: "Search or run a command", Icon: lucide.Search, Shortcut: "mod+k", Variant: ui.SidebarButtonField, OnPress: nothing},
-			ui.ToggleButton{Label: "To-Do Bar", Icon: lucide.PanelRight, On: todo.Get, OnChange: todo.Set},
-		},
+		// A window under 720 wide has one row for its title and its actions:
+		// the title alone, Compose as an icon, and the rest behind More.
+		Header: []core.Node{core.Dynamic(func(cx *core.Scope) core.Node {
+			title := core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, MinWidth: core.Pt(0)}, Children: []core.Node{
+				core.Text{Content: "All Inboxes", MaxLines: 1, Style: ui.TypeTitle},
+				core.Text{Content: "3 unread", MaxLines: 1, Style: ui.TypeCaption, StyleFunc: ui.Colored(colors.Muted)}}}
+			if cx.Env().Window().Width < 720 {
+				return title
+			}
+			return core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10, Width: core.Pt(378)}, Children: []core.Node{
+				title, ui.Button{Text: "Compose", Icon: lucide.SquarePen, OnPress: nothing}}}
+		})},
+		Actions: []core.Node{core.Dynamic(func(cx *core.Scope) core.Node {
+			if cx.Env().Window().Width < 720 {
+				return workspaceui.Row(
+					ui.IconButton{Label: "Compose", Icon: lucide.SquarePen, Variant: ui.IconButtonPrimary, OnPress: nothing},
+					ui.Menu{Label: "More", Trigger: ui.Button{Label: "More", Icon: lucide.Ellipsis, Variant: ui.ButtonGhost}, Children: []core.Node{
+						ui.MenuItem{Text: "Reply", Icon: lucide.Reply, OnSelect: nothing}, ui.MenuItem{Text: "Archive", Icon: lucide.Archive, OnSelect: nothing},
+						ui.MenuItem{Text: "Search or run a command", Icon: lucide.Search, OnSelect: nothing}}})
+			}
+			return workspaceui.Row(
+				ui.Toolbar{Label: "Message", Children: []core.Node{
+					ui.ToolbarGroup{Label: "File", Children: []core.Node{action("Archive", lucide.Archive), action("Delete", lucide.Trash), action("Junk", lucide.ShieldAlert)}},
+					ui.ToolbarSeparator{},
+					ui.ToolbarGroup{Label: "Answer", Children: []core.Node{action("Reply", lucide.Reply), action("Reply all", lucide.ReplyAll), action("Forward", lucide.Forward)}},
+					ui.ToolbarSeparator{},
+					ui.ToolbarGroup{Label: "Mark", Children: []core.Node{action("Flag", lucide.Flag), action("Move", lucide.FolderInput), action("More", lucide.Ellipsis)}},
+				}},
+				ui.SidebarButton{Text: "Search or run a command", Icon: lucide.Search, Shortcut: "mod+k", Variant: ui.SidebarButtonField, OnPress: nothing},
+				ui.ToggleButton{Label: "To-Do Bar", Icon: lucide.PanelRight, On: todo.Get, OnChange: todo.Set})
+		})},
 		Content: []core.Node{split},
 	}
 }

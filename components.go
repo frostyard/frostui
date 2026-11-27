@@ -169,10 +169,11 @@ func IconTile(c *ui.Context, icon string, tone Tone, size float32) ui.Element {
 	})
 }
 
-// IconButton is a flat button showing only an icon. label names it for
-// screen readers and its tooltip; it must not be empty. It is a ghost: a
-// hairline and no face, its icon in the hover text while the pointer is
-// over it, and the accent face while it is Selected.
+// IconButton is a flat button showing only an icon. Callers must pass a
+// nonempty label for the accessible name and tooltip. An empty label is
+// passed through unchanged, without validation or a fallback.
+// It is a ghost: a hairline and no face, its icon in the hover text while
+// the pointer is over it, and the accent face while it is Selected.
 func IconButton(c *ui.Context, icon, label string) ui.Element {
 	return ghost(c, ui.Button(c, "")).Label(label).Tooltip(label).Children(func() {
 		Icon(c, icon)
@@ -180,7 +181,9 @@ func IconButton(c *ui.Context, icon, label string) ui.Element {
 }
 
 // QuietIconButton is an icon-only button with no resting face or border.
-// label names it for screen readers and its tooltip; it must not be empty.
+// As with [IconButton], callers must pass a nonempty label for the accessible
+// name and tooltip. An empty label is passed through unchanged, without
+// validation or a fallback.
 // Hover and press show the theme's surface treatments; MyGo retains focus,
 // activation and disabled behavior. Dimensions chain as on IconButton.
 func QuietIconButton(c *ui.Context, icon, label string) ui.Element {
@@ -211,9 +214,10 @@ func PrimaryButton(c *ui.Context, label string) ui.Element {
 }
 
 // PrimaryIconButton is an icon-only button on the same brand gradient as
-// PrimaryButton, with the on-gradient icon color. label names it for screen
-// readers and its tooltip; it must not be empty. Dimensions, activation,
-// focus and Disabled chain as on MyGo's PrimaryButton.
+// PrimaryButton, with the on-gradient icon color. As with [IconButton],
+// callers must pass a nonempty label for the accessible name and tooltip.
+// An empty label is passed through unchanged, without validation or a fallback.
+// Dimensions, activation, focus and Disabled chain as on MyGo's PrimaryButton.
 func PrimaryIconButton(c *ui.Context, icon, label string) ui.Element {
 	return primaryFace(ui.PrimaryButton(c, ""), c.Theme()).Label(label).Tooltip(label).Children(func() {
 		Icon(c, icon)

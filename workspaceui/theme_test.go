@@ -277,3 +277,46 @@ func TestAToneOutOfRangeIsNeutral(t *testing.T) {
 		t.Errorf("toneName past the last tone = %q, want neutral", got)
 	}
 }
+
+// TestFlagsAreSevenColorsInBothThemes checks the flags: 7 colors that
+// differ from each other in a theme, each different between the themes,
+// and the first for a number outside them.
+func TestFlagsAreSevenColorsInBothThemes(t *testing.T) {
+	read := func(dark bool) (flags [FlagCount + 2]core.Color) {
+		themed(t, dark, 100, func(cx *core.Scope) core.Node {
+			for n := range flags {
+				flags[n] = ColorsOf(cx).Flag(n)
+			}
+			return core.Text{Content: "x"}
+		})
+		return flags
+	}
+	darks, lights := read(true), read(false)
+	for _, flags := range [][FlagCount + 2]core.Color{darks, lights} {
+		seen := map[core.Color]int{}
+		for n := 1; n <= FlagCount; n++ {
+			if flags[n] == 0 {
+				t.Errorf("flag %d has no color", n)
+			}
+			if other, ok := seen[flags[n]]; ok {
+				t.Errorf("flags %d and %d are both %#08x", other, n, uint32(flags[n]))
+			}
+			seen[flags[n]] = n
+		}
+		if flags[0] != flags[1] || flags[FlagCount+1] != flags[1] {
+			t.Errorf("a flag outside 1 to %d is %#08x and %#08x, want the first, %#08x", FlagCount, uint32(flags[0]), uint32(flags[FlagCount+1]), uint32(flags[1]))
+		}
+	}
+	for n := 1; n <= FlagCount; n++ {
+		if darks[n] == lights[n] {
+			t.Errorf("flag %d is %#08x in both themes", n, uint32(darks[n]))
+		}
+	}
+}
+
+// TestIndentStepsByDepth checks a tree row's inset.
+func TestIndentStepsByDepth(t *testing.T) {
+	if Indent(0) != 0 || Indent(-1) != 0 || Indent(2) != 2*Indent(1) || Indent(1) <= 0 {
+		t.Errorf("Indent is %v, %v, %v, %v at depths -1, 0, 1, 2", Indent(-1), Indent(0), Indent(1), Indent(2))
+	}
+}
