@@ -112,7 +112,7 @@ for the rendering and headless checks.
 ## Develop
 
 ```sh
-mise install   # golangci-lint and Node; Go comes from go.mod
+mise install   # Go from go.mod, plus pinned golangci-lint and Node
 make ci        # what CI runs
 ```
 

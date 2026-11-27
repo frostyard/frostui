@@ -12,8 +12,8 @@ CGO_ENABLED = 0
 # every gate below runs once in each.
 MODULES := . workspaceui workspaceui/gallery
 
-# Pinned golangci-lint release, read from mise.toml, the single source of
-# every tool pin: `mise install` provisions it locally and CI installs it with
+# Pinned golangci-lint release, read from mise.toml:
+# `mise install` provisions it locally and CI installs it with
 # jdx/mise-action, verified against mise.lock. Compared with `golangci-lint
 # version --short`, which prints the bare "MAJOR.MINOR.PATCH".
 GOLANGCI_LINT_VERSION := $(strip $(shell sed -n 's/^golangci-lint = "\(.*\)"/\1/p' mise.toml))
