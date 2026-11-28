@@ -21,15 +21,6 @@ type Section struct {
 func (s Section) Render(cx *core.Scope) core.Node {
 	open := core.NewSignal(cx, s.InitiallyOpen)
 	colors := ui.ColorsOf(cx)
-	chevron := func() *core.SVG {
-		if open.Get() {
-			return lucide.ChevronDown()
-		}
-		if cx.Env().RTL() {
-			return lucide.ChevronLeft()
-		}
-		return lucide.ChevronRight()
-	}
 	header := base.Button{Label: s.Title, Expanded: open.Get,
 		OnPress: func(core.PressEvent) { open.Set(!open.Get()) },
 		Style:   core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10, Padding: core.Symmetric(8, 4), CornerRadius: ui.RadiusControl},
@@ -37,12 +28,22 @@ func (s Section) Render(cx *core.Scope) core.Node {
 			return core.Style{FocusVisible: ui.FocusRing(cx, -2), Hover: &core.Style{Background: colors.Hover()}}
 		},
 		Children: []core.Node{
-			ui.IconOf(chevron, 18, colors.Muted),
+			ui.IconOf(func() *core.SVG { return disclosureChevron(cx, open.Get()) }, 18, colors.Muted),
 			core.Text{Content: s.Title, Style: ui.TypeHeading.Merge(core.Style{FlexShrink: 1})},
 			ui.Badge{TextFunc: func() string { return strconv.Itoa(s.Count()) }},
 		},
 	}
 	return Stack(base.AccordionHeader{Level: 2, Children: []core.Node{header}}, core.Show{When: open.Get, Then: s.Content})
+}
+
+func disclosureChevron(cx *core.Scope, expanded bool) *core.SVG {
+	if expanded {
+		return lucide.ChevronDown()
+	}
+	if cx.Env().RTL() {
+		return lucide.ChevronLeft()
+	}
+	return lucide.ChevronRight()
 }
 
 // Card keeps one item's content and actions together on a themed surface.

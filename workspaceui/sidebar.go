@@ -2,7 +2,6 @@ package workspaceui
 
 import (
 	"github.com/nsgo-dev/nsgo/core"
-	"github.com/nsgo-dev/nsgo/icons/lucide"
 	"github.com/nsgo-dev/nsgo/ui"
 )
 
@@ -19,15 +18,7 @@ func (b BranchLabel) Render(cx *core.Scope) core.Node {
 	colors := ui.ColorsOf(cx)
 	var arrow core.Node = core.View{Style: core.Style{Width: core.Pt(14)}}
 	if b.Expanded != nil {
-		arrow = ui.IconOf(func() *core.SVG {
-			if b.Expanded() {
-				return lucide.ChevronDown()
-			}
-			if cx.Env().RTL() {
-				return lucide.ChevronLeft()
-			}
-			return lucide.ChevronRight()
-		}, 14, colors.Text)
+		arrow = ui.IconOf(func() *core.SVG { return disclosureChevron(cx, b.Expanded()) }, 14, colors.Text)
 	}
 	label := ui.Text(b.Text, 13, ui.Semibold, colors.Text)
 	label.MaxLines, label.Style.FlexShrink = 1, 1

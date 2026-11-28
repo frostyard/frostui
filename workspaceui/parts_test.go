@@ -32,6 +32,32 @@ func right(v *nsgotest.View) core.Points {
 	return b.Origin.X + b.Size.Width
 }
 
+func TestDisclosureChevron(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		locale   string
+		expanded bool
+		want     *core.SVG
+	}{
+		{"expanded LTR points down", "en", true, lucide.ChevronDown()},
+		{"expanded RTL points down", "ar", true, lucide.ChevronDown()},
+		{"collapsed LTR points right", "en", false, lucide.ChevronRight()},
+		{"collapsed RTL points left", "ar", false, lucide.ChevronLeft()},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var got *core.SVG
+			nsgotest.Start(t, func(cx *core.Scope) core.Node {
+				cx.SetLocale(tc.locale)
+				got = disclosureChevron(cx, tc.expanded)
+				return core.View{}
+			})
+			if got != tc.want {
+				t.Errorf("disclosureChevron returned %p, want %p", got, tc.want)
+			}
+		})
+	}
+}
+
 // TestNavLabelKeepsItsCountAtTheRowsEnd checks the count's place for a
 // short name and for one far longer than the row: the count ends where the
 // row ends, and the name is cut, not the count.
