@@ -322,13 +322,21 @@ func (s *SourceList[K]) StartRename(section string, item K) {
 // Renaming reports whether an item's name is being typed.
 func (s *SourceList[K]) Renaming() bool { return s.renaming }
 
+// section returns the first section with the ID, or nil if none matches.
+func (s *SourceList[K]) section(id string) *SourceSection[K] {
+	for i := range s.sections {
+		if s.sections[i].ID == id {
+			return &s.sections[i]
+		}
+	}
+	return nil
+}
+
 // title is the text of a row: a section's title, or an item's.
 func (s *SourceList[K]) title(k sourceKey[K]) string {
 	if k.header {
-		for _, sec := range s.sections {
-			if sec.ID == k.section {
-				return sec.Title
-			}
+		if sec := s.section(k.section); sec != nil {
+			return sec.Title
 		}
 		return ""
 	}
@@ -338,36 +346,13 @@ func (s *SourceList[K]) title(k sourceKey[K]) string {
 	return s.Row(k.item).Title
 }
 
-// tooltip is the tooltip of the header of the section with the ID.
-func (s *SourceList[K]) tooltip(id string) string {
-	for _, sec := range s.sections {
-		if sec.ID == id {
-			return sec.Tooltip
-		}
-	}
-	return ""
-}
-
-// titled reports whether the section with the ID has a header.
-func (s *SourceList[K]) titled(id string) bool {
-	for _, sec := range s.sections {
-		if sec.ID == id {
-			return sec.Title != ""
-		}
-	}
-	return false
-}
-
 // children returns the rows under a row: a section's items, or an item's
 // children in its section.
 func (s *SourceList[K]) children(k sourceKey[K]) []sourceKey[K] {
 	var items []K
 	if k.header {
-		for _, sec := range s.sections {
-			if sec.ID == k.section {
-				items = sec.Items
-				break
-			}
+		if sec := s.section(k.section); sec != nil {
+			items = sec.Items
 		}
 		if items == nil {
 			items = []K{}
@@ -616,8 +601,8 @@ func (s *SourceList[K]) header(c *ui.Context, t *ui.Theme, k sourceKey[K]) {
 	r := s.cur
 	head := r.Arrow().Grow(1).Height(28).Row().Gap(SpaceS).Padding(0, SpaceS).AlignItems(ui.Center).
 		Cursor(ui.CursorPointer).Background(Chrome(t))
-	if tip := s.tooltip(k.section); tip != "" {
-		head.Tooltip(tip)
+	if sec := s.section(k.section); sec != nil && sec.Tooltip != "" {
+		head.Tooltip(sec.Tooltip)
 	}
 	head.Children(func() {
 		Label(c, s.title(k)).Grow(1).SingleLine()
@@ -643,7 +628,7 @@ func (s *SourceList[K]) item(c *ui.Context, t *ui.Theme, k sourceKey[K]) {
 	st := &s.state
 	chosen := s.row >= 0 && s.row < st.Rows() && st.Item(s.row) == k
 	depth := r.Depth
-	if s.titled(k.section) {
+	if sec := s.section(k.section); sec != nil && sec.Title != "" {
 		depth--
 	}
 	content := ui.Row(c).Grow(1).Height(28).Gap(6).Padding(0, SpaceS, 0, SpaceXS).AlignItems(ui.Center)
